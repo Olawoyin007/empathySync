@@ -75,7 +75,11 @@ def check_ollama_server() -> HealthStatus:
 
 
 def check_ollama_model() -> HealthStatus:
-    """Check if the configured model is available in Ollama."""
+    """Check if the configured model is available in Ollama.
+
+    If the configured model is missing but other models are installed,
+    automatically falls back to an available model so the app can start.
+    """
     model_name = settings.OLLAMA_MODEL
     try:
         client = get_http_client()
@@ -97,21 +101,35 @@ def check_ollama_model() -> HealthStatus:
 
         if model_found:
             return HealthStatus(name="Ollama Model", ok=True, message=f"`{model_name}` available")
-        else:
-            model_list = ", ".join(available_models[:5]) if available_models else "none"
-            if len(available_models) > 5:
-                model_list += f" (+{len(available_models) - 5} more)"
 
+        # Model not found - try to fallback to an available model
+        if available_models:
+            fallback = available_models[0]
+            settings.OLLAMA_MODEL = fallback
+            logger.warning(f"Model '{model_name}' not found, falling back to '{fallback}'")
+            model_list = ", ".join(available_models[:5])
             return HealthStatus(
                 name="Ollama Model",
-                ok=False,
-                message=f"Model `{model_name}` not found",
+                ok=True,
+                message=f"Using `{fallback}` (configured `{model_name}` not found)",
+                critical=False,
                 details=(
-                    f"Available models: {model_list}\n\n"
-                    f"**To fix:**\n"
-                    f"`ollama pull {model_name}`"
+                    f"Auto-selected from available: {model_list}\n\n"
+                    f"To use your preferred model: `ollama pull {model_name}`"
                 ),
             )
+
+        # No models at all
+        return HealthStatus(
+            name="Ollama Model",
+            ok=False,
+            message="No models installed",
+            details=(
+                "Ollama is running but has no models.\n\n"
+                "**To fix:**\n"
+                f"`ollama pull {model_name}`"
+            ),
+        )
     except Exception:
         return HealthStatus(
             name="Ollama Model",
@@ -197,3 +215,34 @@ def run_health_checks() -> List[HealthStatus]:
 def has_critical_failures(checks: List[HealthStatus]) -> bool:
     """Check if any critical health checks failed."""
     return any(not c.ok and c.critical for c in checks)
+
+
+def auto_pull_model(model_name: str) -> bool:
+    """Pull a model from Ollama. Returns True on success.
+
+    Uses the Ollama /api/pull endpoint which streams progress.
+    This is a blocking call that may take several minutes.
+    """
+    try:
+        client = get_http_client()
+        # Use stream=True so we don't timeout on large downloads
+        with client.stream(
+            "POST",
+            f"{settings.OLLAMA_HOST}/api/pull",
+            json={"name": model_name},
+            timeout=600,  # 10 min max for model download
+        ) as response:
+            if response.status_code != 200:
+                return False
+            # Consume the stream (Ollama sends progress JSON lines)
+            for _line in response.iter_lines():
+                pass
+        # Verify the model is now available
+        verify = client.get(f"{settings.OLLAMA_HOST}/api/tags", timeout=5)
+        if verify.status_code == 200:
+            models = [m.get("name", "") for m in verify.json().get("models", [])]
+            return any(m == model_name or m.startswith(f"{model_name}:") for m in models)
+        return False
+    except Exception as e:
+        logger.error(f"Auto-pull failed for {model_name}: {e}")
+        return False
