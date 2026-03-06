@@ -30,7 +30,7 @@ from utils.helpers import setup_logging, validate_environment
 from utils.wellness_tracker import WellnessTracker
 from utils.trusted_network import TrustedNetwork
 from utils.scenario_loader import get_scenario_loader
-from utils.health_check import run_health_checks, has_critical_failures
+from utils.health_check import run_health_checks, has_critical_failures, auto_pull_model
 
 # Configure page
 st.set_page_config(
@@ -1388,6 +1388,30 @@ def main():
     if "health_checks_passed" not in st.session_state:
         checks = run_health_checks()
         if has_critical_failures(checks):
+            # Check if the only critical failure is "no models" - try auto-pull
+            model_check = next((c for c in checks if c.name == "Ollama Model"), None)
+            server_ok = any(c.name == "Ollama Server" and c.ok for c in checks)
+            if (
+                model_check
+                and not model_check.ok
+                and server_ok
+                and "No models installed" in model_check.message
+            ):
+                model_to_pull = settings.OLLAMA_MODEL or "llama3.2"
+                with st.spinner(
+                    f"No models found. Pulling `{model_to_pull}`... this may take a few minutes"
+                ):
+                    if auto_pull_model(model_to_pull):
+                        settings.OLLAMA_MODEL = model_to_pull
+                        st.success(f"Model `{model_to_pull}` downloaded successfully!")
+                        st.session_state.health_checks_passed = True
+                        st.rerun()
+                    else:
+                        st.error(
+                            f"Failed to pull `{model_to_pull}`. Please run manually: `ollama pull {model_to_pull}`"
+                        )
+                        return
+
             st.error("**Startup Check Failed**")
             for check in checks:
                 if check.ok:
@@ -1403,7 +1427,24 @@ def main():
             st.markdown("---")
             st.markdown("Fix the issues above and refresh the page.")
             return
+        # Show non-critical warnings (e.g., model fallback) without blocking
+        for check in checks:
+            if check.ok and check.details:
+                st.info(f"**{check.name}**: {check.message}")
+                st.caption(check.details)
         st.session_state.health_checks_passed = True
+
+    # Data pruning: remove records older than DATA_RETENTION_DAYS (runs once per session)
+    if "data_pruned" not in st.session_state:
+        if settings.DATA_RETENTION_DAYS > 0:
+            try:
+                from utils.storage_backend import get_storage_backend
+
+                backend = get_storage_backend()
+                backend.prune_old_data(settings.DATA_RETENTION_DAYS)
+            except Exception:
+                pass  # Non-critical: pruning can retry next session
+        st.session_state.data_pruned = True
 
     # Phase 11: Check device lock status (enables read-only mode if locked by other)
     display_lock_warning()
@@ -1553,6 +1594,10 @@ def main():
 
         # Subtle usage stats
         display_usage_health()
+
+        # Show active model
+        if settings.OLLAMA_MODEL:
+            st.caption(f"Running: {settings.OLLAMA_MODEL}")
 
         st.markdown("---")
 

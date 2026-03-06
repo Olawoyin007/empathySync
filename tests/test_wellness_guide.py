@@ -2483,8 +2483,8 @@ class TestHealthChecks:
             assert result.ok is True
 
     @patch("utils.health_check.get_http_client")
-    def test_check_ollama_model_not_found(self, mock_get_client):
-        """Test model check when model is missing."""
+    def test_check_ollama_model_not_found_fallback(self, mock_get_client):
+        """Test model check falls back to available model when configured one is missing."""
         from utils.health_check import check_ollama_model
 
         mock_client = Mock()
@@ -2495,9 +2495,26 @@ class TestHealthChecks:
             mock_settings.OLLAMA_HOST = "http://localhost:11434"
             mock_settings.OLLAMA_MODEL = "llama2"
             result = check_ollama_model()
-            assert result.ok is False
+            assert result.ok is True
+            assert "mistral:7b" in result.message
             assert "not found" in result.message
-            assert "ollama pull" in result.details
+            assert mock_settings.OLLAMA_MODEL == "mistral:7b"
+
+    @patch("utils.health_check.get_http_client")
+    def test_check_ollama_model_no_models(self, mock_get_client):
+        """Test model check when no models are installed at all."""
+        from utils.health_check import check_ollama_model
+
+        mock_client = Mock()
+        mock_get_client.return_value = mock_client
+        mock_client.get.return_value.status_code = 200
+        mock_client.get.return_value.json.return_value = {"models": []}
+        with patch("utils.health_check.settings") as mock_settings:
+            mock_settings.OLLAMA_HOST = "http://localhost:11434"
+            mock_settings.OLLAMA_MODEL = "llama2"
+            result = check_ollama_model()
+            assert result.ok is False
+            assert "No models installed" in result.message
 
     def test_has_critical_failures(self):
         """Test critical failure detection."""

@@ -267,6 +267,11 @@ class StorageBackend(ABC):
     # ==================== DATA MANAGEMENT ====================
 
     @abstractmethod
+    def prune_old_data(self, retention_days: int) -> int:
+        """Delete records older than retention_days. Returns count of pruned records."""
+        pass
+
+    @abstractmethod
     def clear_all_data(self) -> None:
         """Clear all stored data."""
         pass
@@ -776,6 +781,33 @@ class JSONBackend(StorageBackend):
         return [r for r in data.get("reach_outs", []) if start_str <= r.get("date", "") <= end_str]
 
     # ==================== DATA MANAGEMENT ====================
+
+    def prune_old_data(self, retention_days: int) -> int:
+        self._ensure_write_allowed()
+        cutoff = (date.today() - timedelta(days=retention_days)).isoformat()
+        pruned = 0
+
+        data = self._load_wellness()
+        date_lists = [
+            "check_ins",
+            "usage_sessions",
+            "policy_events",
+            "session_intents",
+            "independence_records",
+            "handoff_events",
+            "self_reports",
+        ]
+        for key in date_lists:
+            original = data.get(key, [])
+            filtered = [r for r in original if r.get("date", "") >= cutoff]
+            pruned += len(original) - len(filtered)
+            data[key] = filtered
+
+        if pruned > 0:
+            self._save_wellness(data)
+            logger.info(f"Pruned {pruned} records older than {retention_days} days")
+
+        return pruned
 
     def clear_all_data(self) -> None:
         self._ensure_write_allowed()
@@ -1401,6 +1433,31 @@ class SQLiteBackend(StorageBackend):
         return [dict(row) for row in rows]
 
     # ==================== DATA MANAGEMENT ====================
+
+    def prune_old_data(self, retention_days: int) -> int:
+        self._ensure_write_allowed()
+        cutoff = (datetime.now() - timedelta(days=retention_days)).isoformat()
+        pruned = 0
+
+        # Tables with created_at timestamp columns
+        tables_with_created_at = [
+            "check_ins",
+            "usage_sessions",
+            "policy_events",
+            "session_intents",
+            "independence_records",
+            "handoff_events",
+            "self_reports",
+        ]
+        for table in tables_with_created_at:
+            cursor = self.db.execute(f"DELETE FROM {table} WHERE created_at < ?", (cutoff,))
+            pruned += cursor.rowcount
+
+        if pruned > 0:
+            self.db.commit()
+            logger.info(f"Pruned {pruned} records older than {retention_days} days")
+
+        return pruned
 
     def clear_all_data(self) -> None:
         self._ensure_write_allowed()
