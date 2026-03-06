@@ -42,7 +42,7 @@ context:
     relationships: 6
     default: 4
   domain_stability_streak: 3      # Consecutive turns before domain is "established"
-  domain_shift_intensity: 7       # Intensity >= this allows domain shift
+  domain_shift_intensity: 5       # Intensity >= this allows domain shift
   continuation_max_length: 30     # Messages shorter than this may be continuations
   topic_hints_limit: 5            # Max extracted topic hints per message
   emotional_coloring_min_intensity: 3  # Minimum intensity for emotional acknowledgment
