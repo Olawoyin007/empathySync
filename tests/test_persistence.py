@@ -804,5 +804,189 @@ class TestWriteGate:
             backend.close()
 
 
+class TestDataPruning:
+    """Tests for data pruning / active forgetting."""
+
+    @pytest.fixture
+    def temp_data_dir(self, tmp_path):
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        return data_dir
+
+    @pytest.fixture
+    def json_backend(self, temp_data_dir):
+        from utils.storage_backend import JSONBackend, reset_storage_backend
+
+        reset_storage_backend()
+        with patch("utils.storage_backend.settings") as mock_settings:
+            mock_settings.DATA_DIR = temp_data_dir
+            mock_settings.USE_SQLITE = False
+            backend = JSONBackend()
+            yield backend
+            backend.close()
+
+    def _inject_old_records(self, backend, days_ago):
+        """Add records with dates in the past."""
+        old_date = (date.today() - timedelta(days=days_ago)).isoformat()
+        data = backend._load_wellness()
+        data["check_ins"].append(
+            {"id": 99, "date": old_date, "datetime": old_date, "feeling_score": 3, "notes": "old"}
+        )
+        data["usage_sessions"].append(
+            {
+                "id": 99,
+                "date": old_date,
+                "datetime": old_date,
+                "hour": 10,
+                "duration_minutes": 15,
+                "turn_count": 5,
+                "domains_touched": [],
+                "max_risk_weight": 1.0,
+            }
+        )
+        data["policy_events"].append(
+            {
+                "id": 99,
+                "date": old_date,
+                "datetime": old_date,
+                "policy_type": "test",
+                "domain": "logistics",
+                "risk_weight": 1.0,
+                "action_taken": "none",
+            }
+        )
+        backend._save_wellness(data)
+
+    def test_prune_removes_old_records(self, json_backend):
+        """Records older than retention_days are pruned."""
+        # Add a current record
+        json_backend.add_check_in(4, "recent")
+        # Add records from 100 days ago
+        self._inject_old_records(json_backend, days_ago=100)
+
+        pruned = json_backend.prune_old_data(retention_days=90)
+
+        assert pruned == 3  # 1 check-in + 1 session + 1 policy event
+        # Recent check-in should survive
+        data = json_backend._load_wellness()
+        assert len(data["check_ins"]) == 1
+        assert data["check_ins"][0]["notes"] == "recent"
+
+    def test_prune_keeps_recent_records(self, json_backend):
+        """Records within retention window are kept."""
+        json_backend.add_check_in(4, "today")
+        self._inject_old_records(json_backend, days_ago=30)
+
+        pruned = json_backend.prune_old_data(retention_days=90)
+
+        assert pruned == 0
+        data = json_backend._load_wellness()
+        assert len(data["check_ins"]) == 2
+
+    def test_prune_returns_zero_when_no_old_data(self, json_backend):
+        """No pruning needed when all data is recent."""
+        json_backend.add_check_in(5, "fresh")
+
+        pruned = json_backend.prune_old_data(retention_days=90)
+
+        assert pruned == 0
+
+    def test_prune_does_not_save_when_nothing_pruned(self, json_backend):
+        """File is not rewritten when no records are pruned."""
+        json_backend.add_check_in(5, "fresh")
+        with patch.object(json_backend, "_save_wellness") as mock_save:
+            json_backend.prune_old_data(retention_days=90)
+            mock_save.assert_not_called()
+
+    def test_prune_respects_write_gate(self, json_backend):
+        """Pruning is blocked when in read-only mode."""
+        from utils.write_gate import set_read_only, WriteBlockedError
+
+        set_read_only(True)
+        try:
+            with pytest.raises(WriteBlockedError):
+                json_backend.prune_old_data(retention_days=90)
+        finally:
+            set_read_only(False)
+
+
+class TestMaintenanceMode:
+    """Tests for empathysync --maintenance CLI flag."""
+
+    def test_maintenance_flag_calls_run_maintenance(self):
+        """--maintenance flag routes to run_maintenance."""
+        with patch("src.cli.run_maintenance") as mock:
+            with patch("sys.argv", ["empathysync", "--maintenance"]):
+                from src.cli import main
+
+                main()
+            assert mock.called
+
+    def test_maintenance_and_mode_prefers_maintenance(self):
+        """--maintenance takes priority over --mode."""
+        with patch("src.cli.run_maintenance") as mock_maint:
+            with patch("src.cli.run_cli") as mock_cli:
+                with patch("sys.argv", ["empathysync", "--maintenance", "--mode", "cli"]):
+                    from src.cli import main
+
+                    main()
+                assert mock_maint.called
+                assert not mock_cli.called
+
+    def test_run_maintenance_completes(self, tmp_path):
+        """run_maintenance runs without error on empty data."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+
+        with (
+            patch("config.settings.settings") as mock_settings,
+            patch("utils.storage_backend.settings") as mock_sb_settings,
+        ):
+            mock_settings.DATA_RETENTION_DAYS = 90
+            mock_settings.DATA_DIR = data_dir
+            mock_settings.USE_SQLITE = False
+            mock_settings.OLLAMA_MODEL = "test-model"
+            mock_settings.OLLAMA_HOST = "http://localhost:11434"
+            mock_sb_settings.DATA_DIR = data_dir
+            mock_sb_settings.USE_SQLITE = False
+
+            from utils.storage_backend import reset_storage_backend
+
+            reset_storage_backend()
+
+            from src.cli import run_maintenance
+
+            # Should complete without raising
+            run_maintenance()
+
+    def test_run_maintenance_prune_disabled(self, tmp_path, capsys):
+        """Maintenance reports pruning disabled when DATA_RETENTION_DAYS=0."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+
+        with (
+            patch("config.settings.settings") as mock_settings,
+            patch("utils.storage_backend.settings") as mock_sb_settings,
+        ):
+            mock_settings.DATA_RETENTION_DAYS = 0
+            mock_settings.DATA_DIR = data_dir
+            mock_settings.USE_SQLITE = False
+            mock_settings.OLLAMA_MODEL = "test"
+            mock_settings.OLLAMA_HOST = "http://localhost:11434"
+            mock_sb_settings.DATA_DIR = data_dir
+            mock_sb_settings.USE_SQLITE = False
+
+            from utils.storage_backend import reset_storage_backend
+
+            reset_storage_backend()
+
+            from src.cli import run_maintenance
+
+            run_maintenance()
+
+        output = capsys.readouterr().out
+        assert "disabled" in output.lower()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

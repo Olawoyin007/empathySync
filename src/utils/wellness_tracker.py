@@ -1372,7 +1372,7 @@ class WellnessTracker:
         # Only penalize if there's a meaningful baseline to compare against
         # If last week was 0, this is the user's first week - don't penalize
         comparison = self.get_weekly_comparison()
-        last_week_sensitive = comparison.get("last_week", {}).get("sensitive_topics", 0)
+        last_week_sensitive = comparison.get("last_week", {}).get("sensitive_sessions", 0)
         escalation = comparison["changes"]["sensitive_sessions"]
 
         if last_week_sensitive == 0:

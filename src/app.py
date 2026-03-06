@@ -1405,6 +1405,18 @@ def main():
             return
         st.session_state.health_checks_passed = True
 
+    # Data pruning: remove records older than DATA_RETENTION_DAYS (runs once per session)
+    if "data_pruned" not in st.session_state:
+        if settings.DATA_RETENTION_DAYS > 0:
+            try:
+                from utils.storage_backend import get_storage_backend
+
+                backend = get_storage_backend()
+                backend.prune_old_data(settings.DATA_RETENTION_DAYS)
+            except Exception:
+                pass  # Non-critical: pruning can retry next session
+        st.session_state.data_pruned = True
+
     # Phase 11: Check device lock status (enables read-only mode if locked by other)
     display_lock_warning()
 
@@ -1553,6 +1565,10 @@ def main():
 
         # Subtle usage stats
         display_usage_health()
+
+        # Show active model
+        if settings.OLLAMA_MODEL:
+            st.caption(f"Running: {settings.OLLAMA_MODEL}")
 
         st.markdown("---")
 
