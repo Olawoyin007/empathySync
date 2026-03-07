@@ -1351,13 +1351,17 @@ class WellnessGuide:
             and self.primary_domain_streak >= 3
             and detected_domain != self.primary_domain
         ):
-            # High intensity (>= 7) suggests genuine distress — allow the shift
-            if intensity >= 7:
+            # High intensity suggests genuine distress — allow the shift
+            shift_threshold = self.risk_classifier.loader.get_default(
+                "session", "domain_shift_intensity", fallback=5
+            )
+            if intensity >= shift_threshold:
                 logger.info(
-                    "Domain stability: allowing shift %s→%s (intensity=%.1f >= 7)",
+                    "Domain stability: allowing shift %s→%s (intensity=%.1f >= %s)",
                     self.primary_domain,
                     detected_domain,
                     intensity,
+                    shift_threshold,
                 )
                 self._update_domain_streak(detected_domain)
                 return risk_assessment

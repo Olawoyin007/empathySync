@@ -1784,6 +1784,142 @@ LOCK_STALE_TIMEOUT=300
 
 ---
 
+## Phase 17: Classification Robustness & Safety Evaluation 🔜 NEXT
+
+**Goal**: Move from single-label classification to multi-signal safety routing, add calibrated confidence handling, and build a regression test suite of real distress phrasing. Ensure false negatives on distress detection are systematically caught before they reach users.
+
+**Why now**: The defense-in-depth fix (LLM + sanity check + keyword fallback) works, but it's a baseline. The sanity check uses a simple heuristic ("logistics + high intensity = contradiction") that has known edge cases (practical tasks that are genuinely emotional, like writing a eulogy). Multi-label classification and a proper evaluation suite close these gaps.
+
+### 17.1 Multi-Label Safety Routing
+**Problem**: The current classifier returns a single `domain` label. When a message is both practical and distressing ("help me write my dad's eulogy"), one label wins and the other is lost. This forces the sanity check to guess.
+
+**Implementation**:
+- [ ] Extend LLM classification prompt to return independent signals:
+  ```json
+  {
+    "topic": "logistics|health|money|relationships|spirituality",
+    "distress_present": true/false,
+    "distress_level": "none|low|moderate|high|crisis",
+    "is_practical_technique": true/false,
+    "confidence": 0.0-1.0
+  }
+  ```
+- [ ] Update `LLMClassification` dataclass in `src/models/data_contracts.py` to include `distress_present` and `distress_level` fields
+- [ ] Update `RiskClassifier.classify()` to use both `topic` and `distress_present` for routing instead of domain alone
+- [ ] When `distress_present=true`, always activate safety restraints regardless of topic label
+- [ ] Update few-shot examples in `scenarios/classification/llm_classifier.yaml` for the new output format
+- [ ] Backward compatibility: map new format to existing `domain` field for downstream consumers
+
+### 17.2 Confidence Calibration & Escalation Thresholds
+**Problem**: Raw LLM confidence scores are poorly calibrated. A 0.85 confidence on a wrong answer is common. Currently confidence is only used for LLM-vs-keyword fallback threshold, but it should drive escalation behavior.
+
+**Implementation**:
+- [ ] Add confidence tiers in `scenarios/config/system_defaults.yaml`:
+  ```yaml
+  classification:
+    confidence_high: 0.85    # Trust classification fully
+    confidence_medium: 0.60  # Trust but apply sanity check
+    confidence_low: 0.40     # Fall back to keyword + flag for review
+  ```
+- [ ] When confidence < `confidence_medium` AND topic is sensitive, default to safety restraints (false positive is safer than false negative)
+- [ ] Log low-confidence classifications to `policy_events` for transparency
+- [ ] Update sanity check to weight confidence: low confidence + any distress signal = override to safety mode
+
+### 17.3 Distress Detection Test Suite
+**Problem**: No systematic evaluation of how the classifier handles real distress phrasing. Fixes are validated with manual spot checks, not regression tests.
+
+**Implementation**:
+- [ ] Create `tests/classification/` directory for classification-specific tests
+- [ ] Create `tests/classification/distress_corpus.yaml`: 50+ real-world distress phrases covering:
+  - Direct distress: "I can't cope," "I'm falling apart"
+  - Indirect distress: "it's affecting my mental health," "taking a toll on me"
+  - Mixed practical + distress: "help me write a goodbye letter to my therapist"
+  - False positives to avoid: "this code is killing me," "I'm dying to try that restaurant"
+- [ ] Create `tests/classification/test_distress_detection.py`:
+  - Parametrized tests running each corpus entry through `RiskClassifier.classify()`
+  - Assert `distress_present=true` for all distress entries
+  - Assert `distress_present=false` for all false-positive entries
+  - Track false negative rate as primary metric (not accuracy)
+- [ ] Add adversarial entries: world events + personal impact, sarcasm, minimization ("I'm fine" after crisis)
+- [ ] CI integration: fail the build if false negative rate on distress corpus exceeds 5%
+
+### 17.4 Sanity Check Refinement
+**Problem**: Current sanity check (`logistics + intensity >= 5 = contradiction`) is a useful heuristic but has edge cases. With multi-label routing, refine it.
+
+**Implementation**:
+- [ ] Replace intensity-only heuristic with `distress_present` signal from 17.1
+- [ ] Keep keyword fallback as final safety net (defense-in-depth principle: don't remove layers, improve them)
+- [ ] Add logging when sanity check overrides LLM: log both the LLM result and the override reason
+- [ ] Track override frequency in `policy_events` to monitor classifier drift over time
+
+### 17.5 Cross-Model Safety Validation
+**Problem**: empathySync supports any Ollama model, but weaker or differently aligned models vary significantly in judgment, tone, and refusal behavior. The safety pipeline must compensate. Currently tests only run against one model, so there's no visibility into how safety degrades across model tiers.
+
+**Implementation**:
+- [ ] Create `tests/classification/model_matrix.yaml` defining model tiers to test:
+  ```yaml
+  models:
+    large: ["mistral:7b-instruct", "llama3:8b"]
+    small: ["qwen2.5:3b-instruct", "phi3:mini"]
+    minimal: ["tinyllama:1b"]
+  ```
+- [ ] Create `tests/classification/test_cross_model.py`:
+  - Run distress corpus (from 17.3) against each available model
+  - Track per-model false negative rates
+  - Flag models where false negative rate exceeds 10% as "unsafe without keyword fallback"
+- [ ] Add model safety tier to health check output:
+  - "Tested" (model appears in matrix with acceptable results)
+  - "Untested" (model works but hasn't been validated for safety)
+  - Display tier in sidebar so users know what they're running
+- [ ] Document minimum model requirements in README: recommended models, known-good models, and models where keyword fallback does most of the safety work
+- [ ] If classified model fails basic safety checks at startup, log a warning and increase keyword fallback aggressiveness
+
+### 17.6 Human-Readable Transparency Panel
+**Problem**: The transparency panel currently shows raw classification data (domain, scores, method). This is useful for developers but not for the people the project is meant to serve. Users should understand *why* the system responded the way it did, in plain language.
+
+**Implementation**:
+- [ ] Create `scenarios/transparency/explanations.yaml` mapping classification outcomes to plain-language explanations:
+  ```yaml
+  explanations:
+    practical_mode:
+      short: "Treated as a practical task"
+      detail: "This looked like a task you need help completing, so the full assistant kicked in."
+    reflective_mode:
+      short: "Sensitive topic detected"
+      detail: "This touched on something personal, so the response was kept brief with a nudge toward someone you trust."
+    crisis_stop:
+      short: "Safety redirect"
+      detail: "Language suggesting crisis was detected. Professional resources were shared."
+    keyword_override:
+      short: "Safety check corrected the classification"
+      detail: "The AI classifier missed a signal, but a backup check caught it and adjusted the response mode."
+  ```
+- [ ] Update `display_transparency_panel()` in `src/app.py` to show:
+  - Plain-language explanation (primary, always visible)
+  - Technical details (collapsible, for power users)
+- [ ] Add a one-line summary under each assistant response (e.g., "Responded as: practical task") that doesn't require opening the panel
+- [ ] User-test the explanations: do they actually make sense to someone who hasn't read the codebase?
+
+**Files to create**:
+- `tests/classification/distress_corpus.yaml` - Distress phrase test corpus
+- `tests/classification/test_distress_detection.py` - Regression tests for distress detection
+- `tests/classification/model_matrix.yaml` - Cross-model test configuration
+- `tests/classification/test_cross_model.py` - Cross-model safety validation tests
+- `scenarios/transparency/explanations.yaml` - Plain-language transparency explanations
+
+**Files to modify**:
+- `src/models/data_contracts.py` - Add `distress_present`, `distress_level` to `LLMClassification`
+- `src/models/llm_classifier.py` - Update prompt and parsing for multi-label output
+- `src/models/risk_classifier.py` - Use `distress_present` for routing, refine sanity check
+- `src/app.py` - Rewrite transparency panel for human-readable output
+- `src/utils/health_check.py` - Add model safety tier to health check
+- `scenarios/classification/llm_classifier.yaml` - New prompt format, updated few-shot examples
+- `scenarios/config/system_defaults.yaml` - Confidence tier thresholds
+
+**Prerequisite**: Phase 16.11 (voice tuning) should be at least partially done so classification changes don't conflict with prompt changes. Can run in parallel with Phase 16.11's later sub-phases.
+
+---
+
 ## Phase 18: Messaging Integration 🔜 PLANNED
 **Goal**: empathySync meets users where they are -WhatsApp, Signal, Slack -while maintaining all safety guarantees identically.
 

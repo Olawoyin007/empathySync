@@ -32,52 +32,149 @@ from utils.trusted_network import TrustedNetwork
 from utils.scenario_loader import get_scenario_loader
 from utils.health_check import run_health_checks, has_critical_failures, auto_pull_model
 
+# Pre-encode logo for inline HTML header (avoids st.columns layout issues)
+import base64 as _b64
+
+_logo_path = Path(__file__).parent.parent / "assets" / "logo.png"
+try:
+    _LOGO_B64 = _b64.b64encode(_logo_path.read_bytes()).decode()
+except Exception:
+    _LOGO_B64 = ""
+
 # Configure page
 st.set_page_config(
-    page_title="empathySync", page_icon="", layout="wide", initial_sidebar_state="expanded"
+    page_title="empathySync",
+    page_icon="assets/logo.png",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-# Custom CSS for better visual hierarchy (Phase 9.5)
+# Custom CSS for polished UI (works in both light and dark mode)
 st.markdown(
     """
 <style>
-    /* Sidebar section headers */
-    .sidebar-header {
-        font-size: 0.75rem;
+    /* -- Global typography -- */
+    html, body, [class*="css"] {
+        font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    /* -- Brand header -- */
+    .es-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .es-brand-logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .es-brand-name {
+        font-size: 1.45rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1;
+    }
+    .es-brand-name span {
+        color: #4A90D9;
+    }
+
+    /* -- Chat message text: fix horizontal overflow -- */
+    .stChatMessage [data-testid="stMarkdownContainer"] {
+        overflow-wrap: break-word !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        white-space: pre-wrap !important;
+        max-width: 100% !important;
+    }
+    .stChatMessage [data-testid="stMarkdownContainer"] pre {
+        white-space: pre-wrap !important;
+        word-break: break-all !important;
+        overflow-x: auto !important;
+    }
+    .stChatMessage [data-testid="stMarkdownContainer"] p {
+        max-width: 100% !important;
+    }
+
+    /* -- Chat bubbles -- */
+    [data-testid="stChatMessage"] {
+        padding: 0.85rem 1rem !important;
+        border-radius: 12px !important;
+        margin-bottom: 0.6rem !important;
+        border: 1px solid rgba(128, 128, 128, 0.15) !important;
+    }
+    /* User messages - subtle tint */
+    [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+        background: rgba(74, 144, 217, 0.06) !important;
+    }
+    /* Assistant messages - default bg */
+    [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+        background: transparent !important;
+    }
+
+    /* -- Sidebar -- */
+    section[data-testid="stSidebar"] .sidebar-header {
+        font-size: 0.7rem;
         font-weight: 600;
-        color: #666;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 0.5rem;
+        letter-spacing: 0.08em;
+        margin: 0.75rem 0 0.4rem 0;
+        opacity: 0.5;
     }
 
-    /* Better button spacing in sidebar */
-    .stButton > button {
-        margin-bottom: 0.25rem;
+    /* Sidebar button polish */
+    section[data-testid="stSidebar"] .stButton > button {
+        margin-bottom: 0.2rem;
+        border-radius: 8px !important;
+        font-size: 0.85rem;
+        transition: all 0.15s ease;
     }
-
-    /* Primary action buttons stand out */
-    .stButton > button[kind="primary"] {
+    section[data-testid="stSidebar"] .stButton > button[kind="primary"] {
         font-weight: 600;
     }
 
-    /* Subtle dividers */
+    /* -- Dividers -- */
     hr {
-        margin: 1rem 0;
+        margin: 0.75rem 0;
         border: none;
-        border-top: 1px solid #e0e0e0;
+        border-top: 1px solid rgba(128, 128, 128, 0.2);
     }
 
-    /* Main title styling */
+    /* -- Reduce top padding on main area -- */
+    .stMainBlockContainer {
+        padding-top: 1.5rem !important;
+    }
+
+    /* -- Caption and small text -- */
+    .stCaption, [data-testid="stCaptionContainer"] {
+        font-size: 0.78rem !important;
+        opacity: 0.55;
+    }
+
+    /* -- Chat input styling -- */
+    [data-testid="stChatInput"] {
+        border-radius: 12px !important;
+    }
+    [data-testid="stChatInput"] textarea {
+        font-size: 0.92rem !important;
+    }
+
+    /* -- Hide default Streamlit title margin -- */
     h1 {
         margin-bottom: 0 !important;
     }
 
-    /* Subtitle styling */
-    .subtitle {
-        color: #666;
-        font-style: italic;
-        margin-top: 0;
+    /* -- Model badge in sidebar -- */
+    .es-model-badge {
+        display: inline-block;
+        background: rgba(74, 144, 217, 0.12);
+        font-size: 0.72rem;
+        padding: 0.2rem 0.55rem;
+        border-radius: 20px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        opacity: 0.7;
     }
 </style>
 """,
@@ -1214,13 +1311,6 @@ def display_chat_interface(wellness_mode):
         session.pending_graduation = None
         session.graduation_shown_this_session = True
 
-    # Empty state welcome — shown before the first message
-    if not session.messages:
-        st.caption(
-            "Practical tasks get full help. Personal topics get a shorter response "
-            "and a nudge toward real people. Type anything to start."
-        )
-
     # Chat input (disabled in read-only mode)
     if is_read_only():
         st.chat_input("Read-only mode: close empathySync on other device first", disabled=True)
@@ -1503,10 +1593,6 @@ def main():
     if "show_transparency" not in st.session_state:
         st.session_state.show_transparency = False
 
-    # Header
-    st.markdown("# empathySync")
-    st.markdown('<p class="subtitle">Help that knows when to stop</p>', unsafe_allow_html=True)
-
     # Phase 11: Show lock banner if in read-only mode
     if is_read_only() and not st.session_state.get("lock_banner_dismissed"):
         display_lock_banner()
@@ -1561,15 +1647,32 @@ def main():
         with st.expander("No trusted network yet — find your people", expanded=False):
             display_building_your_network(domain=current_domain)
 
-    # Sidebar — clean, minimal, restrained
+    # Sidebar - clean, minimal, restrained
     with st.sidebar:
         wellness_mode = "Balanced"
 
+        # Brand at top of sidebar
+        _logo_html = (
+            f'<img src="data:image/png;base64,{_LOGO_B64}" ' f'alt="logo" class="es-brand-logo">'
+            if _LOGO_B64
+            else ""
+        )
+        st.markdown(
+            f"""
+            <div class="es-brand">
+                {_logo_html}
+                <span class="es-brand-name">empathy<span>Sync</span></span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown("---")
+
         # Read-only mode indicator (Phase 11)
         if is_read_only():
-            st.error("**Writes blocked** — another device has the lock")
+            st.error("**Writes blocked** - another device has the lock")
 
-        # New Chat — the primary action, always visible
+        # New Chat - the primary action, always visible
         if st.button("New Chat", use_container_width=True, type="primary"):
             save_session_on_end()
             session = st.session_state.conversation_session
@@ -1595,13 +1698,17 @@ def main():
         # Subtle usage stats
         display_usage_health()
 
-        # Show active model
+        # Show active model as badge
         if settings.OLLAMA_MODEL:
-            st.caption(f"Running: {settings.OLLAMA_MODEL}")
+            st.markdown(
+                f'<span class="es-model-badge">{settings.OLLAMA_MODEL}</span>',
+                unsafe_allow_html=True,
+            )
 
         st.markdown("---")
 
-        # === TOOLS — toggle panels (only one open at a time) ===
+        # === TOOLS - toggle panels (only one open at a time) ===
+        st.markdown('<div class="sidebar-header">Tools</div>', unsafe_allow_html=True)
         reality_active = st.session_state.get("show_reality_check", False)
         network_active = st.session_state.get("show_network_setup", False)
         patterns_active = st.session_state.get("show_my_patterns", False)
@@ -1658,7 +1765,7 @@ def main():
         st.markdown("---")
 
         # === SECONDARY ACTIONS ===
-        # Reality Check — less prominent, below the main tools
+        # Reality Check - less prominent, below the main tools
         if not reality_active:
             if st.button(
                 "Reality Check",
@@ -1698,7 +1805,8 @@ def main():
 
         st.markdown("---")
 
-        # === SESSION & DATA (tucked away) ===
+        # === SESSION & DATA ===
+        st.markdown('<div class="sidebar-header">Data</div>', unsafe_allow_html=True)
         with st.expander("Session & Data", expanded=False):
             # Session summary (only if conversation happened)
             if guide.session_turn_count > 0:

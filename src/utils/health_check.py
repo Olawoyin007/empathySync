@@ -139,6 +139,69 @@ def check_ollama_model() -> HealthStatus:
         )
 
 
+def check_classifier_model() -> HealthStatus:
+    """Check if the classifier model is available, fall back to main model if not.
+
+    This is non-critical - if the classifier model is missing, we clear the
+    setting so LLMClassifier falls back to OLLAMA_MODEL automatically.
+    """
+    classifier_model = settings.OLLAMA_CLASSIFIER_MODEL
+    if not classifier_model or classifier_model == settings.OLLAMA_MODEL:
+        return HealthStatus(
+            name="Classifier Model",
+            ok=True,
+            message=f"Using main model (`{settings.OLLAMA_MODEL}`)",
+            critical=False,
+        )
+
+    try:
+        client = get_http_client()
+        response = client.get(f"{settings.OLLAMA_HOST}/api/tags", timeout=5)
+        if response.status_code != 200:
+            return HealthStatus(
+                name="Classifier Model",
+                ok=True,
+                message=f"Cannot verify `{classifier_model}`, will use main model",
+                critical=False,
+            )
+
+        data = response.json()
+        available_models = [m.get("name", "") for m in data.get("models", [])]
+        model_found = any(
+            m == classifier_model or m.startswith(f"{classifier_model}:") for m in available_models
+        )
+
+        if model_found:
+            return HealthStatus(
+                name="Classifier Model",
+                ok=True,
+                message=f"`{classifier_model}` available",
+                critical=False,
+            )
+
+        # Not found - fall back to main model
+        settings.OLLAMA_CLASSIFIER_MODEL = ""
+        logger.warning(
+            f"Classifier model '{classifier_model}' not found, "
+            f"falling back to main model '{settings.OLLAMA_MODEL}'"
+        )
+        return HealthStatus(
+            name="Classifier Model",
+            ok=True,
+            message=f"Using main model (configured `{classifier_model}` not found)",
+            critical=False,
+            details=f"To use a dedicated classifier: `ollama pull {classifier_model}`",
+        )
+    except Exception:
+        settings.OLLAMA_CLASSIFIER_MODEL = ""
+        return HealthStatus(
+            name="Classifier Model",
+            ok=True,
+            message=f"Cannot verify `{classifier_model}`, using main model",
+            critical=False,
+        )
+
+
 def check_data_directory() -> HealthStatus:
     """Check if the data directory exists and is writable."""
     data_dir = settings.DATA_DIR
@@ -194,6 +257,7 @@ def run_health_checks() -> List[HealthStatus]:
     checks = [
         check_ollama_server(),
         check_ollama_model(),
+        check_classifier_model(),
         check_data_directory(),
     ]
 

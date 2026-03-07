@@ -2757,11 +2757,12 @@ class TestDomainStability:
         # Simulate 4 prior logistics turns
         self._simulate_turns(guide, "logistics", 4)
 
-        # Mock risk_classifier to return a false "health" shift with moderate intensity
+        # Mock risk_classifier to return a false "health" shift with low intensity
+        # (below the domain_shift_intensity threshold of 5)
         with patch.object(guide.risk_classifier, "classify") as mock_classify:
             mock_classify.return_value = {
                 "domain": "health",
-                "emotional_intensity": 5.0,
+                "emotional_intensity": 3.0,
                 "dependency_risk": 0.0,
                 "risk_weight": 7.0,
                 "emotional_weight": "low_weight",

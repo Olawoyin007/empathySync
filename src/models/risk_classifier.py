@@ -140,6 +140,22 @@ class RiskClassifier:
         if llm_result:
             domain = llm_result["domain"]
             emotional_intensity = llm_result["emotional_intensity"]
+
+            # Sanity check: logistics with high intensity is contradictory.
+            # If the LLM recognizes emotional weight (intensity >= 5) but still
+            # labels it logistics, fall back to keyword domain detection which
+            # catches emotional markers like "depressing", "mental wellbeing".
+            if domain == "logistics" and emotional_intensity >= 5:
+                keyword_domain = self._detect_domain(
+                    user_input, primary_domain=primary_domain, domain_streak=domain_streak
+                )
+                if keyword_domain != "logistics":
+                    logger.info(
+                        "LLM sanity check: overriding logistics→%s (intensity=%.1f)",
+                        keyword_domain,
+                        emotional_intensity,
+                    )
+                    domain = keyword_domain
         else:
             domain = self._detect_domain(
                 user_input, primary_domain=primary_domain, domain_streak=domain_streak
