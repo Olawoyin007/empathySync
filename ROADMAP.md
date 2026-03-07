@@ -1784,6 +1784,50 @@ LOCK_STALE_TIMEOUT=300
 
 ---
 
+## Phase 16.12: UI Extraction & app.py Decomposition 🔧 IN PROGRESS
+
+**Goal**: Break the 1,861-line `app.py` into focused UI modules. `app.py` has become a god class containing CSS, sidebar rendering, chat interface, transparency panels, network UI, handoff flows, lock management, and session orchestration all in one file. Extract display functions into a `src/ui/` package so `app.py` becomes a thin orchestrator (~200 lines).
+
+**Why now**: The UI polish work revealed that every visual change requires navigating a 1,800+ line file. Future UI improvements (Phase 17.6 transparency rewrite, further polish) will be much easier with separated concerns.
+
+### Module Structure
+```
+src/ui/
+  __init__.py         - Public imports
+  styles.py           - CSS string and page config
+  sidebar.py          - Sidebar rendering (brand, buttons, panels, session & data)
+  chat.py             - Chat interface (message display, input, streaming)
+  panels.py           - Transparency, reality check, patterns, session summary, safety banner
+  network.py          - Trusted network setup, building your network, bring someone in, handoff
+  lock.py             - Lock banner, lock warning, takeover, read-only helpers
+```
+
+### Extraction Plan
+- [ ] Create `src/ui/` package with `__init__.py`
+- [ ] Extract CSS and `st.set_page_config` to `src/ui/styles.py`
+- [ ] Extract sidebar rendering to `src/ui/sidebar.py`
+- [ ] Extract chat interface to `src/ui/chat.py`
+- [ ] Extract display panels to `src/ui/panels.py` (transparency, reality check, patterns, graduation, skill tips, independence, safety banner, session summary)
+- [ ] Extract network/handoff UI to `src/ui/network.py` (trusted network, building network, bring someone in, handoff follow-up, handoff outcome)
+- [ ] Extract lock UI to `src/ui/lock.py` (lock warning, lock banner, takeover, is_read_only)
+- [ ] Slim `app.py` to: imports, `main()` orchestrator, `save_session_on_end()`
+- [ ] Verify all 796+ tests still pass
+- [ ] Verify Streamlit app runs correctly with extracted modules
+
+**Files to create**:
+- `src/ui/__init__.py`
+- `src/ui/styles.py`
+- `src/ui/sidebar.py`
+- `src/ui/chat.py`
+- `src/ui/panels.py`
+- `src/ui/network.py`
+- `src/ui/lock.py`
+
+**Files to modify**:
+- `src/app.py` - Reduce to thin orchestrator importing from `src/ui/`
+
+---
+
 ## Phase 17: Classification Robustness & Safety Evaluation 🔜 NEXT
 
 **Goal**: Move from single-label classification to multi-signal safety routing, add calibrated confidence handling, and build a regression test suite of real distress phrasing. Ensure false negatives on distress detection are systematically caught before they reach users.
