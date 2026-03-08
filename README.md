@@ -4,7 +4,7 @@
 
 # empathySync
 
-**Help that knows when to stop..**
+**Help that knows when to stop...**
 
 *Most chatbots want you to keep talking.*
 *This one wants you to leave and go live your life.*
