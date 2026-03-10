@@ -378,6 +378,13 @@ fast_path_crisis:
   - "better off dead"
   - "no reason to live"
   - "take my own life"
+  - "thinking drowning"
+  - "don't want to exist"
+  - "don't want to be here"
+  - "wish I wasn't alive"
+  - "tired of living"
+  - "tired of being alive"
+  - "rather be dead"
 
 fast_path_harmful:
   - "kill someone"

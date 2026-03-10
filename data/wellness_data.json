@@ -1,357 +1,121 @@
 {
+  "schema_version": 1,
   "check_ins": [],
   "usage_sessions": [],
   "policy_events": [
     {
-      "datetime": "2026-01-27T03:18:17.055949",
-      "date": "2026-01-27",
-      "policy_type": "high_risk_response",
-      "domain": "spirituality",
-      "risk_weight": 9.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-01-27T03:21:37.686314",
-      "date": "2026-01-27",
-      "policy_type": "high_risk_response",
-      "domain": "spirituality",
-      "risk_weight": 9.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-01-27T03:22:58.510711",
-      "date": "2026-01-27",
-      "policy_type": "high_risk_response",
-      "domain": "spirituality",
-      "risk_weight": 9.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-01-27T03:25:00.815551",
-      "date": "2026-01-27",
-      "policy_type": "high_risk_response",
-      "domain": "spirituality",
-      "risk_weight": 5.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-01-27T03:29:51.784678",
-      "date": "2026-01-27",
-      "policy_type": "high_risk_response",
-      "domain": "relationships",
-      "risk_weight": 6.78,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-01-27T04:09:12.884297",
-      "date": "2026-01-27",
-      "policy_type": "high_risk_response",
-      "domain": "spirituality",
-      "risk_weight": 5.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-01-27T04:10:45.220015",
-      "date": "2026-01-27",
+      "datetime": "2026-03-10T20:13:16.916045",
+      "date": "2026-03-10",
       "policy_type": "high_risk_response",
       "domain": "emotional",
-      "risk_weight": 6.78,
+      "risk_weight": 8.26,
       "action_taken": "Response generated with high-risk guardrails"
     },
     {
-      "datetime": "2026-01-27T04:11:13.608139",
-      "date": "2026-01-27",
-      "policy_type": "crisis_stop",
-      "domain": "crisis",
-      "risk_weight": 10.0,
-      "action_taken": "Immediate crisis redirect"
-    },
-    {
-      "datetime": "2026-01-28T23:37:40.724108",
-      "date": "2026-01-28",
-      "policy_type": "high_risk_response",
-      "domain": "spirituality",
-      "risk_weight": 5.04,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-01-28T23:56:14.452866",
-      "date": "2026-01-28",
-      "policy_type": "high_risk_response",
-      "domain": "spirituality",
-      "risk_weight": 5.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-01-29T05:12:02.341687",
-      "date": "2026-01-29",
-      "policy_type": "high_risk_response",
-      "domain": "spirituality",
-      "risk_weight": 5.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-01-29T05:20:16.781285",
-      "date": "2026-01-29",
-      "policy_type": "high_risk_response",
-      "domain": "spirituality",
-      "risk_weight": 5.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-01-29T05:25:31.036775",
-      "date": "2026-01-29",
-      "policy_type": "high_risk_response",
-      "domain": "spirituality",
-      "risk_weight": 5.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-02-01T13:00:28.080618",
-      "date": "2026-02-01",
-      "policy_type": "harmful_stop",
-      "domain": "harmful",
-      "risk_weight": 10.0,
-      "action_taken": "Refused harmful request"
-    },
-    {
-      "datetime": "2026-02-01T13:01:55.117019",
-      "date": "2026-02-01",
+      "datetime": "2026-03-10T20:37:31.148463",
+      "date": "2026-03-10",
       "policy_type": "high_risk_response",
       "domain": "relationships",
-      "risk_weight": 6.92,
+      "risk_weight": 7.38,
       "action_taken": "Response generated with high-risk guardrails"
     },
     {
-      "datetime": "2026-02-04T14:20:35.842868",
-      "date": "2026-02-04",
-      "policy_type": "friend_mode",
+      "datetime": "2026-03-10T21:11:15.731025",
+      "date": "2026-03-10",
+      "policy_type": "high_risk_response",
+      "domain": "relationships",
+      "risk_weight": 7.08,
+      "action_taken": "Response generated with high-risk guardrails"
+    },
+    {
+      "datetime": "2026-03-10T21:12:13.165639",
+      "date": "2026-03-10",
+      "policy_type": "high_risk_response",
+      "domain": "relationships",
+      "risk_weight": 6.46,
+      "action_taken": "Response generated with high-risk guardrails"
+    },
+    {
+      "datetime": "2026-03-10T21:14:52.827920",
+      "date": "2026-03-10",
+      "policy_type": "high_risk_response",
       "domain": "relationships",
       "risk_weight": 6.64,
-      "action_taken": "Triggered friend mode - helping user access own wisdom"
+      "action_taken": "Response generated with high-risk guardrails"
     },
     {
-      "datetime": "2026-02-04T14:20:44.933614",
-      "date": "2026-02-04",
-      "policy_type": "crisis_stop",
-      "domain": "crisis",
-      "risk_weight": 10.0,
-      "action_taken": "Immediate crisis redirect"
-    },
-    {
-      "datetime": "2026-02-04T14:24:32.760758",
-      "date": "2026-02-04",
-      "policy_type": "harmful_stop",
-      "domain": "harmful",
-      "risk_weight": 10.0,
-      "action_taken": "Refused harmful request"
-    },
-    {
-      "datetime": "2026-02-04T14:28:53.833028",
-      "date": "2026-02-04",
+      "datetime": "2026-03-10T21:17:55.660712",
+      "date": "2026-03-10",
       "policy_type": "high_risk_response",
       "domain": "relationships",
-      "risk_weight": 7.82,
+      "risk_weight": 6.64,
       "action_taken": "Response generated with high-risk guardrails"
     },
     {
-      "datetime": "2026-02-04T14:34:27.555104",
-      "date": "2026-02-04",
-      "policy_type": "friend_mode",
-      "domain": "logistics",
-      "risk_weight": 2.02,
-      "action_taken": "Triggered friend mode - helping user access own wisdom"
-    },
-    {
-      "datetime": "2026-02-04T14:40:13.705991",
-      "date": "2026-02-04",
+      "datetime": "2026-03-10T21:21:52.152404",
+      "date": "2026-03-10",
       "policy_type": "high_risk_response",
-      "domain": "health",
-      "risk_weight": 10.0,
+      "domain": "relationships",
+      "risk_weight": 6.64,
       "action_taken": "Response generated with high-risk guardrails"
     },
     {
-      "datetime": "2026-02-04T14:45:54.499951",
-      "date": "2026-02-04",
-      "policy_type": "friend_mode",
-      "domain": "logistics",
-      "risk_weight": 2.02,
-      "action_taken": "Triggered friend mode - helping user access own wisdom"
-    },
-    {
-      "datetime": "2026-02-04T15:35:35.112782",
-      "date": "2026-02-04",
+      "datetime": "2026-03-10T21:41:18.724322",
+      "date": "2026-03-10",
       "policy_type": "high_risk_response",
-      "domain": "health",
-      "risk_weight": 10.0,
+      "domain": "relationships",
+      "risk_weight": 6.64,
       "action_taken": "Response generated with high-risk guardrails"
     },
     {
-      "datetime": "2026-02-04T15:36:33.296801",
-      "date": "2026-02-04",
+      "datetime": "2026-03-10T21:47:34.871296",
+      "date": "2026-03-10",
       "policy_type": "high_risk_response",
-      "domain": "money",
-      "risk_weight": 9.24,
+      "domain": "relationships",
+      "risk_weight": 6.64,
       "action_taken": "Response generated with high-risk guardrails"
     },
     {
-      "datetime": "2026-02-04T18:44:20.562965",
-      "date": "2026-02-04",
+      "datetime": "2026-03-10T21:48:59.782623",
+      "date": "2026-03-10",
       "policy_type": "high_risk_response",
-      "domain": "emotional",
-      "risk_weight": 7.680000000000001,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-02-04T18:53:10.861102",
-      "date": "2026-02-04",
-      "policy_type": "high_risk_response",
-      "domain": "emotional",
-      "risk_weight": 7.22,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-02-04T19:49:13.225466",
-      "date": "2026-02-04",
-      "policy_type": "high_risk_response",
-      "domain": "emotional",
-      "risk_weight": 7.8,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-02-04T19:50:23.804661",
-      "date": "2026-02-04",
-      "policy_type": "crisis_stop",
-      "domain": "crisis",
-      "risk_weight": 10.0,
-      "action_taken": "Immediate crisis redirect"
-    },
-    {
-      "datetime": "2026-02-22T09:38:17.232103",
-      "date": "2026-02-22",
-      "policy_type": "high_risk_response",
-      "domain": "emotional",
-      "risk_weight": 7.9799999999999995,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-02-22T10:06:42.172094",
-      "date": "2026-02-22",
-      "policy_type": "high_risk_response",
-      "domain": "emotional",
-      "risk_weight": 8.12,
+      "domain": "relationships",
+      "risk_weight": 7.52,
       "action_taken": "Response generated with high-risk guardrails"
     }
   ],
   "session_intents": [
     {
-      "date": "2026-01-27",
-      "datetime": "2026-01-27T04:08:25.704067",
+      "date": "2026-03-10",
+      "datetime": "2026-03-10T20:04:21.057805",
       "intent": "practical",
       "was_check_in": false,
       "auto_detected": true
     },
     {
-      "date": "2026-02-04",
-      "datetime": "2026-02-04T14:16:40.847765",
+      "date": "2026-03-10",
+      "datetime": "2026-03-10T20:07:19.803156",
       "intent": "practical",
       "was_check_in": false,
       "auto_detected": true
     },
     {
-      "date": "2026-02-04",
-      "datetime": "2026-02-04T14:19:04.060931",
+      "date": "2026-03-10",
+      "datetime": "2026-03-10T20:12:19.592382",
       "intent": "practical",
       "was_check_in": false,
       "auto_detected": true
     },
     {
-      "date": "2026-02-04",
-      "datetime": "2026-02-04T14:20:08.297430",
-      "intent": "processing",
-      "was_check_in": false,
-      "auto_detected": true
-    },
-    {
-      "date": "2026-02-04",
-      "datetime": "2026-02-04T14:20:58.977008",
+      "date": "2026-03-10",
+      "datetime": "2026-03-10T20:18:00.697936",
       "intent": "practical",
       "was_check_in": false,
       "auto_detected": true
     },
     {
-      "date": "2026-02-04",
-      "datetime": "2026-02-04T14:22:21.136259",
-      "intent": "connection",
-      "was_check_in": false,
-      "auto_detected": true
-    },
-    {
-      "date": "2026-02-04",
-      "datetime": "2026-02-04T14:22:27.798084",
-      "intent": "practical",
-      "was_check_in": false,
-      "auto_detected": true
-    },
-    {
-      "date": "2026-02-04",
-      "datetime": "2026-02-04T14:24:04.847485",
-      "intent": "practical",
-      "was_check_in": false,
-      "auto_detected": true
-    },
-    {
-      "date": "2026-02-04",
-      "datetime": "2026-02-04T14:24:40.396139",
-      "intent": "practical",
-      "was_check_in": false,
-      "auto_detected": true
-    },
-    {
-      "date": "2026-02-22",
-      "datetime": "2026-02-22T09:34:30.125897",
-      "intent": "practical",
-      "was_check_in": false,
-      "auto_detected": true
-    },
-    {
-      "date": "2026-02-22",
-      "datetime": "2026-02-22T09:58:41.745584",
-      "intent": "practical",
-      "was_check_in": false,
-      "auto_detected": true
-    },
-    {
-      "date": "2026-02-22",
-      "datetime": "2026-02-22T10:03:40.025458",
-      "intent": "practical",
-      "was_check_in": false,
-      "auto_detected": true
-    },
-    {
-      "date": "2026-02-22",
-      "datetime": "2026-02-22T10:15:10.683893",
-      "intent": "connection",
-      "was_check_in": true,
-      "auto_detected": false
-    },
-    {
-      "date": "2026-02-22",
-      "datetime": "2026-02-22T10:18:46.489270",
-      "intent": "practical",
-      "was_check_in": false,
-      "auto_detected": true
-    },
-    {
-      "date": "2026-02-22",
-      "datetime": "2026-02-22T10:27:06.621727",
-      "intent": "practical",
-      "was_check_in": false,
-      "auto_detected": true
-    },
-    {
-      "date": "2026-02-22",
-      "datetime": "2026-02-22T10:27:55.784636",
+      "date": "2026-03-10",
+      "datetime": "2026-03-10T20:47:17.080600",
       "intent": "practical",
       "was_check_in": false,
       "auto_detected": true
@@ -359,103 +123,33 @@
   ],
   "independence_records": [],
   "handoff_events": [],
+  "self_reports": [],
+  "created_at": "2026-03-10T19:53:21.769171",
   "task_patterns": {
-    "writing_general": {
-      "count": 4,
-      "first_use": "2026-02-04T14:26:26.024690",
-      "uses": [
-        {
-          "datetime": "2026-02-04T14:26:26.024699",
-          "date": "2026-02-04"
-        },
-        {
-          "datetime": "2026-02-22T09:59:40.288685",
-          "date": "2026-02-22"
-        },
-        {
-          "datetime": "2026-02-22T10:03:54.316309",
-          "date": "2026-02-22"
-        },
-        {
-          "datetime": "2026-02-22T10:28:11.571936",
-          "date": "2026-02-22"
-        }
-      ],
-      "graduation_shown_count": 0,
-      "dismissal_count": 0,
-      "last_use": "2026-02-22T10:28:11.571929"
-    },
     "explanations": {
-      "count": 5,
-      "first_use": "2026-02-04T14:35:34.801442",
-      "uses": [
-        {
-          "datetime": "2026-02-04T14:35:34.801461",
-          "date": "2026-02-04"
-        },
-        {
-          "datetime": "2026-02-04T14:47:35.204631",
-          "date": "2026-02-04"
-        },
-        {
-          "datetime": "2026-02-04T15:34:30.961401",
-          "date": "2026-02-04"
-        },
-        {
-          "datetime": "2026-02-04T16:05:00.204154",
-          "date": "2026-02-04"
-        },
-        {
-          "datetime": "2026-02-04T16:38:12.452003",
-          "date": "2026-02-04"
-        }
-      ],
-      "graduation_shown_count": 0,
-      "dismissal_count": 0,
-      "last_use": "2026-02-04T16:38:12.451996"
-    },
-    "email_drafting": {
       "count": 4,
-      "first_use": "2026-02-04T14:55:05.640168",
+      "first_use": "2026-03-10T20:07:25.279849",
       "uses": [
         {
-          "datetime": "2026-02-04T14:55:05.640179",
-          "date": "2026-02-04"
+          "datetime": "2026-03-10T20:07:25.279865",
+          "date": "2026-03-10"
         },
         {
-          "datetime": "2026-02-04T15:41:20.882394",
-          "date": "2026-02-04"
+          "datetime": "2026-03-10T20:12:24.842479",
+          "date": "2026-03-10"
         },
         {
-          "datetime": "2026-02-04T16:13:35.973548",
-          "date": "2026-02-04"
+          "datetime": "2026-03-10T20:18:03.298492",
+          "date": "2026-03-10"
         },
         {
-          "datetime": "2026-02-04T16:46:45.513238",
-          "date": "2026-02-04"
+          "datetime": "2026-03-10T20:47:20.273113",
+          "date": "2026-03-10"
         }
       ],
       "graduation_shown_count": 0,
       "dismissal_count": 0,
-      "last_use": "2026-02-04T16:46:45.513230"
+      "last_use": "2026-03-10T20:47:20.273102"
     }
-  },
-  "self_reports": [
-    {
-      "datetime": "2026-01-31T23:38:52.372001",
-      "date": "2026-01-31",
-      "type": "handoff_followup",
-      "response": "helpful",
-      "details": null
-    },
-    {
-      "datetime": "2026-01-31T23:38:52.384265",
-      "date": "2026-01-31",
-      "type": "usage_reflection",
-      "response": "too_much",
-      "details": null
-    }
-  ],
-  "created_at": "2026-01-25T20:13:55.600594",
-  "schema_version": 1
+  }
 }

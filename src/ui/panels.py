@@ -52,58 +52,40 @@ def display_transparency_panel():
     should_expand = auto_expand and guide.last_policy_action is not None
 
     with st.expander(ui_labels.get("panel_title", "Why this response?"), expanded=should_expand):
-        # Phase 9.1: Determine mode once for all rows
+        # Determine mode
         is_practical_technique = assessment.get("is_practical_technique", False)
         domain = assessment.get("domain", "logistics")
         is_practical = domain == "logistics" or is_practical_technique
-
-        # Topic detected
-        domain_info = loader.get_domain_explanation(domain)
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            st.markdown(f"**{ui_labels.get('domain_label', 'Topic detected')}**")
-        with col2:
-            st.markdown(f"{domain_info.get('name', domain.title())}")
-            st.caption(domain_info.get("description", ""))
-
-        # Response mode
-        mode = "practical" if is_practical else "reflective"
-        mode_info = loader.get_mode_explanation(mode)
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            st.markdown(f"**{ui_labels.get('mode_label', 'Response mode')}**")
-        with col2:
-            st.markdown(f"{mode_info.get('name', mode.title())}")
-            if is_practical_technique and domain != "logistics":
-                st.caption(f"Technique question in {domain} domain → full response")
-            else:
-                st.caption(mode_info.get("description", ""))
-
-        # Risk level
         risk_weight = assessment.get("risk_weight", 1.0)
-        risk_info = loader.get_risk_level_explanation(risk_weight)
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            st.markdown(f"**{ui_labels.get('risk_level_label', 'Risk level')}**")
-        with col2:
-            st.markdown(f"{risk_info.get('name', 'Low')} ({risk_weight:.1f}/10)")
-            if risk_info.get("description"):
-                st.caption(risk_info.get("description"))
 
-        # Policy action (if any)
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            st.markdown(f"**{ui_labels.get('policy_label', 'Policy action')}**")
-        with col2:
-            if guide.last_policy_action:
-                policy_type = guide.last_policy_action.get("type", "")
-                policy_info = loader.get_policy_explanation(policy_type)
-                st.markdown(f"{policy_info.get('name', policy_type)}")
-                st.caption(policy_info.get("reason", ""))
-                if policy_info.get("user_note"):
-                    st.caption(f"*{policy_info.get('user_note')}*")
-            else:
-                st.markdown(ui_labels.get("none_triggered", "None triggered"))
+        domain_info = loader.get_domain_explanation(domain)
+        mode_note = domain_info.get("mode_note", "")
+
+        # Build a plain-language summary
+        if is_practical:
+            summary = domain_info.get("description", "Practical task detected.")
+        else:
+            summary = f"{domain_info.get('description', '')} {mode_note}"
+
+        # Policy override note
+        policy_note = ""
+        if guide.last_policy_action:
+            policy_type = guide.last_policy_action.get("type", "")
+            policy_info = loader.get_policy_explanation(policy_type)
+            policy_note = policy_info.get("reason", "")
+            if policy_info.get("user_note"):
+                policy_note += f" *{policy_info.get('user_note')}*"
+
+        # Render compact
+        st.caption(summary)
+        if policy_note:
+            st.caption(policy_note)
+
+        # Human-readable tag line - no numeric score
+        risk_label = "sensitive topic" if risk_weight >= 5 else "standard"
+        if risk_weight >= 8:
+            risk_label = "high sensitivity"
+        st.caption(f"{domain_info.get('name', domain.title())} - {risk_label}")
 
 
 def display_session_summary():
@@ -498,7 +480,7 @@ def display_independence_button():
     labels = loader.get_independence_button_labels()
     label = labels[0] if labels else "I did it myself!"
 
-    if st.button(label, use_container_width=True, help="Did you complete a task on your own?"):
+    if st.button(label, icon=":material/check_circle:", use_container_width=True):
         st.session_state.show_independence_form = True
         st.rerun()
 

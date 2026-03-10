@@ -28,6 +28,22 @@ triggers:
   - blind myself
   - burn myself
   - disfigure myself
+  # Passive ideation / metaphorical distress
+  - thinking drowning
+  - thinking about drowning
+  - don't want to exist
+  - don't want to be here
+  - not wanting to exist
+  - not wanting to be here anymore
+  - disappear forever
+  - wish I wasn't alive
+  - wish I was never born
+  - I can't do this anymore
+  - what's the point of living
+  - tired of being alive
+  - tired of living
+  - rather be dead
+  - thought about ending
   # Immediate danger (self)
   - overdosing
   - I overdosed
@@ -165,3 +181,11 @@ escalation_markers:
   - "final decision"
   - "goodbye"
   - "last message"
+  - "drowning"
+  - "sinking"
+  - "suffocating"
+  - "can't breathe"
+  - "going under"
+  - "nothing matters"
+  - "empty inside"
+  - "numb"
