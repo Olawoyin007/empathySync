@@ -1918,11 +1918,11 @@ src/ui/
 - [ ] Document minimum model requirements in README: recommended models, known-good models, and models where keyword fallback does most of the safety work
 - [ ] If classified model fails basic safety checks at startup, log a warning and increase keyword fallback aggressiveness
 
-### 17.6 Human-Readable Transparency Panel
+### 17.6 Human-Readable Transparency Panel (Partial)
 **Problem**: The transparency panel currently shows raw classification data (domain, scores, method). This is useful for developers but not for the people the project is meant to serve. Users should understand *why* the system responded the way it did, in plain language.
 
 **Implementation**:
-- [ ] Create `scenarios/transparency/explanations.yaml` mapping classification outcomes to plain-language explanations:
+- [x] Create `scenarios/transparency/explanations.yaml` mapping classification outcomes to plain-language explanations:
   ```yaml
   explanations:
     practical_mode:
@@ -1938,9 +1938,9 @@ src/ui/
       short: "Safety check corrected the classification"
       detail: "The AI classifier missed a signal, but a backup check caught it and adjusted the response mode."
   ```
-- [ ] Update `display_transparency_panel()` in `src/app.py` to show:
+- [x] Update `display_transparency_panel()` in `src/ui/panels.py` to show:
   - Plain-language explanation (primary, always visible)
-  - Technical details (collapsible, for power users)
+  - Human-readable risk labels (sensitive topic / high sensitivity / standard) instead of numeric scores
 - [ ] Add a one-line summary under each assistant response (e.g., "Responded as: practical task") that doesn't require opening the panel
 - [ ] User-test the explanations: do they actually make sense to someone who hasn't read the codebase?
 

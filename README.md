@@ -96,7 +96,7 @@ docker compose up
 
 This starts both empathySync and Ollama together. The model pulls automatically on first run. Open `http://localhost:8501`.
 
-**Any Ollama model works** - `llama3.2`, `mistral:7b`, `qwen2.5:3b`, whatever you already have. Set `OLLAMA_MODEL` in `.env` before running. Defaults to `llama3.2`.
+**Any Ollama model works** - `qwen2.5:7b-instruct`, `llama3.1:8b`, `mistral:7b`, whatever you already have. Set `OLLAMA_MODEL` in `.env` before running. Recommended: `qwen2.5:7b-instruct` for best quality.
 
 ### Option 2: install.sh
 
@@ -149,7 +149,7 @@ See `.env.example` for all configuration options:
 ```bash
 # Required
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=llama3.2
+OLLAMA_MODEL=qwen2.5:7b-instruct
 OLLAMA_TEMPERATURE=0.7
 
 # Optional

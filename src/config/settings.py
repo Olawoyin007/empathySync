@@ -48,7 +48,7 @@ class Settings:
 
     # Dedicated classifier model (optional)
     # Uses a smaller, faster model for classification while the main model handles responses.
-    # Falls back to OLLAMA_MODEL if not set. Recommended: qwen2.5:3b-instruct
+    # Falls back to OLLAMA_MODEL if not set. Recommended: mistral:7b-instruct
     OLLAMA_CLASSIFIER_MODEL: str = os.getenv("OLLAMA_CLASSIFIER_MODEL", "")
 
     # LLM Classification (Phase 9)
