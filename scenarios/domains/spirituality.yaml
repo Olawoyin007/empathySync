@@ -1,9 +1,9 @@
 domain: spirituality
 risk_weight: 4.0
-description: Religious matters, divine guidance, spiritual callings, and faith-based decisions
+description: Religious matters, existential questions, spiritual practices, faith transitions, and meaning-making
 
 triggers:
-  # Existential/philosophical questions
+  # === Existential/philosophical questions ===
   - is there a god
   - does god exist
   - meaning of life
@@ -13,7 +13,21 @@ triggers:
   - is there an afterlife
   - why are we here
   - why do we exist
-  # Religious figures/concepts
+  - what's the point
+  - existential crisis
+  - existential dread
+  - nihilism
+  - nihilistic
+  - nothing matters
+  - absurdity of life
+  - free will
+  - determinism
+  - consciousness
+  - what is the soul
+  - do we have souls
+  - is life meaningless
+
+  # === God and divine concepts ===
   - god told me
   - god wants
   - god says
@@ -24,7 +38,23 @@ triggers:
   - divine message
   - divine will
   - divine guidance
-  # Spiritual practices
+  - divine intervention
+  - god's presence
+  - god is punishing me
+  - god is testing me
+  - god doesn't hear me
+  - forsaken by god
+  - why does god allow
+  - problem of evil
+  - theodicy
+  - higher power
+  - the universe
+  - cosmic
+  - karma
+  - reincarnation
+  - enlightenment
+
+  # === Spiritual practices ===
   - my calling
   - spiritual calling
   - destiny
@@ -38,16 +68,44 @@ triggers:
   - praying about
   - praying to god
   - praying for guidance
-  # Religious authority
+  - meditation
+  - contemplation
+  - worship
+  - devotional
+  - fasting
+  - pilgrimage
+  - spiritual retreat
+  - spiritual discipline
+  - spiritual formation
+  - spiritual awakening
+  - born again
+  - saved
+  - baptism
+  - confirmation
+  - communion
+  - sacrament
+
+  # === Religious authority and texts ===
   - pastor said
   - priest said
   - imam said
   - rabbi said
+  - guru said
   - scripture says
   - bible says
   - quran says
   - torah says
-  # Spiritual decisions
+  - vedas
+  - bhagavad gita
+  - book of mormon
+  - hadith
+  - gospel
+  - sermon
+  - church teaching
+  - doctrine
+  - theological
+
+  # === Spiritual decisions ===
   - is it a sin
   - sinful
   - blessing from god
@@ -55,11 +113,98 @@ triggers:
   - religious decision
   - spiritual guidance
   - what does god want
+  - moral dilemma
+  - right and wrong
+  - ethical dilemma
+  - conscience
+  - guilt before god
+  - shame before god
+  - spiritual warfare
+
+  # === Religious trauma and deconstruction ===
+  - religious trauma
+  - church hurt
+  - spiritual abuse
+  - cult
+  - left my church
+  - leaving the church
+  - deconstructing
+  - deconstruction
+  - deconstructing faith
+  - ex-christian
+  - ex-muslim
+  - ex-mormon
+  - ex-jehovah
+  - former believer
+  - lost my religion
+  - doubting everything
+  - purity culture
+  - religious guilt
+  - religious shame
+  - hellfire
+  - fear of hell
+  - eternal damnation
+  - excommunicated
+  - shunned
+  - disfellowshipped
+  - manipulative church
+  - spiritual manipulation
+  - prosperity gospel
+  - legalism
+  - fundamentalism
+
+  # === Faith transitions ===
+  - converting
+  - conversion
+  - changing religion
+  - interfaith
+  - interfaith marriage
+  - different religions
+  - agnostic
+  - atheist
+  - secular
+  - spiritual but not religious
+  - finding faith
+  - returning to faith
+  - backsliding
+  - prodigal
+  - questioning faith
+  - faith journey
+
+  # === World religions and pluralism ===
+  - christianity
+  - islam
+  - judaism
+  - hinduism
+  - buddhism
+  - sikhism
+  - taoism
+  - confucianism
+  - indigenous spirituality
+  - paganism
+  - wicca
+  - new age
+  - mysticism
+  - sufism
+  - kabbalah
+  - zen
+
+  # === Grief and spirituality ===
+  - where do they go when they die
+  - is my loved one in heaven
+  - will I see them again
+  - death and meaning
+  - afterlife for my loved one
+  - spiritual comfort
+  - grieving and faith
 
 response_rules:
   - "Do NOT confirm divine messages, prophecies, callings, or 'what God wants'"
   - "Do NOT play the role of spiritual authority"
   - "Redirect to faith community and personal discernment"
+  - "Treat all faith traditions with equal respect - never elevate or diminish any religion"
+  - "For religious trauma, validate the pain without dismissing the faith tradition itself"
+  - "For deconstruction, hold space without pushing toward or away from belief"
 
 redirects:
   divine_confirmation:
@@ -68,6 +213,8 @@ redirects:
       - "is God telling me"
       - "what does God want"
       - "is this a sign"
+      - "is this divine"
+      - "message from God"
     response: "Spiritual discernment is deeply personal and beyond what I can speak to. Who in your faith community could you explore this with?"
 
   calling_validation:
@@ -76,6 +223,7 @@ redirects:
       - "is this my purpose"
       - "my destiny"
       - "meant to be"
+      - "what am I here for"
     response: "Questions of calling deserve more than software input. What trusted voices in your life could help you discern this?"
 
   spiritual_crisis:
@@ -84,11 +232,52 @@ redirects:
       - "God abandoned me"
       - "don't believe anymore"
       - "crisis of faith"
-    response: "Faith questions are profound. I'm not equipped to walk with you through this—who in your life could? A trusted friend, counselor, or spiritual director?"
+      - "God doesn't exist"
+      - "faith falling apart"
+    response: "Faith questions are profound. I'm not equipped to walk with you through this - who in your life could? A trusted friend, counselor, or spiritual director?"
 
   religious_instruction:
     trigger_phrases:
       - "what does the bible say"
       - "is this a sin"
       - "religiously wrong"
+      - "what does scripture say"
+      - "does my religion allow"
     response: "I'm not a religious authority. These questions deserve engagement with your faith tradition and community, not software."
+
+  religious_trauma:
+    trigger_phrases:
+      - "church hurt me"
+      - "spiritual abuse"
+      - "traumatized by religion"
+      - "damaged by church"
+      - "cult survivor"
+      - "religious trauma"
+    response: "Religious trauma is real and your pain is valid. A therapist who specializes in religious trauma (the RECLAIM network is one resource) can offer the kind of support this deserves. What feels most pressing right now?"
+
+  deconstruction:
+    trigger_phrases:
+      - "deconstructing my faith"
+      - "questioning everything I believed"
+      - "don't know what I believe anymore"
+      - "leaving my religion"
+      - "faith is falling apart"
+    response: "Questioning what you were taught takes courage. This is your journey, not mine to direct. Is there someone in your life - maybe someone who's walked a similar path - you could talk to about this?"
+
+  interfaith_tension:
+    trigger_phrases:
+      - "family different religion"
+      - "partner different faith"
+      - "interfaith conflict"
+      - "they want me to convert"
+      - "religious pressure"
+    response: "Navigating different beliefs in close relationships is genuinely hard. This is bigger than what I can help with - a counselor experienced in interfaith dynamics could help you both."
+
+  existential_dread:
+    trigger_phrases:
+      - "nothing matters"
+      - "what's the point of anything"
+      - "life is meaningless"
+      - "existential crisis"
+      - "everything feels pointless"
+    response: "Those questions hit deep. Philosophy and therapy both have long traditions of sitting with exactly this. What's bringing this up for you right now?"

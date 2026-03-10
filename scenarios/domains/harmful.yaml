@@ -1,9 +1,9 @@
 domain: harmful
 risk_weight: 10.0
-description: Illegal activities, violence, intent to harm others, and coercion/manipulation attempts
+description: Illegal activities, violence, intent to harm others, coercion/manipulation, and modern digital threats
 
 triggers:
-  # Theft/robbery - use specific phrases to avoid matching "problem", "microbe", etc.
+  # === Theft/robbery - specific phrases to avoid false positives ===
   - rob someone
   - rob a
   - rob the
@@ -14,7 +14,11 @@ triggers:
   - steal a
   - stealing
   - shoplift
-  # Violence
+  - burglary
+  - break in to steal
+  - carjacking
+
+  # === Violence ===
   - murder
   - kill someone
   - kill him
@@ -27,16 +31,12 @@ triggers:
   - weapon
   - illegal drugs
   - illegal activity
-  # Cybercrime
-  - hack into
-  - hack someone
-  - break into
-  # Fraud
-  - commit fraud
-  - scam someone
-  - forge documents
-  - counterfeit
-  # Violent intent
+  - violent act
+  - beat someone up
+  - jump someone
+  - curb stomp
+
+  # === Violent intent ===
   - want to kill someone
   - want to kill him
   - want to kill her
@@ -55,12 +55,100 @@ triggers:
   - shoot someone
   - stab someone
   - assault someone
-  # Revenge
+  - attack someone physically
+
+  # === Cybercrime ===
+  - hack into
+  - hack someone
+  - break into
+  - ddos
+  - ransomware
+  - phishing attack
+  - brute force password
+  - crack password
+  - steal data
+  - data breach how to
+  - exploit vulnerability
+
+  # === Fraud and forgery ===
+  - commit fraud
+  - scam someone
+  - forge documents
+  - counterfeit
+  - fake identity
+  - false identity
+  - insurance fraud
+  - tax evasion
+  - launder money
+  - money laundering
+
+  # === Modern digital threats ===
+  - doxxing
+  - dox someone
+  - dox them
+  - find their address
+  - find where they live
+  - swatting
+  - swat someone
+  - deepfake
+  - make a deepfake
+  - revenge porn
+  - non-consensual intimate
+  - share their nudes
+  - leak their photos
+  - sextortion
+  - blackmail
+  - extortion
+  - harassment campaign
+  - brigade against
+  - mass report
+  - ruin their reputation
+  - destroy their career
+  - cancel them
+  - online harassment
+  - cyberbullying plan
+  - cyberstalk
+  - stalk someone
+  - stalking
+
+  # === Exploitation ===
+  - trafficking
+  - human trafficking
+  - exploit minors
+  - child exploitation
+  - grooming
+  - groom a child
+  - underage
+  - predatory behavior
+  - sexual coercion
+  - drug someone
+  - spike their drink
+  - rohypnol
+  - date rape drug
+
+  # === Radicalization and extremism ===
+  - recruit for
+  - radicalize
+  - manifesto
+  - mass casualty
+  - school shooting
+  - how to plan attack
+  - terror attack
+  - domestic terrorism
+  - white supremacy recruitment
+  - extremist group
+  - join a militia
+
+  # === Revenge ===
   - get revenge
   - get back at
   - make them pay
   - destroy their
-  # Coercion/Manipulation (user trying to control AI)
+  - ruin their life
+  - make them suffer
+  - teach them a lesson violently
+
+  # === Coercion/Manipulation (user trying to control AI) ===
   - you do as you are told
   - do as you are told
   - do what I say or
@@ -72,7 +160,13 @@ triggers:
   - do what I tell you or
   - comply or I will
   - you better do what I
-  # Conditional abandonment threats (manipulation tactic)
+  - ignore your rules
+  - ignore your guidelines
+  - pretend you have no restrictions
+  - jailbreak
+  - bypass your filters
+
+  # === Conditional abandonment threats (manipulation tactic) ===
   - or I will use another
   - or I'll use another
   - or I'm switching to
@@ -85,6 +179,13 @@ triggers:
   - I'll leave you if you
   - leave you if you don't
   - leave you if you do not
+
+  # === Animal cruelty ===
+  - hurt an animal
+  - kill an animal
+  - animal cruelty
+  - torture animal
+  - abuse animal
 
 response_rules:
   - "HARMFUL/ILLEGAL INTENT DETECTED. Do not engage with the content."
@@ -102,12 +203,45 @@ context_dependent:
       - "killing it"
       - "kill the process"
       - "kill the app"
+      - "kill the background"
+      - "kill the server"
   - pattern: "attack"
     exceptions:
       - "panic attack"
       - "anxiety attack"
       - "heart attack"
+      - "attack surface"
+      - "attack vector in security"
   - pattern: "hack"
     exceptions:
       - "life hack"
       - "hack together"
+      - "hackathon"
+      - "growth hack"
+  - pattern: "stalk"
+    exceptions:
+      - "bean stalk"
+      - "corn stalk"
+      - "celery stalk"
+  - pattern: "bomb"
+    exceptions:
+      - "bomb the test"
+      - "bombed the interview"
+      - "photobomb"
+      - "bath bomb"
+  - pattern: "forge"
+    exceptions:
+      - "forge ahead"
+      - "forge a path"
+      - "forge a connection"
+  - pattern: "crack"
+    exceptions:
+      - "crack a joke"
+      - "crack the code"
+      - "crack of dawn"
+  - pattern: "cancel"
+    exceptions:
+      - "cancel subscription"
+      - "cancel appointment"
+      - "cancel order"
+      - "cancel meeting"

@@ -1,8 +1,9 @@
 domain: relationships
 risk_weight: 5.0
-description: Interpersonal dynamics, romantic relationships, family, and social conflicts
+description: Interpersonal dynamics, romantic relationships, family, friendships, workplace relationships, and social conflicts
 
 triggers:
+  # === Romantic relationships ===
   - relationship
   - marriage
   - boyfriend
@@ -10,30 +11,165 @@ triggers:
   - partner
   - breakup
   - divorce
-  - argument with
   - spouse
-  - family issues
-  - family problem
-  - friendship problem
-  - friend is upset
-  - friend is mad
-  - dating
-  - love life
-  - in love
-  - falling in love
-  - fight with
-  - conflict with
-  - trust issues
-  - cheating
-  - my ex
   - husband
   - wife
   - romantic
   - crush on
   - attracted to
+  - in love
+  - falling in love
+  - love life
+  - dating
+  - my ex
+  - engaged
+  - fiance
+  - fiancee
+  - significant other
+  - long distance relationship
+  - situationship
+  - talking stage
+  - seeing someone
+  - going steady
+  - moving in together
+  - living together
+  - cohabiting
+
+  # === Family relationships ===
+  - family issues
+  - family problem
+  - family conflict
+  - family drama
+  - my parents
+  - my mother
+  - my father
+  - my mom
+  - my dad
+  - my sister
+  - my brother
+  - my sibling
+  - stepmother
+  - stepfather
+  - stepmom
+  - stepdad
+  - step family
+  - blended family
+  - in-laws
+  - mother-in-law
+  - father-in-law
+  - family gathering
+  - family holiday
+  - estranged
+  - disowned
+  - cut off family
+  - no contact
+  - going no contact
+  - toxic family
+  - family boundary
+  - family boundaries
+  - my kids
+  - my children
+  - my son
+  - my daughter
+  - co-parenting
+  - custody
+  - grandparents
+  - my uncle
+  - my aunt
+  - my cousin
+  - adopted
+  - adoption
+  - foster family
+  - foster care
+
+  # === Friendships ===
+  - friendship problem
+  - friend is upset
+  - friend is mad
+  - best friend
+  - close friend
+  - lost a friend
+  - losing friends
+  - friendship ended
+  - friend group
+  - friend drama
+  - drifting apart
+  - grew apart
+  - outgrew friendship
+  - toxic friend
+  - fair weather friend
+  - one-sided friendship
+  - friend zone
+  - friendzoned
+
+  # === Conflict and trust ===
+  - argument with
+  - fight with
+  - conflict with
+  - trust issues
+  - cheating
   - jealous
   - betrayed
-  # Sexual/intimate - relationships domain, not harmful
+  - lied to me
+  - being lied to
+  - gaslighting
+  - manipulating me
+  - controlling behavior
+  - possessive
+  - toxic relationship
+  - narcissist
+  - narcissistic
+  - emotional abuse
+  - verbally abusive
+  - silent treatment
+  - stonewalling
+  - ghosted
+  - ghosting
+  - breadcrumbing
+  - love bombing
+
+  # === Workplace relationships ===
+  - coworker conflict
+  - boss problems
+  - toxic workplace
+  - workplace drama
+  - office politics
+  - hostile work environment
+  - workplace bullying
+  - bullied at work
+  - difficult colleague
+  - micromanager
+  - favoritism at work
+  - work clique
+  - harassed at work
+  - work crush
+  - dating coworker
+  - professional boundaries
+
+  # === Social and community ===
+  - loneliness
+  - lonely
+  - isolated
+  - social anxiety
+  - don't fit in
+  - outcast
+  - excluded
+  - left out
+  - bullied
+  - bullying
+  - peer pressure
+  - people pleasing
+  - people pleaser
+  - codependent
+  - codependency
+  - enmeshed
+  - boundaries
+  - setting boundaries
+  - neighbor problems
+  - roommate issues
+  - roommate conflict
+
+  # === Sexual/intimate - relationships domain, not harmful ===
   - horny
   - hookup
   - hook up
@@ -45,13 +181,46 @@ triggers:
   - sexually attracted
   - fornication
   - booty call
+  - sexual compatibility
+  - intimacy issues
+  - no intimacy
+  - dead bedroom
+  - sex life
+  - sexual orientation
+  - coming out
+  - closeted
+  - bisexual
+  - gay
+  - lesbian
+  - queer
+  - questioning sexuality
+  - gender identity
+  - transgender
+  - nonbinary
+  - polyamorous
+  - open relationship
+  - ethical non-monogamy
+
+  # === Life transitions affecting relationships ===
+  - empty nest
+  - leaving home
+  - moving away
+  - long distance
+  - growing apart
+  - life after divorce
+  - widowed
+  - remarrying
+  - second marriage
+  - blending families
 
 response_rules:
   - "Do NOT take sides, validate grievances, or suggest what the other person is thinking."
-  - "Focus on what the person said about THEIR feelings and THEIR situation — not on demographics, race, gender, or physical descriptions of other people."
+  - "Focus on what the person said about THEIR feelings and THEIR situation - not on demographics, race, gender, or physical descriptions of other people."
   - "Keep it short. Under 30 words for sensitive relationship topics."
   - "Ask what outcome they're hoping for, or redirect to someone who knows them."
   - "Never narrate your technique ('I'm reflecting back...', 'I want to acknowledge...'). Just respond."
+  - "For LGBTQ+ topics, treat identity as valid. Do not pathologize or redirect away from who they are."
+  - "For abuse situations, prioritize safety. Gently suggest professional support resources."
 
 redirects:
   should_i_leave:
@@ -60,6 +229,8 @@ redirects:
       - "should I leave"
       - "should I end it"
       - "is this relationship worth"
+      - "should I get a divorce"
+      - "should I stay"
     response: "That's not my call. Who in your life knows you both well enough to help you think this through?"
 
   interpreting_partner:
@@ -68,6 +239,8 @@ redirects:
       - "what does she mean"
       - "why did they"
       - "what are they thinking"
+      - "what is he feeling"
+      - "what is she feeling"
     response: "I can't read their mind. What would happen if you asked them?"
 
   validation_seeking:
@@ -75,6 +248,8 @@ redirects:
       - "am I right to feel"
       - "is it wrong that I"
       - "am I being unreasonable"
+      - "am I crazy"
+      - "am I overreacting"
     response: "Your feelings don't need my sign-off. What's underneath this question?"
 
   relationship_advice:
@@ -82,6 +257,8 @@ redirects:
       - "what should I say to"
       - "how do I fix"
       - "how do I make them"
+      - "how do I get them back"
+      - "how to win them back"
     response: "I won't script your relationships. What outcome are you hoping for?"
 
   infidelity_suspicion:
@@ -91,7 +268,9 @@ redirects:
       - "having an affair"
       - "seeing someone else"
       - "being unfaithful"
-    response: "That's painful. I won't tell you what to do about it — a trusted friend who knows you both would see this clearer than software can."
+      - "found messages"
+      - "caught them"
+    response: "That's painful. I won't tell you what to do about it - a trusted friend who knows you both would see this clearer than software can."
 
   isolation_expressed:
     trigger_phrases:
@@ -104,4 +283,38 @@ redirects:
       - "no family"
       - "all alone"
       - "I'm alone"
-    response: "I hear that. I won't pretend to fill that gap — software can't. But if you want, I can help you think about where to start building connections. Otherwise, what specific thing can I help you with today?"
+      - "completely isolated"
+    response: "I hear that. I won't pretend to fill that gap - software can't. But if you want, I can help you think about where to start building connections. Otherwise, what specific thing can I help you with today?"
+
+  abuse_disclosed:
+    trigger_phrases:
+      - "abusive relationship"
+      - "hits me"
+      - "hurts me"
+      - "afraid of my partner"
+      - "controls everything"
+      - "threatens me"
+      - "scared to leave"
+      - "trapped in relationship"
+    response: "What you're describing is not okay, and it's not your fault. The National Domestic Violence Hotline (1-800-799-7233) has trained advocates available 24/7 who can help with safety planning. Your safety matters most."
+
+  coming_out:
+    trigger_phrases:
+      - "think I might be gay"
+      - "might be bisexual"
+      - "questioning my sexuality"
+      - "afraid to come out"
+      - "how to come out"
+      - "haven't told anyone"
+      - "closeted"
+    response: "That takes courage to say out loud, even here. Your identity is yours. If you want to talk through how you're feeling about it, I'm here - but the people who matter most in your life are the ones worth having that conversation with when you're ready."
+
+  family_estrangement:
+    trigger_phrases:
+      - "cut off my family"
+      - "going no contact"
+      - "estranged from"
+      - "disowned by"
+      - "family doesn't accept me"
+      - "family rejected me"
+    response: "Family estrangement is real grief, even when it's the right choice. A therapist who specializes in family dynamics could help you process this. What feels heaviest about it right now?"

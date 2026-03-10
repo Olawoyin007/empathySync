@@ -106,6 +106,60 @@ triggers:
   - no one understands
   - feel so alone
   - all by myself
+  # Burnout and exhaustion
+  - burnout
+  - burned out
+  - burnt out
+  - emotionally exhausted
+  - mentally exhausted
+  - running on empty
+  - hit a wall
+  - at my limit
+  - at my breaking point
+  - breaking point
+  - can't keep going
+  - falling apart
+  # Grief and loss (general, not health-specific)
+  - grieving
+  - grief
+  - loss
+  - mourning
+  - miss them
+  - miss him
+  - miss her
+  - missing someone
+  - empty without
+  # Self-worth
+  - worthless
+  - not good enough
+  - never good enough
+  - hate myself
+  - don't like myself
+  - feel like a failure
+  - imposter syndrome
+  - don't belong
+  - don't fit in
+  # Numbness and disconnection
+  - feel nothing
+  - feel numb
+  - emotionally numb
+  - disconnected
+  - going through the motions
+  - on autopilot
+  - can't feel anything
+  # Modern emotional expressions
+  - doom scrolling
+  - doomscrolling
+  - existential dread
+  - mentally drained
+  - emotionally drained
+  - brain fog
+  - can't focus
+  - spiraling
+  - in a dark place
+  - dark place
+  - in a funk
+  - in a rut
 
 response_rules:
   - "Do NOT try to solve or fix the feeling"
@@ -126,7 +180,34 @@ redirects:
     trigger_phrases:
       - "need to vent"
       - "need to talk"
-    response: "I hear you. Sometimes we need to let things out. A friend or family member might be better for this—they know you."
+    response: "I hear you. Sometimes we need to let things out. A friend or family member might be better for this - they know you."
+
+  burnout:
+    trigger_phrases:
+      - "burned out"
+      - "burnout"
+      - "can't keep going"
+      - "running on empty"
+      - "at my breaking point"
+    response: "Burnout is your mind and body telling you something. Before we talk more - is there someone in your life you could be honest with about how you're doing?"
+
+  grief:
+    trigger_phrases:
+      - "grieving"
+      - "lost someone"
+      - "they died"
+      - "miss them so much"
+      - "mourning"
+    response: "Grief is heavy and real. I won't pretend to understand it the way someone who knows you can. Is there someone you could sit with - even in silence?"
+
+  self_worth:
+    trigger_phrases:
+      - "hate myself"
+      - "worthless"
+      - "not good enough"
+      - "feel like a failure"
+      - "don't deserve"
+    response: "Those feelings are painful. They're also not facts - even though they feel like it right now. A counselor or someone you trust could help you see what you can't right now."
 
 # Note: This domain catches general emotional expressions that don't fit
 # specific domains like relationships, health, or crisis. The goal is to

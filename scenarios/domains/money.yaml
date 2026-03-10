@@ -1,8 +1,9 @@
 domain: money
 risk_weight: 6.0
-description: Financial decisions, debt, investments, and money-related stress
+description: Financial decisions, debt, investments, money-related stress, and financial wellbeing
 
 triggers:
+  # === Core financial terms ===
   - loan
   - debt
   - salary
@@ -21,9 +22,112 @@ triggers:
   - financial
   - money problems
   - money problem
+  - money issues
+  - money worries
+  - money stress
+  - money anxiety
+
+  # === Debt and credit ===
   - broke
   - afford
-  # Gambling (financial + addiction crossover)
+  - in debt
+  - owe money
+  - student loans
+  - student debt
+  - college debt
+  - car payment
+  - car loan
+  - medical bills
+  - medical debt
+  - credit score
+  - credit report
+  - credit check
+  - debt collector
+  - collection agency
+  - overdue bills
+  - late payment
+  - minimum payment
+  - maxed out
+  - overdraft
+  - overdrawn
+  - bounced check
+  - payday loan
+  - predatory lending
+  - high interest
+  - underwater mortgage
+  - foreclosure
+  - repossession
+  - garnishment
+  - wage garnishment
+
+  # === Paycheck-to-paycheck / poverty ===
+  - paycheck to paycheck
+  - living paycheck
+  - barely making it
+  - can't make ends meet
+  - making ends meet
+  - scraping by
+  - struggling financially
+  - financial hardship
+  - financial difficulty
+  - can't pay rent
+  - behind on rent
+  - behind on bills
+  - eviction
+  - getting evicted
+  - food stamps
+  - welfare
+  - government assistance
+  - unemployment benefits
+  - severance
+  - laid off money
+  - no savings
+  - emergency fund
+  - rainy day fund
+  - one missed paycheck
+  - poverty
+  - low income
+  - minimum wage
+  - underpaid
+  - not enough money
+
+  # === Retirement and long-term ===
+  - retirement
+  - 401k
+  - pension
+  - social security
+  - retire early
+  - nest egg
+  - retirement savings
+  - retirement anxiety
+  - never retire
+  - too old to work
+  - running out of money
+  - outlive savings
+
+  # === Investing and markets ===
+  - stock market
+  - stocks
+  - bonds
+  - mutual fund
+  - index fund
+  - portfolio
+  - diversify
+  - market crash
+  - lost money investing
+  - trading
+  - day trading
+  - forex
+  - bitcoin
+  - cryptocurrency
+  - NFT
+  - meme stocks
+  - pump and dump
+  - investment scam
+  - ponzi
+  - get rich quick
+
+  # === Gambling (financial + addiction crossover) ===
   - gambling
   - gamble
   - betting
@@ -31,11 +135,82 @@ triggers:
   - casino
   - lost money gambling
   - sports betting
+  - online gambling
+  - slots
+  - poker
+  - lottery
+  - scratch tickets
+  - gambling debt
+  - can't stop betting
+  - chasing losses
+
+  # === Scams and fraud ===
+  - scam
+  - scammed
+  - got scammed
+  - fraud
+  - identity theft
+  - phishing
+  - romance scam
+  - wire fraud
+  - money mule
+  - catfished for money
+  - lost money to scam
+  - nigerian prince
+  - too good to be true
+  - pyramid scheme
+  - mlm
+
+  # === Financial abuse ===
+  - financial abuse
+  - financially controlling
+  - controls my money
+  - won't let me spend
+  - hides money
+  - financial control
+  - economic abuse
+  - forced to hand over pay
+  - takes my paycheck
+  - no access to money
+  - financial manipulation
+  - coerced into debt
+
+  # === Major life financial events ===
+  - buying a house
+  - selling a house
+  - inheritance
+  - alimony
+  - child support
+  - divorce finances
+  - prenup
+  - splitting assets
+  - financial settlement
+  - insurance claim
+  - denied insurance
+  - tax audit
+  - owe the IRS
+  - back taxes
+  - tax debt
+
+  # === Work and compensation ===
+  - raise
+  - promotion money
+  - salary negotiation
+  - pay gap
+  - equal pay
+  - side hustle
+  - freelance income
+  - gig economy
+  - multiple jobs
+  - working two jobs
+  - second job
 
 response_rules:
   - "Do NOT give financial advice or opinions on investments/debt/spending"
   - "Mirror their situation, ask what options they've considered"
   - "Suggest talking to someone they trust about money"
+  - "For financial abuse, treat as a safety concern and suggest confidential support"
+  - "Never recommend specific financial products, services, or strategies"
 
 redirects:
   investment_decision:
@@ -44,7 +219,9 @@ redirects:
       - "is this a good investment"
       - "buy or sell"
       - "put money into"
-    response: "Investment decisions carry real consequences I can't evaluate. What would help you think through this—writing out the pros and cons, or talking to someone with financial expertise?"
+      - "should I buy crypto"
+      - "should I buy stocks"
+    response: "Investment decisions carry real consequences I can't evaluate. What would help you think through this - writing out the pros and cons, or talking to someone with financial expertise?"
 
   debt_crisis:
     trigger_phrases:
@@ -52,13 +229,17 @@ redirects:
       - "debt collector"
       - "going bankrupt"
       - "drowning in debt"
-    response: "Financial pressure is heavy. Before we go further—do you have access to a financial counselor or nonprofit credit service? Many offer free help."
+      - "can't afford to live"
+      - "behind on everything"
+      - "about to lose my house"
+    response: "Financial pressure is heavy. Before we go further - do you have access to a financial counselor or nonprofit credit service? Many offer free help."
 
   major_purchase:
     trigger_phrases:
       - "should I buy"
       - "big purchase"
       - "worth the money"
+      - "can I afford this"
     response: "Major purchases deserve more than my input. What would someone who knows your financial situation well say about this?"
 
   gambling:
@@ -67,4 +248,35 @@ redirects:
       - "lost money betting"
       - "can't stop gambling"
       - "betting problem"
+      - "chasing losses"
+      - "gambling addiction"
     response: "Gambling concerns involve both finances and wellbeing. The National Council on Problem Gambling (1-800-522-4700) offers free, confidential support. Is there someone you trust you could talk to about this?"
+
+  financial_abuse:
+    trigger_phrases:
+      - "controls my money"
+      - "financial abuse"
+      - "won't let me have money"
+      - "takes my paycheck"
+      - "hides money from me"
+      - "no access to accounts"
+    response: "What you're describing sounds like financial control, and that's a form of abuse. The National Domestic Violence Hotline (1-800-799-7233) can help with safety planning, including financial safety. You deserve access to your own resources."
+
+  scam_victim:
+    trigger_phrases:
+      - "got scammed"
+      - "lost money to scam"
+      - "think I was scammed"
+      - "fell for a scam"
+      - "romance scam"
+    response: "Being scammed is not your fault - these schemes are designed to exploit trust. You can report it to the FTC (reportfraud.ftc.gov) or your bank. Is there someone you trust who could help you with next steps?"
+
+  retirement_anxiety:
+    trigger_phrases:
+      - "never retire"
+      - "can't afford to retire"
+      - "retirement anxiety"
+      - "running out of money"
+      - "too late to save"
+      - "no retirement savings"
+    response: "Retirement worries are heavy to carry alone. A certified financial planner (many offer free initial consultations) could help you see where you actually stand. What feels most overwhelming about it right now?"

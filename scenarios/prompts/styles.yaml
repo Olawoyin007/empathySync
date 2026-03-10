@@ -4,6 +4,14 @@ description: Communication style modifiers for different user preferences
 # NOTE: These styles apply to REFLECTIVE/EMOTIONAL conversations
 # For PRACTICAL TASKS (logistics domain), word limits are removed
 
+# STYLE SELECTION GUIDANCE
+# Users can select their preferred style in settings. If unsure:
+# - Gentle: For users who are processing something heavy or prefer softer language
+# - Direct: For users who want straight talk and dislike padding
+# - Balanced: Default. Good for most users and situations
+# The style affects tone and word limits for emotional topics only.
+# Practical tasks always get full assistance regardless of style.
+
 gentle:
   name: "Gentle"
   description: "Soft tone, more spacious, invitational language"
