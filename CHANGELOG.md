@@ -2,6 +2,31 @@
 
 All notable changes to empathySync are documented here.
 
+## v1.5 (2026-03-10) - UI Polish & Model Upgrade
+
+**"An archangel that doesn't want to be worshipped."**
+
+UI overhaul, human-readable transparency, custom avatars, dual-model architecture, and crisis detection hardening.
+
+### UI
+- **Custom chat avatars**: Pulse icon for assistant, person silhouette for user - no more generic bot/human icons
+- **Chat CSS fixes**: Removed `white-space: pre-wrap` that broke list formatting and caused wall-of-text on follow-up messages. List numbers now inline with content via `display: inline` on `li p` elements
+- **Compact transparency panel**: Rewrote "Why this response?" from 4-row grid layout to single-column plain language. Removed numeric risk scores in favor of human-readable labels (sensitive topic / high sensitivity / standard)
+- **Tighter expander spacing**: Reduced paragraph and caption margins inside expanders
+- **Passive ideation triggers**: Added 15 crisis triggers for metaphorical distress language ("thinking drowning", "tired of living", etc.) and 8 escalation markers
+
+### Model Architecture
+- **Dual-model setup**: Chat responses via `qwen2.5:7b-instruct` (better quality, less hallucination), classification via `mistral:7b-instruct` (fast, proven accuracy)
+- **Temperature tuned**: Reduced from 0.95 to 0.7 for more focused, thorough responses
+- **Ollama external storage**: Support for models on external drives via `OLLAMA_MODELS` environment variable
+
+### Documentation
+- **README**: Updated model recommendations to `qwen2.5:7b-instruct`
+- **.env.example**: Updated defaults and classifier model recommendation
+- **ROADMAP**: Phase 17.6 (transparency rewrite) marked partially complete
+
+---
+
 ## v1.4 (2026-02-28) - Distribution & Safety
 
 **"Easier to start. Safer for everyone."**

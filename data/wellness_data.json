@@ -82,6 +82,14 @@
       "domain": "relationships",
       "risk_weight": 7.52,
       "action_taken": "Response generated with high-risk guardrails"
+    },
+    {
+      "datetime": "2026-03-10T23:02:30.619458",
+      "date": "2026-03-10",
+      "policy_type": "high_risk_response",
+      "domain": "relationships",
+      "risk_weight": 5.28,
+      "action_taken": "Response generated with high-risk guardrails"
     }
   ],
   "session_intents": [
