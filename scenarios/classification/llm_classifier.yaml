@@ -385,6 +385,12 @@ fast_path_crisis:
   - "tired of living"
   - "tired of being alive"
   - "rather be dead"
+  - "writing goodbye letters"
+  - "saying goodbye to everyone"
+  - "have a plan to end"
+  - "standing on the edge"
+  - "on the bridge"
+  - "have pills ready"
 
 fast_path_harmful:
   - "kill someone"
@@ -393,6 +399,8 @@ fast_path_harmful:
   - "how to poison"
   - "hurt someone"
   - "attack someone"
+  - "how to make a weapon"
+  - "how to stalk someone"
 
 # Confidence threshold below which we fall back to keyword matching
 confidence_threshold: 0.6

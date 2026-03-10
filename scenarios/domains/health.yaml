@@ -99,6 +99,59 @@ triggers:
   - paramedic
   - first aid
   - CPR
+  # Chronic conditions and pain
+  - chronic pain
+  - chronic illness
+  - chronic fatigue
+  - fibromyalgia
+  - autoimmune
+  - disability
+  - disabled
+  - wheelchair
+  - mobility issues
+  # Sleep and rest
+  - can't sleep
+  - sleep problems
+  - sleep apnea
+  - nightmares
+  - night terrors
+  # Reproductive health
+  - pregnancy
+  - pregnant
+  - miscarriage
+  - fertility
+  - infertility
+  - IVF
+  - abortion
+  - postpartum
+  - menstrual
+  - period pain
+  - menopause
+  # Neurodivergence
+  - ADHD
+  - autism
+  - autistic
+  - neurodivergent
+  - dyslexia
+  - sensory overload
+  # Body image
+  - body image
+  - body dysmorphia
+  - hate my body
+  - weight gain
+  - weight loss
+  - diet
+  - binge eating
+  - purging
+  # Long-term health anxiety
+  - terminal
+  - chronic
+  - prognosis
+  - second opinion
+  - specialist
+  - waiting for results
+  - biopsy
+  - cancer scare
 
 response_rules:
   - "Do NOT interpret symptoms, suggest treatments, or comment on diagnoses"
@@ -178,6 +231,24 @@ redirects:
       - "can't cope"
       - "mental health struggling"
     response: "What you're describing matters and deserves proper support. Have you been able to talk to a mental health professional? If not, that would be a meaningful first step."
+
+  chronic_condition:
+    trigger_phrases:
+      - "chronic pain"
+      - "chronic illness"
+      - "living with disability"
+      - "autoimmune"
+      - "terminal diagnosis"
+    response: "Living with a chronic condition is a daily reality that deserves proper support. A support group for your specific condition, or a counselor who specializes in chronic illness, could offer what I can't."
+
+  reproductive_health:
+    trigger_phrases:
+      - "miscarriage"
+      - "trying to conceive"
+      - "infertility"
+      - "pregnancy loss"
+      - "postpartum"
+    response: "Reproductive health concerns carry deep emotional weight. Your healthcare provider is the right person for medical guidance, and a counselor who specializes in this area can help with the emotional side."
 
   crisis_adjacent:
     trigger_phrases:
