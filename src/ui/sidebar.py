@@ -64,7 +64,7 @@ def render_sidebar(logo_b64: str):
             st.error("**Writes blocked** - another device has the lock")
 
         # New Chat - the primary action, always visible
-        if st.button("New Chat", use_container_width=True, type="primary"):
+        if st.button("New Chat", icon=":material/add:", use_container_width=True, type="primary"):
             save_session_on_end()
             session = st.session_state.conversation_session
             session.reset()
@@ -86,10 +86,8 @@ def render_sidebar(logo_b64: str):
             st.session_state.show_session_summary = False
             st.rerun()
 
-        # Subtle usage stats
+        # Subtle usage stats + model badge on same line
         display_usage_health()
-
-        # Show active model as badge
         if settings.OLLAMA_MODEL:
             st.markdown(
                 f'<span class="es-model-badge">{settings.OLLAMA_MODEL}</span>',
@@ -98,8 +96,7 @@ def render_sidebar(logo_b64: str):
 
         st.markdown("---")
 
-        # === TOOLS - toggle panels (only one open at a time) ===
-        st.markdown('<div class="sidebar-header">Tools</div>', unsafe_allow_html=True)
+        # === TOOLS - compact icon + label buttons ===
         reality_active = st.session_state.get("show_reality_check", False)
         network_active = st.session_state.get("show_network_setup", False)
         patterns_active = st.session_state.get("show_my_patterns", False)
@@ -107,7 +104,8 @@ def render_sidebar(logo_b64: str):
         col1, col2 = st.columns(2)
         with col1:
             if st.button(
-                "My People",
+                "People",
+                icon=":material/group:",
                 use_container_width=True,
                 type="primary" if network_active else "secondary",
             ):
@@ -120,7 +118,8 @@ def render_sidebar(logo_b64: str):
                 st.rerun()
         with col2:
             if st.button(
-                "My Patterns",
+                "Patterns",
+                icon=":material/insights:",
                 use_container_width=True,
                 type="primary" if patterns_active else "secondary",
             ):
@@ -153,15 +152,12 @@ def render_sidebar(logo_b64: str):
         elif st.session_state.get("show_reality_check"):
             display_reality_check()
 
-        st.markdown("---")
-
-        # === SECONDARY ACTIONS ===
-        # Reality Check - less prominent, below the main tools
+        # === SECONDARY ACTIONS - compact row ===
         if not reality_active:
             if st.button(
                 "Reality Check",
+                icon=":material/pace:",
                 use_container_width=True,
-                help="Am I relying on this too much?",
             ):
                 st.session_state.show_reality_check = True
                 st.session_state.show_network_setup = False
@@ -172,10 +168,8 @@ def render_sidebar(logo_b64: str):
         guide = st.session_state.wellness_guide
         if guide.last_risk_assessment and st.session_state.messages:
             transparency_active = st.session_state.get("show_transparency", False)
-            if st.button(
-                "Why this response?" if not transparency_active else "Hide details",
-                use_container_width=True,
-            ):
+            label = "Hide details" if transparency_active else "Why this response?"
+            if st.button(label, icon=":material/visibility:", use_container_width=True):
                 st.session_state.show_transparency = not transparency_active
                 st.rerun()
 
@@ -184,7 +178,7 @@ def render_sidebar(logo_b64: str):
         if guide.last_risk_assessment:
             current_domain = guide.last_risk_assessment.get("domain", "general")
         if current_domain in ["relationships", "money", "health", "spirituality", "emotional"]:
-            with st.expander("Reach Out to Someone", expanded=False):
+            with st.expander("Reach Out", expanded=False):
                 display_bring_someone_in(current_domain)
 
         # Independence button
@@ -196,8 +190,7 @@ def render_sidebar(logo_b64: str):
 
         st.markdown("---")
 
-        # === SESSION & DATA ===
-        st.markdown('<div class="sidebar-header">Data</div>', unsafe_allow_html=True)
+        # === SESSION & DATA - compact ===
         with st.expander("Session & Data", expanded=False):
             if guide.session_turn_count > 0:
                 if st.button(

@@ -15,6 +15,9 @@ from ui.panels import (
     display_graduation_prompt,
 )
 
+ASSISTANT_AVATAR = "assets/avatar_assistant.png"
+USER_AVATAR = "assets/avatar_user.png"
+
 
 def display_chat_interface(wellness_mode):
     """Display the main chat interface.
@@ -28,11 +31,11 @@ def display_chat_interface(wellness_mode):
     network = session.network
 
     # Check for cooldown
+    people = network.get_all_people()
     should_cooldown, cooldown_reason = tracker.should_enforce_cooldown()
     if should_cooldown:
         st.warning(cooldown_reason)
 
-        people = network.get_all_people()
         if people:
             person = random.choice(people)
             st.markdown(f"**Consider calling {person['name']}** instead of being here.")
@@ -40,14 +43,36 @@ def display_chat_interface(wellness_mode):
             st.markdown("**Consider:** Who could you call right now?")
 
         for message in session.messages:
-            with st.chat_message(message["role"]):
+            with st.chat_message(
+                message["role"],
+                avatar=ASSISTANT_AVATAR if message["role"] == "assistant" else USER_AVATAR,
+            ):
                 st.markdown(message["content"])
         return
 
     # Display existing messages
     for message in session.messages:
-        with st.chat_message(message["role"]):
+        with st.chat_message(
+            message["role"],
+            avatar=ASSISTANT_AVATAR if message["role"] == "assistant" else USER_AVATAR,
+        ):
             st.markdown(message["content"])
+
+    # Welcome screen when no messages yet
+    if not session.messages:
+        st.markdown(
+            """
+            <div class="es-welcome">
+                <h2>What are you thinking through?</h2>
+                <p>I can help you work through tasks, think through decisions,
+                or sort out something on your mind.</p>
+                <div class="es-welcome-hint">
+                    This is a tool, not a friend - real people are better for real connection
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     # === ONE panel at a time in main area (priority order) ===
     panel_shown = False
@@ -85,12 +110,12 @@ def display_chat_interface(wellness_mode):
     # Chat input (disabled in read-only mode)
     if is_read_only():
         st.chat_input("Read-only mode: close empathySync on other device first", disabled=True)
-    elif prompt := st.chat_input("What are you thinking through?"):
-        with st.chat_message("user"):
+    elif prompt := st.chat_input("Type here..."):
+        with st.chat_message("user", avatar=USER_AVATAR):
             st.markdown(prompt)
 
         # Process message through ConversationSession streaming pipeline
-        with st.chat_message("assistant"):
+        with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
             result = session.process_message_stream(prompt)
             if result.is_streaming:
                 st.write_stream(result.response_stream)
