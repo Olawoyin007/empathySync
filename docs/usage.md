@@ -242,7 +242,7 @@ When you ask "what should I do?" about sensitive topics, the system may flip the
 
 > *"If a friend came to you with this exact situation, what would you tell them?"*
 
-This helps you access your own wisdom instead of asking AI for answers you already have. Whatever you'd tell a friend is probably good advice for yourself too.
+This helps you think it through yourself instead of deferring to AI for answers you already have. Whatever you'd tell a friend is probably good advice for yourself too.
 
 ### "Have You Talked to Someone?"
 

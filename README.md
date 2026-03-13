@@ -26,17 +26,17 @@ Every AI assistant is built to keep you talking. empathySync is the only one bui
 
 Full help for practical tasks. Deliberate restraint on personal ones. When it detects you're spiralling, it redirects you to real humans - not more conversation. Everything runs on your hardware via Ollama. No cloud. No data harvesting. No engagement optimization.
 
-Your inner life deserves something that knows the difference.
+The things that matter most to you deserve a tool that knows the difference.
 
 <details>
-<summary><strong>The belief behind it</strong></summary>
+<summary><strong>Why it's built this way</strong></summary>
 <br>
 
 Every person should have the right to an AI system that is entirely their own. Not rented. Not monitored. Not optimised for someone else's engagement metrics. Yours - running on your hardware, answering only to you, storing nothing it doesn't need to.
 
 For sensitive, personal things - how you're feeling, your relationships, your health, your money - you deserve something local, private, and restrained. For complex tasks that need serious compute, use the cloud AIs. That's a reasonable division.
 
-But the part of AI that touches your inner life should belong to you.
+But the part of AI that handles your personal life should belong to you.
 
 This isn't a feature. It's the point.
 
