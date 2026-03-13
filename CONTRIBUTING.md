@@ -1,14 +1,14 @@
 # Contributing to empathySync
 
-Thank you for your interest in contributing to empathySync! This project exists to serve users through compassionate AI wellness guidance.
+Thank you for your interest in contributing to empathySync! This project exists to give users a privacy-respecting AI wellness tool that works for them, not against them.
 
 ## Development Principles
 
-Before contributing, please embrace these principles:
+Before contributing, keep these principles in mind:
 
 ### 1. **Empathy First** 
 - Every feature must center human wellbeing
-- Code with compassion for users experiencing digital overwhelm
+- Build with the user's wellbeing in mind, not just technical correctness
 - Test for emotional safety alongside technical functionality
 
 ### 2. **Privacy First**   
@@ -18,7 +18,7 @@ Before contributing, please embrace these principles:
 
 ### 3. **User Wellbeing** 
 - Reject features that manipulate or exploit users
-- Build technology that honors human dignity
+- Build technology that respects user autonomy
 - Consider the wellness impact of your code
 
 ## Not an Engineer?
@@ -46,7 +46,7 @@ If you're a therapist, counsellor, social worker, UX writer, or ethicist - your 
 ## Code Style
 
 - Follow PEP 8 guidelines
-- Use descriptive variable names that reflect compassionate intent
+- Use descriptive variable names that make your intent clear
 - Comment code to explain the "why" behind empathetic choices
 - Include docstrings for all functions
 
@@ -84,7 +84,7 @@ Your PR should include:
 - **Be kind** - Everyone is learning and growing
 - **Assume good intent** - We're all here to serve users
 - **Offer constructive feedback** - Help others improve
-- **Respect boundaries** - Honor people's time and energy
+- **Respect boundaries** - Be mindful of people's time and contributions
 
 ## Required Reading
 
@@ -104,6 +104,6 @@ For changes to safety-critical code (crisis detection, dependency scoring), incl
 
 ---
 
-*"Through empathy and collaboration, we build technology that serves human wellbeing."*
+*"Good tools get out of the way. Build something users can trust and then leave."*
 
 **Thank you for helping people develop healthier relationships with AI.**

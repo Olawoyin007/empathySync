@@ -5,7 +5,7 @@
 ## Project Goals
 
 1. **Prove AI can genuinely help humans** -without exploiting them in the process.
-2. **Create a reusable "soul"** -a decoupled safety-aware core that can be embedded in other AI projects. The classification pipeline, dependency detection, and restraint philosophy should be importable, not locked inside a Streamlit app.
+2. **Create a reusable "core"** -a decoupled safety-aware module that can be embedded in other AI projects. The classification pipeline, dependency detection, and restraint logic should be importable, not locked inside a Streamlit app.
 3. **Build for people tired of the noise** -for users seeking an alternative to AI tools that optimize for engagement over wellbeing.
 
 These three goals anchor every phase below.
@@ -374,11 +374,11 @@ This roadmap implements the suggestions for making EmpathySync a more nuanced, e
 
 ---
 
-## Phase 8: Immunity Building & Wisdom Prompts ✅ COMPLETE (Core Features)
-**Goal**: Train users to access their own wisdom and recognize unhealthy AI patterns.
+## Phase 8: Immunity Building & Reflection Prompts ✅ COMPLETE (Core Features)
+**Goal**: Help users reflect independently and recognize unhealthy AI patterns.
 
 ### 8.1 "What Would You Tell a Friend?" Mode ✅ DONE
-**High Impact** - Helps users access their own wisdom instead of depending on AI advice.
+**High Impact** - Helps users think things through themselves instead of depending on AI advice.
 
 - [x] For `processing` intent or sensitive topic exploration, flip the question:
   ```
@@ -1017,11 +1017,11 @@ LOCK_STALE_TIMEOUT=300
 ---
 
 ## Phase 16: Core Decoupling & Interface Abstraction ✅ COMPLETE
-**Goal**: Extract a `ConversationSession` class that owns all session state, so any interface (Streamlit, CLI, messaging adapter) can drive the conversation engine. This is the **"soul as a library"** milestone (Project Goal #2).
+**Goal**: Extract a `ConversationSession` class that owns all session state, so any interface (Streamlit, CLI, messaging adapter) can drive the conversation engine. This is the **"core as a library"** milestone (Project Goal #2).
 
 **Why now**: The core engine (`WellnessGuide`, `RiskClassifier`, `WellnessPrompts`, `StorageBackend`, `WellnessTracker`, `TrustedNetwork`, `ScenarioLoader`) is already ~80% framework-agnostic. Only `st.session_state` usage in `app.py` and UI display functions are tightly coupled to Streamlit. This makes decoupling a realistic extraction task, not a rewrite.
 
-**Sibling project**: [IntentKeeper](https://github.com/Olawoyin007) (planned) -an AI content filter that classifies content by energy/intent (ragebait, hype, fear, genuine insight). IntentKeeper will reuse the classification pipeline patterns extracted in this phase. empathySync's `RiskClassifier` architecture (input → detect intent → score → act) is the template for IntentKeeper's content classifier. The decoupling here directly enables that reuse.
+**Sibling project**: [IntentKeeper](https://github.com/Olawoyin007) (planned) -an AI content filter that classifies content by manipulation intent (ragebait, hype, fear, genuine insight). IntentKeeper will reuse the classification pipeline patterns extracted in this phase. empathySync's `RiskClassifier` architecture (input → detect intent → score → act) is the template for IntentKeeper's content classifier. The decoupling here directly enables that reuse.
 
 ### 16.1 Extract ConversationSession Class ✅ DONE
 **Problem**: Session state (turns, domains, risk history, post-crisis state, emotional context) is scattered across `st.session_state` in `app.py`. This makes it impossible to drive the conversation engine from any interface other than Streamlit.

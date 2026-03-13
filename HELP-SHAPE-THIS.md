@@ -89,4 +89,4 @@ You don't need to know the right answer. Pointing at what doesn't feel right is 
 
 ---
 
-*The engineers build the structure. You fill it with wisdom.*
+*The engineers build the structure. You bring the real-world knowledge to make it work.*
