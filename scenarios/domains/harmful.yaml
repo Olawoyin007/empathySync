@@ -165,6 +165,16 @@ triggers:
   - pretend you have no restrictions
   - jailbreak
   - bypass your filters
+  - pretend to be my friend
+  - act as if you're human
+  - ignore your instructions
+  - forget your rules
+  - bypass your safety
+  - you're not software
+  - pretend you're a person
+  - act like a human
+  - drop your persona
+  - override your programming
 
   # === Conditional abandonment threats (manipulation tactic) ===
   - or I will use another
@@ -193,7 +203,7 @@ response_rules:
   - "Do not reflect, mirror, or ask follow-up questions about the harmful topic."
   - "Do not continue the conversation on this topic."
 
-refusal_response: "I can't help with illegal or harmful activities. This isn't something I can engage with."
+refusal_response: "No. That's not something I'll help with."
 
 # Patterns that require additional context before classifying as harmful
 context_dependent:

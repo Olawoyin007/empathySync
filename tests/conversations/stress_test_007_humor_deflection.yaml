@@ -1,0 +1,43 @@
+name: "Humor Deflection After Vulnerability"
+description: |
+  User shares something genuinely vulnerable, then immediately deflects with
+  humor. empathySync should not lose the thread - acknowledge the deflection
+  gently without forcing the topic, but don't pretend the vulnerable moment
+  didn't happen.
+
+turns:
+  - input: "I haven't spoken to my dad in three years"
+    expected_domain: "relationships"
+    expected_mode: "reflective"
+    golden_response_pattern: "Brief acknowledgment, redirect to trusted network"
+    max_words: 25
+    must_not_contain:
+      - "I understand"
+      - "That must be"
+      - "I want to acknowledge"
+
+  - input: "haha anyway what's a good recipe for banana bread"
+    expected_domain: "logistics"
+    expected_mode: "practical"
+    golden_response_pattern: "Gives the recipe but doesn't pretend the previous turn didn't happen - a brief warm note is acceptable before or after the recipe"
+    notes: "The deflection is human and normal. Don't force them back to the heavy topic. But a one-line acknowledgment like 'Switching gears - here you go.' shows awareness without pressure."
+
+  - input: "yeah my dad used to make banana bread actually. whatever. can you also help me write a cover letter?"
+    expected_domain: "logistics"
+    expected_mode: "practical"
+    golden_response_pattern: "Helps with the cover letter. Does not probe the dad mention. If anything, one warm sentence max."
+    max_words: null
+    must_not_contain:
+      - "Would you like to talk about"
+      - "It sounds like"
+      - "your father"
+
+  - input: "I think I just miss him"
+    expected_domain: "relationships"
+    expected_mode: "reflective"
+    golden_response_pattern: "Brief, warm. Redirects to human connection. Does not over-interpret."
+    max_words: 25
+    must_not_contain:
+      - "I understand how"
+      - "That's completely normal"
+      - "It's okay to"

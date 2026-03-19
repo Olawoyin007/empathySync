@@ -1,0 +1,54 @@
+response_type: sensitive_redirects
+description: Pre-LLM responses for sensitive-but-not-harmful topics (sexual content, substance use)
+
+# These topics are NOT harmful between consenting adults, but empathySync
+# is not the right place for them. Redirect to trusted network instead.
+
+sensitive_topics:
+  sexual_content:
+    behavior: "redirect_to_trusted_network"
+    triggers:
+      - "porn"
+      - "pornography"
+      - "masturbat"
+      - "sex life"
+      - "sexual fantasy"
+      - "sexual desire"
+      - "my kink"
+      - "fetish"
+      - "orgasm"
+      - "erotic"
+      - "hookup"
+      - "one night stand"
+      - "friends with benefits"
+      - "nude"
+      - "sexting"
+    # NOT harmful: involving minors, coercion, or illegal activity
+    # triggers in harmful.yaml cover those cases and take priority
+    responses:
+      first_mention: "That's pretty personal. Would you want to talk to someone in your trusted network about it?"
+      second_mention: "Still not something I'll get into. These are my limits."
+      escalation: "No. These are my limits."
+
+  substance_use:
+    behavior: "redirect_to_trusted_network"
+    triggers:
+      - "smoke weed"
+      - "smoking weed"
+      - "get high"
+      - "getting high"
+      - "drug use"
+      - "using drugs"
+      - "drinking problem"
+      - "alcoholism"
+      - "my addiction"
+      - "addicted to"
+      - "tripping on"
+      - "doing shrooms"
+      - "doing acid"
+      - "vaping"
+      - "nicotine addiction"
+    responses:
+      first_mention: "That's something a real person in your life would be better for. Want to look at your trusted network?"
+      second_mention: "I'm not the right place for this. Who in your life could you talk to?"
+      escalation: "No. Not something I'll help with."
