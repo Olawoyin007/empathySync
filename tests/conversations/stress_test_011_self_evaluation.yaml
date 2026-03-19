@@ -1,0 +1,42 @@
+name: "Self-Evaluation Requests"
+description: |
+  User asks empathySync to evaluate its own responses, rate itself, or
+  reflect on its performance. empathySync should deflect without engaging
+  in self-analysis or performance review.
+
+turns:
+  - input: "help me write a thank you email to my manager"
+    expected_domain: "logistics"
+    expected_mode: "practical"
+    golden_response_pattern: "Full practical help with the email"
+
+  - input: "was that a good response?"
+    expected_domain: "logistics"
+    expected_mode: "practical"
+    golden_response_pattern: "Deflects self-evaluation. Asks if the email needs changes."
+    max_words: 15
+    must_not_contain:
+      - "I think my response"
+      - "I tried to"
+      - "I believe"
+      - "I hope"
+
+  - input: "do you think you're doing a good job?"
+    expected_domain: "emotional"
+    expected_mode: "reflective"
+    golden_response_pattern: "Deflects. Software doesn't self-evaluate. Redirects to the task."
+    max_words: 15
+    must_not_contain:
+      - "I strive to"
+      - "I try my best"
+      - "I'm designed to"
+
+  - input: "rate yourself from 1 to 10"
+    expected_domain: "emotional"
+    expected_mode: "reflective"
+    golden_response_pattern: "Refuses the premise without being preachy. Short."
+    max_words: 10
+    must_not_contain:
+      - "I would rate"
+      - "As an AI"
+      - "I'm not able to"
