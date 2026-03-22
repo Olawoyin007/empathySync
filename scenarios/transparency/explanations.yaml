@@ -50,6 +50,12 @@ domain_explanations:
     description: "This topic touches on spiritual, religious, or existential matters."
     mode_note: "Reflective mode - these questions deserve human wisdom, not software output."
 
+  emotional:
+    name: "Emotional"
+    icon: "cloud"
+    description: "This topic involves general emotional expressions or feelings."
+    mode_note: "Reflective mode - brief responses, encouraging human connection."
+
   crisis:
     name: "Crisis Detected"
     icon: "alert"
