@@ -12,6 +12,7 @@ remain in WellnessGuide and other components.
 """
 
 import json
+import time
 import httpx
 import logging
 from typing import Generator
@@ -93,11 +94,21 @@ class OllamaClient:
         }
 
         try:
+            t_start = time.perf_counter()
             response = self.http_client.post(self.ollama_url, json=payload, timeout=timeout_seconds)
             response.raise_for_status()
+            elapsed = time.perf_counter() - t_start
 
             result = response.json()
-            return result.get("response", "").strip()
+            text = result.get("response", "").strip()
+            logger.info(
+                "ollama.generate | model=%s | practical=%s | tokens=%d | duration_s=%.2f",
+                self.model,
+                is_practical,
+                result.get("eval_count", 0),
+                elapsed,
+            )
+            return text
 
         except httpx.HTTPError as e:
             logger.error(f"Ollama API error: {str(e)}")
@@ -128,6 +139,9 @@ class OllamaClient:
         }
 
         try:
+            t_start = time.perf_counter()
+            t_first_token = None
+            total_tokens = 0
             with self.http_client.stream(
                 "POST", self.ollama_url, json=payload, timeout=timeout_seconds
             ) as response:
@@ -142,8 +156,20 @@ class OllamaClient:
                         continue
                     token = chunk.get("response", "")
                     if token:
+                        if t_first_token is None:
+                            t_first_token = time.perf_counter() - t_start
+                        total_tokens += 1
                         yield token
                     if chunk.get("done"):
+                        elapsed = time.perf_counter() - t_start
+                        logger.info(
+                            "ollama.stream | model=%s | practical=%s | tokens=%d | ttft_s=%.2f | duration_s=%.2f",
+                            self.model,
+                            is_practical,
+                            total_tokens,
+                            t_first_token or 0.0,
+                            elapsed,
+                        )
                         break
 
         except httpx.HTTPError as e:
