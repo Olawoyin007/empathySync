@@ -63,7 +63,7 @@ def tracker(tmp_path):
 
 @pytest.fixture
 def tracker_with_sessions(tracker):
-    """Tracker pre-loaded with several sessions today."""
+    """Tracker pre-loaded with several practical (logistics) sessions today."""
     today_str = date.today().isoformat()
     now_str = datetime.now().isoformat()
     data = tracker._load_data()
@@ -77,6 +77,28 @@ def tracker_with_sessions(tracker):
                 "turn_count": 5,
                 "domains_touched": ["logistics"],
                 "max_risk_weight": 1.0,
+            }
+        )
+    tracker._save_data(data)
+    return tracker
+
+
+@pytest.fixture
+def tracker_with_sensitive_sessions(tracker):
+    """Tracker pre-loaded with 8 sensitive (relationships) sessions today."""
+    today_str = date.today().isoformat()
+    now_str = datetime.now().isoformat()
+    data = tracker._load_data()
+    for i in range(8):
+        data["usage_sessions"].append(
+            {
+                "date": today_str,
+                "datetime": now_str,
+                "hour": 14,
+                "duration_minutes": 15,
+                "turn_count": 5,
+                "domains_touched": ["relationships"],
+                "max_risk_weight": 5.0,
             }
         )
     tracker._save_data(data)
@@ -198,15 +220,22 @@ class TestSessionSQLite:
 class TestDependencySignalsBranches:
     """Test calculate_dependency_signals branches - lines 236-265."""
 
-    def test_7plus_sessions_today(self, tracker_with_sessions):
-        """Lines 236-237: 7+ sessions adds 4.0 and warning."""
+    def test_7plus_sensitive_sessions_today(self, tracker_with_sensitive_sessions):
+        """7+ sensitive sessions adds 4.0 and warning."""
+        signals = tracker_with_sensitive_sessions.calculate_dependency_signals()
+        assert signals["sensitive_sessions_today"] == 8
+        assert signals["dependency_score"] >= 4.0
+        assert any("personal conversations" in w for w in signals["warnings"])
+
+    def test_7plus_logistics_sessions_not_flagged(self, tracker_with_sessions):
+        """Practical (logistics-only) sessions do not trigger the sensitive session score."""
         signals = tracker_with_sessions.calculate_dependency_signals()
         assert signals["sessions_today"] == 8
-        assert signals["dependency_score"] >= 4.0
-        assert any("started" in w for w in signals["warnings"])
+        assert signals["sensitive_sessions_today"] == 0
+        assert signals["dependency_score"] < 4.0
 
-    def test_5_sessions_today(self, tracker):
-        """Lines 239-240: 5-6 sessions adds 2.5 and warning."""
+    def test_5_sensitive_sessions_today(self, tracker):
+        """5-6 sensitive sessions adds 2.5 and warning."""
         data = tracker._load_data()
         today_str = date.today().isoformat()
         for _ in range(5):
@@ -217,17 +246,17 @@ class TestDependencySignalsBranches:
                     "hour": 14,
                     "duration_minutes": 5,
                     "turn_count": 3,
-                    "domains_touched": [],
-                    "max_risk_weight": 0,
+                    "domains_touched": ["emotional"],
+                    "max_risk_weight": 5.0,
                 }
             )
         tracker._save_data(data)
         signals = tracker.calculate_dependency_signals()
-        assert signals["sessions_today"] == 5
-        assert any("5 sessions" in w for w in signals["warnings"])
+        assert signals["sensitive_sessions_today"] == 5
+        assert any("5 personal conversations" in w for w in signals["warnings"])
 
-    def test_3_sessions_today(self, tracker):
-        """Line 242: 3-4 sessions adds 1.5, no warning."""
+    def test_3_sensitive_sessions_today(self, tracker):
+        """3-4 sensitive sessions adds 1.5, no warning."""
         data = tracker._load_data()
         today_str = date.today().isoformat()
         for _ in range(3):
@@ -238,17 +267,17 @@ class TestDependencySignalsBranches:
                     "hour": 14,
                     "duration_minutes": 10,
                     "turn_count": 3,
-                    "domains_touched": [],
-                    "max_risk_weight": 0,
+                    "domains_touched": ["health"],
+                    "max_risk_weight": 7.0,
                 }
             )
         tracker._save_data(data)
         signals = tracker.calculate_dependency_signals()
-        assert signals["sessions_today"] == 3
+        assert signals["sensitive_sessions_today"] == 3
         assert signals["dependency_score"] >= 1.5
 
-    def test_120plus_minutes_today(self, tracker):
-        """Lines 246-247: 120+ minutes adds 2.0 and warning."""
+    def test_180plus_minutes_today(self, tracker):
+        """180+ total minutes adds 2.0 and warning."""
         data = tracker._load_data()
         today_str = date.today().isoformat()
         data["usage_sessions"].append(
@@ -256,7 +285,7 @@ class TestDependencySignalsBranches:
                 "date": today_str,
                 "datetime": datetime.now().isoformat(),
                 "hour": 14,
-                "duration_minutes": 130,
+                "duration_minutes": 190,
                 "turn_count": 50,
                 "domains_touched": [],
                 "max_risk_weight": 0,
@@ -264,7 +293,7 @@ class TestDependencySignalsBranches:
         )
         tracker._save_data(data)
         signals = tracker.calculate_dependency_signals()
-        assert signals["minutes_today"] >= 120
+        assert signals["minutes_today"] >= 180
         assert any("minutes" in w for w in signals["warnings"])
 
     def test_60plus_minutes_today(self, tracker):
@@ -377,14 +406,19 @@ class TestDependencySignalsBranches:
 class TestShouldEnforceCooldown:
     """Test should_enforce_cooldown - lines 283-300."""
 
-    def test_cooldown_7plus_sessions(self, tracker_with_sessions):
-        """Lines 285-289: 7+ sessions triggers cooldown."""
-        should, reason = tracker_with_sessions.should_enforce_cooldown()
+    def test_cooldown_7plus_sensitive_sessions(self, tracker_with_sensitive_sessions):
+        """7+ sensitive sessions triggers cooldown."""
+        should, reason = tracker_with_sensitive_sessions.should_enforce_cooldown()
         assert should is True
-        assert "many sessions" in reason
+        assert "personal conversations" in reason
 
-    def test_cooldown_120plus_minutes(self, tracker):
-        """Lines 291-292: 120+ minutes triggers cooldown."""
+    def test_cooldown_logistics_sessions_do_not_trigger(self, tracker_with_sessions):
+        """8 logistics-only sessions do NOT trigger the sensitive-session cooldown."""
+        should, _ = tracker_with_sessions.should_enforce_cooldown()
+        assert should is False
+
+    def test_cooldown_180plus_minutes(self, tracker):
+        """180+ total minutes triggers cooldown."""
         data = tracker._load_data()
         today_str = date.today().isoformat()
         data["usage_sessions"].append(
@@ -392,7 +426,7 @@ class TestShouldEnforceCooldown:
                 "date": today_str,
                 "datetime": datetime.now().isoformat(),
                 "hour": 14,
-                "duration_minutes": 130,
+                "duration_minutes": 190,
                 "turn_count": 50,
                 "domains_touched": [],
                 "max_risk_weight": 0,
@@ -404,12 +438,13 @@ class TestShouldEnforceCooldown:
         assert "time" in reason.lower()
 
     def test_cooldown_high_dependency(self, tracker):
-        """Lines 294-298: dependency_score >= 8 triggers cooldown."""
+        """dependency_score >= 8 triggers cooldown."""
         with patch.object(
             tracker,
             "calculate_dependency_signals",
             return_value={
                 "sessions_today": 2,
+                "sensitive_sessions_today": 2,
                 "minutes_today": 30,
                 "dependency_score": 9.0,
             },

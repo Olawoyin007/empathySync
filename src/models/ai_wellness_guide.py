@@ -70,8 +70,21 @@ def _load_turn_limits():
 
 TURN_LIMITS = _load_turn_limits()
 
-# Identity reminder frequency (every N turns)
-IDENTITY_REMINDER_FREQUENCY = 6
+
+def _load_identity_reminder_frequency() -> int:
+    """Load identity reminder frequency from system_defaults.yaml, fallback to 9."""
+    try:
+        from utils.scenario_loader import get_scenario_loader
+
+        loader = get_scenario_loader()
+        defaults = loader.get_system_defaults()
+        return int(defaults.get("session", {}).get("identity_reminder_frequency", 9))
+    except Exception:
+        return 9
+
+
+# Identity reminder frequency (every N turns in Reflective mode only)
+IDENTITY_REMINDER_FREQUENCY = _load_identity_reminder_frequency()
 
 
 class WellnessGuide:
