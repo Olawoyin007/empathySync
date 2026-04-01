@@ -6,6 +6,7 @@ from datetime import datetime, date
 import streamlit as st
 
 from config.settings import settings
+from utils.transcript import generate_markdown_transcript
 from ui.panels import (
     display_usage_health,
     display_my_patterns_dashboard,
@@ -209,6 +210,23 @@ def render_sidebar(logo_b64: str):
                 mime="application/json",
                 use_container_width=True,
             )
+
+            messages = st.session_state.get("messages", [])
+            if messages:
+                transcript_md = generate_markdown_transcript(
+                    messages=messages,
+                    exported_at=datetime.now(),
+                    session_turns=len([m for m in messages if m.get("role") == "user"]),
+                    domains=list(st.session_state.get("session_domains", [])),
+                    app_version=settings.APP_VERSION,
+                )
+                st.download_button(
+                    "Export Transcript",
+                    data=transcript_md,
+                    file_name=f"empathysync_transcript_{date.today()}.md",
+                    mime="text/markdown",
+                    use_container_width=True,
+                )
 
             st.caption("All data stays on your device.")
 

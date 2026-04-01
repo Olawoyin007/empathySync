@@ -9,7 +9,7 @@
 *Most chatbots want you to keep talking.*
 *This one wants you to leave and go live your life.*
 
-[![v1.4](https://img.shields.io/badge/release-v1.4-orange.svg)](https://github.com/Olawoyin007/empathySync/releases/tag/v1.4)
+[![v1.5](https://img.shields.io/badge/release-v1.5-orange.svg)](https://github.com/Olawoyin007/empathySync/releases/tag/v1.5)
 [![CI](https://github.com/Olawoyin007/empathySync/actions/workflows/ci.yml/badge.svg)](https://github.com/Olawoyin007/empathySync/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Local-First](https://img.shields.io/badge/Privacy-Local--First-blue.svg)](#)
@@ -141,6 +141,7 @@ empathysync --mode cli  # Direct terminal mode
 - **YAML-Driven**: All prompts, rules, and thresholds configurable
 - **LLM Classification**: Optional intelligent classification for nuanced context detection
 - **Framework-Agnostic Core**: `ConversationSession` class can be embedded in any Python project
+- **Transcript Export**: Download any conversation as a Markdown file from the Session & Data panel
 
 ## Configuration
 

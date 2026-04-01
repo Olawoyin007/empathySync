@@ -17,7 +17,7 @@ class Settings:
 
     # Application
     APP_NAME: str = "empathySync"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = "1.5.0"
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
