@@ -146,6 +146,13 @@ def apply_custom_css():
     section[data-testid="stSidebar"] {
         border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
     }
+    /* Prevent button labels from breaking mid-word when sidebar is narrow */
+    section[data-testid="stSidebar"] .stButton > button p,
+    section[data-testid="stSidebar"] .stButton > button span:not([data-testid]) {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
 
     /* Sidebar buttons - compact with icon alignment */
     section[data-testid="stSidebar"] .stButton > button {

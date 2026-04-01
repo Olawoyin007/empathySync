@@ -13,6 +13,18 @@ import tempfile
 import logging
 from datetime import datetime, date, timedelta
 from pathlib import Path
+
+# Domains considered sensitive for cooldown purposes.
+# Logistics is excluded - practical task usage should not count toward dependency limits.
+_SENSITIVE_DOMAINS = {
+    "crisis",
+    "harmful",
+    "health",
+    "money",
+    "emotional",
+    "relationships",
+    "spirituality",
+}
 from typing import Dict, List, Optional, Tuple
 
 from config.settings import settings
@@ -185,6 +197,25 @@ class WellnessTracker:
         sessions = self.get_sessions_today()
         return sum(s.get("duration_minutes", 0) for s in sessions)
 
+    def get_sensitive_sessions_today(self) -> list:
+        """Sessions today that touched at least one sensitive (non-logistics) domain.
+
+        Practical-only sessions (logistics domain, low risk weight) are excluded
+        so a developer using empathySync for coding help all day does not trigger
+        the dependency cooldown intended for emotional over-reliance.
+        """
+        sessions = self.get_sessions_today()
+        return [
+            s
+            for s in sessions
+            if any(d in _SENSITIVE_DOMAINS for d in s.get("domains_touched", []))
+            or s.get("max_risk_weight", 0) > 2.0
+        ]
+
+    def get_sensitive_minutes_today(self) -> int:
+        """Total minutes spent in sensitive sessions today."""
+        return sum(s.get("duration_minutes", 0) for s in self.get_sensitive_sessions_today())
+
     def is_late_night_session(self) -> bool:
         """Check if current time is late night (10pm - 6am)"""
         hour = datetime.now().hour
@@ -211,6 +242,7 @@ class WellnessTracker:
         - warnings: list of human-readable warnings
         """
         sessions_today = self.count_sessions_today()
+        sensitive_sessions_today = len(self.get_sensitive_sessions_today())
         sessions_week = self.count_sessions_this_week()
         late_night = self.get_late_night_sessions_this_week()
         minutes_today = self.get_total_minutes_today()
@@ -231,21 +263,21 @@ class WellnessTracker:
         score = 0.0
         warnings = []
 
-        # Sessions today factor
-        if sessions_today >= 7:
+        # Sensitive sessions today factor (practical/logistics sessions excluded)
+        if sensitive_sessions_today >= 7:
             score += 4.0
-            warnings.append(f"You've started {sessions_today} sessions today")
-        elif sessions_today >= 5:
+            warnings.append(f"You've had {sensitive_sessions_today} personal conversations today")
+        elif sensitive_sessions_today >= 5:
             score += 2.5
-            warnings.append(f"You've had {sessions_today} sessions today")
-        elif sessions_today >= 3:
+            warnings.append(f"You've had {sensitive_sessions_today} personal conversations today")
+        elif sensitive_sessions_today >= 3:
             score += 1.5
 
-        # Minutes today factor
-        if minutes_today >= 120:
+        # Minutes today factor (total usage, practical included)
+        if minutes_today >= 180:
             score += 2.0
             warnings.append(f"You've spent {minutes_today} minutes with me today")
-        elif minutes_today >= 60:
+        elif minutes_today >= 90:
             score += 1.0
 
         # Late night factor
@@ -266,6 +298,7 @@ class WellnessTracker:
 
         return {
             "sessions_today": sessions_today,
+            "sensitive_sessions_today": sensitive_sessions_today,
             "sessions_this_week": sessions_week,
             "late_night_sessions": late_night,
             "minutes_today": minutes_today,
@@ -278,17 +311,20 @@ class WellnessTracker:
         """
         Check if a cooldown should be enforced.
 
+        Cooldown is based on sensitive sessions (non-logistics domains) only.
+        Practical task usage (coding, writing, explanations) does not count.
+
         Returns (should_cooldown, reason)
         """
         signals = self.calculate_dependency_signals()
 
-        if signals["sessions_today"] >= 7:
+        if signals["sensitive_sessions_today"] >= 7:
             return (
                 True,
-                "You've had many sessions today. Please take a break and talk to someone you trust.",
+                "You've had many personal conversations today. Please take a break and talk to someone you trust.",
             )
 
-        if signals["minutes_today"] >= 120:
+        if signals["minutes_today"] >= 180:
             return True, "You've spent a lot of time here today. Step away for a while."
 
         if signals["dependency_score"] >= 8:

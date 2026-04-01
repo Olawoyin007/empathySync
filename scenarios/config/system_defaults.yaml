@@ -30,7 +30,7 @@ session:
     spirituality: 10
     crisis: 1
     harmful: 1
-  identity_reminder_frequency: 6  # Remind user "I'm an AI" every N turns
+  identity_reminder_frequency: 9  # Remind user "I'm an AI" every N turns (was 6 - felt preachy)
   post_crisis_clear_after: 3      # Clear post-crisis state after N turns
 
 # --- Context Persistence (Phase 6.5) ---
@@ -86,11 +86,11 @@ anti_engagement:
     start: 22                     # 10 PM
     end: 6                        # 6 AM
   thresholds:
-    sessions_high: 7              # 7+ sessions/day = high concern
+    sessions_high: 7              # 7+ sensitive sessions/day = high concern (practical sessions excluded)
     sessions_moderate: 5
     sessions_low: 3
-    minutes_high: 120             # 2+ hours/day
-    minutes_moderate: 60          # 1+ hour/day
+    minutes_high: 180             # 3+ hours/day total (raised from 120 - practical use unconstrained)
+    minutes_moderate: 90          # 1.5+ hours/day
     late_night_sessions: 3        # 3+ late-night sessions
     dependency_cooldown: 8        # Score triggering cooldown
     break_suggestion: 5           # Score suggesting a break
