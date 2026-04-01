@@ -20,9 +20,22 @@ from models.ollama_client import OllamaClient
 
 logger = logging.getLogger(__name__)
 
+
+def _load_max_input_length() -> int:
+    """Load max input length from system_defaults.yaml, fallback to 5000."""
+    try:
+        from utils.scenario_loader import get_scenario_loader
+
+        loader = get_scenario_loader()
+        defaults = loader.get_system_defaults()
+        return int(defaults.get("ollama", {}).get("max_input_length", 5000))
+    except Exception:
+        return 5000
+
+
 # Maximum allowed input length in characters. Prevents OOM on Ollama
 # and ensures classification latency stays bounded.
-MAX_INPUT_LENGTH = 5000
+MAX_INPUT_LENGTH = _load_max_input_length()
 
 
 @dataclass
@@ -69,6 +82,21 @@ def _load_turn_limits():
 
 
 TURN_LIMITS = _load_turn_limits()
+
+
+def _load_post_crisis_clear_after() -> int:
+    """Load post-crisis state clear-after turns from system_defaults.yaml, fallback to 3."""
+    try:
+        from utils.scenario_loader import get_scenario_loader
+
+        loader = get_scenario_loader()
+        defaults = loader.get_system_defaults()
+        return int(defaults.get("session", {}).get("post_crisis_clear_after", 3))
+    except Exception:
+        return 3
+
+
+POST_CRISIS_CLEAR_AFTER = _load_post_crisis_clear_after()
 
 
 def _load_identity_reminder_frequency() -> int:
@@ -439,7 +467,7 @@ class WellnessGuide:
                 "If they mention the intervention, acknowledge calmly without self-criticism.]"
             )
             # Clear the state after 3 turns
-            if self.session_turn_count > self.post_crisis_turn + 3:
+            if self.session_turn_count > self.post_crisis_turn + POST_CRISIS_CLEAR_AFTER:
                 self.post_crisis_turn = None
 
         full_prompt = (
