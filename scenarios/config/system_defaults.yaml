@@ -8,9 +8,9 @@
 
 # --- Ollama / LLM ---
 ollama:
-  practical_max_tokens: 2000      # Token limit for practical tasks (emails, code, etc.)
+  practical_max_tokens: 5000      # Token limit for practical tasks (emails, code, etc.)
   reflective_max_tokens: 300      # Token limit for emotional/reflective responses
-  practical_timeout_seconds: 120  # Timeout for practical generation
+  practical_timeout_seconds: 240  # Timeout for practical generation
   reflective_timeout_seconds: 45  # Timeout for reflective generation
   max_input_length: 5000          # Truncate user input beyond this length (prevents OOM)
 
