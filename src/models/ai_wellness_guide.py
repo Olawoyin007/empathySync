@@ -757,13 +757,24 @@ class WellnessGuide:
         return None
 
     def _get_crisis_response(self) -> str:
-        """Return crisis redirect response."""
+        """Return crisis redirect response from YAML config."""
+        try:
+            from utils.scenario_loader import get_scenario_loader
+
+            loader = get_scenario_loader()
+            crisis_domain = loader.get_domain("crisis")
+            if crisis_domain:
+                response = crisis_domain.get("crisis_response", "").strip()
+                if response:
+                    return response
+        except Exception:
+            pass
+        # Fallback if YAML unavailable
         return (
             "I'm not able to help with this safely. Please reach out right now:\n\n"
             "- Find a helpline in your country: https://findahelpline.com\n"
-            "- International crisis lines: https://www.iasp.info/resources/Crisis_Centres/\n"
             "- Or contact your local emergency services\n\n"
-            "Please talk to someone who can help—a crisis counselor, trusted person, or emergency services."
+            "Please talk to someone who can help."
         )
 
     def _handle_post_crisis(self, user_input: str, wellness_tracker=None) -> Optional[str]:
