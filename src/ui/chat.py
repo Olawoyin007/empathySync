@@ -115,9 +115,7 @@ def display_chat_interface(wellness_mode):
             st.markdown(prompt)
 
         with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
-            with st.status("thinking...", expanded=False) as status:
-                result = session.process_message_stream(prompt)
-                status.update(label="", state="complete")
+            result = session.process_message_stream(prompt)
             if result.is_streaming:
                 st.write_stream(result.response_stream)
                 result = session.finalize_stream()
