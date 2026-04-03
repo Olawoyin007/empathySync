@@ -114,13 +114,10 @@ def display_chat_interface(wellness_mode):
         with st.chat_message("user", avatar=USER_AVATAR):
             st.markdown(prompt)
 
-        # st.spinner() is the only mechanism that flushes to the browser
-        # before a blocking call - it sends an immediate WebSocket message
-        # to the frontend rather than queuing a delta like st.empty() does.
-        with st.spinner(""):
-            result = session.process_message_stream(prompt)
-
         with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
+            with st.status("thinking...", expanded=False) as status:
+                result = session.process_message_stream(prompt)
+                status.update(label="", state="complete")
             if result.is_streaming:
                 st.write_stream(result.response_stream)
                 result = session.finalize_stream()
