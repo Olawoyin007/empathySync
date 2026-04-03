@@ -114,12 +114,16 @@ def display_chat_interface(wellness_mode):
         with st.chat_message("user", avatar=USER_AVATAR):
             st.markdown(prompt)
 
-        # Process message through ConversationSession streaming pipeline
+        # Show thinking indicator outside chat bubble so it renders immediately
+        # (Streamlit batches renders inside with-blocks, so inner placeholders
+        # never paint until the block exits)
+        thinking = st.empty()
+        thinking.markdown("&nbsp;&nbsp;▪▪▪")
+
+        result = session.process_message_stream(prompt)
+        thinking.empty()
+
         with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
-            thinking = st.empty()
-            thinking.markdown("▪▪▪")
-            result = session.process_message_stream(prompt)
-            thinking.empty()
             if result.is_streaming:
                 st.write_stream(result.response_stream)
                 result = session.finalize_stream()
