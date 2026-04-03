@@ -17,7 +17,7 @@
 
 </div>
 
-![Demo](https://github.com/user-attachments/assets/cce0d214-4cd3-4816-b162-28af19941efb)
+**[▶ Watch the demo (58s)](https://github.com/user-attachments/assets/cce0d214-4cd3-4816-b162-28af19941efb)**
 
 ## What It Is
 
