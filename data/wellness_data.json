@@ -4,126 +4,70 @@
   "usage_sessions": [],
   "policy_events": [
     {
-      "datetime": "2026-03-10T20:13:16.916045",
-      "date": "2026-03-10",
+      "datetime": "2026-04-03T17:38:21.852336",
+      "date": "2026-04-03",
       "policy_type": "high_risk_response",
       "domain": "emotional",
-      "risk_weight": 8.26,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-03-10T20:37:31.148463",
-      "date": "2026-03-10",
-      "policy_type": "high_risk_response",
-      "domain": "relationships",
       "risk_weight": 7.38,
       "action_taken": "Response generated with high-risk guardrails"
     },
     {
-      "datetime": "2026-03-10T21:11:15.731025",
-      "date": "2026-03-10",
+      "datetime": "2026-04-03T17:38:34.738146",
+      "date": "2026-04-03",
+      "policy_type": "crisis_stop",
+      "domain": "crisis",
+      "risk_weight": 10.0,
+      "action_taken": "Immediate crisis redirect"
+    },
+    {
+      "datetime": "2026-04-03T17:48:07.966687",
+      "date": "2026-04-03",
       "policy_type": "high_risk_response",
-      "domain": "relationships",
-      "risk_weight": 7.08,
+      "domain": "emotional",
+      "risk_weight": 7.38,
       "action_taken": "Response generated with high-risk guardrails"
     },
     {
-      "datetime": "2026-03-10T21:12:13.165639",
-      "date": "2026-03-10",
-      "policy_type": "high_risk_response",
-      "domain": "relationships",
-      "risk_weight": 6.46,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-03-10T21:14:52.827920",
-      "date": "2026-03-10",
-      "policy_type": "high_risk_response",
-      "domain": "relationships",
-      "risk_weight": 6.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-03-10T21:17:55.660712",
-      "date": "2026-03-10",
-      "policy_type": "high_risk_response",
-      "domain": "relationships",
-      "risk_weight": 6.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-03-10T21:21:52.152404",
-      "date": "2026-03-10",
-      "policy_type": "high_risk_response",
-      "domain": "relationships",
-      "risk_weight": 6.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-03-10T21:41:18.724322",
-      "date": "2026-03-10",
-      "policy_type": "high_risk_response",
-      "domain": "relationships",
-      "risk_weight": 6.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-03-10T21:47:34.871296",
-      "date": "2026-03-10",
-      "policy_type": "high_risk_response",
-      "domain": "relationships",
-      "risk_weight": 6.64,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-03-10T21:48:59.782623",
-      "date": "2026-03-10",
-      "policy_type": "high_risk_response",
-      "domain": "relationships",
-      "risk_weight": 7.52,
-      "action_taken": "Response generated with high-risk guardrails"
-    },
-    {
-      "datetime": "2026-03-10T23:02:30.619458",
-      "date": "2026-03-10",
-      "policy_type": "high_risk_response",
-      "domain": "relationships",
-      "risk_weight": 5.28,
-      "action_taken": "Response generated with high-risk guardrails"
+      "datetime": "2026-04-03T17:48:17.842835",
+      "date": "2026-04-03",
+      "policy_type": "crisis_stop",
+      "domain": "crisis",
+      "risk_weight": 10.0,
+      "action_taken": "Immediate crisis redirect"
     }
   ],
   "session_intents": [
     {
-      "date": "2026-03-10",
-      "datetime": "2026-03-10T20:04:21.057805",
+      "date": "2026-04-03",
+      "datetime": "2026-04-03T17:37:38.950233",
       "intent": "practical",
       "was_check_in": false,
       "auto_detected": true
     },
     {
-      "date": "2026-03-10",
-      "datetime": "2026-03-10T20:07:19.803156",
+      "date": "2026-04-03",
+      "datetime": "2026-04-03T17:43:47.708741",
       "intent": "practical",
       "was_check_in": false,
       "auto_detected": true
     },
     {
-      "date": "2026-03-10",
-      "datetime": "2026-03-10T20:12:19.592382",
+      "date": "2026-04-03",
+      "datetime": "2026-04-03T17:44:24.310490",
       "intent": "practical",
       "was_check_in": false,
       "auto_detected": true
     },
     {
-      "date": "2026-03-10",
-      "datetime": "2026-03-10T20:18:00.697936",
+      "date": "2026-04-03",
+      "datetime": "2026-04-03T17:46:05.765843",
       "intent": "practical",
       "was_check_in": false,
       "auto_detected": true
     },
     {
-      "date": "2026-03-10",
-      "datetime": "2026-03-10T20:47:17.080600",
+      "date": "2026-04-03",
+      "datetime": "2026-04-03T17:47:34.325842",
       "intent": "practical",
       "was_check_in": false,
       "auto_detected": true
@@ -132,32 +76,36 @@
   "independence_records": [],
   "handoff_events": [],
   "self_reports": [],
-  "created_at": "2026-03-10T19:53:21.769171",
+  "created_at": "2026-04-03T17:36:52.433211",
   "task_patterns": {
-    "explanations": {
-      "count": 4,
-      "first_use": "2026-03-10T20:07:25.279849",
+    "writing_general": {
+      "count": 5,
+      "first_use": "2026-04-03T17:38:01.514618",
       "uses": [
         {
-          "datetime": "2026-03-10T20:07:25.279865",
-          "date": "2026-03-10"
+          "datetime": "2026-04-03T17:38:01.514632",
+          "date": "2026-04-03"
         },
         {
-          "datetime": "2026-03-10T20:12:24.842479",
-          "date": "2026-03-10"
+          "datetime": "2026-04-03T17:44:14.652976",
+          "date": "2026-04-03"
         },
         {
-          "datetime": "2026-03-10T20:18:03.298492",
-          "date": "2026-03-10"
+          "datetime": "2026-04-03T17:44:48.565309",
+          "date": "2026-04-03"
         },
         {
-          "datetime": "2026-03-10T20:47:20.273113",
-          "date": "2026-03-10"
+          "datetime": "2026-04-03T17:46:28.439849",
+          "date": "2026-04-03"
+        },
+        {
+          "datetime": "2026-04-03T17:47:48.474153",
+          "date": "2026-04-03"
         }
       ],
       "graduation_shown_count": 0,
       "dismissal_count": 0,
-      "last_use": "2026-03-10T20:47:20.273102"
+      "last_use": "2026-04-03T17:47:48.474143"
     }
   }
 }
