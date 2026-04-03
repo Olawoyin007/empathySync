@@ -116,8 +116,10 @@ def display_chat_interface(wellness_mode):
 
         # Process message through ConversationSession streaming pipeline
         with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
-            with st.spinner(""):
-                result = session.process_message_stream(prompt)
+            thinking = st.empty()
+            thinking.markdown("▪▪▪")
+            result = session.process_message_stream(prompt)
+            thinking.empty()
             if result.is_streaming:
                 st.write_stream(result.response_stream)
                 result = session.finalize_stream()
