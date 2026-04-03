@@ -29,32 +29,32 @@ domain_explanations:
   relationships:
     name: "Relationships"
     icon: "heart"
-    description: "This topic involves interpersonal dynamics or emotional relationships."
-    mode_note: "Reflective mode - brief responses, encouraging human connection."
+    description: "This touches on relationships or interpersonal dynamics."
+    mode_note: "Keeping it brief and pointing toward real people."
 
   money:
     name: "Financial"
     icon: "dollar"
-    description: "This topic involves financial decisions or concerns."
-    mode_note: "Reflective mode - I'm not a financial advisor. Suggesting professional guidance."
+    description: "This touches on finances or money concerns."
+    mode_note: "Not a financial advisor - suggesting you talk to one."
 
   health:
     name: "Health"
     icon: "medical"
-    description: "This topic involves health, medical, or wellness concerns."
-    mode_note: "Reflective mode - I'm not a healthcare provider. Encouraging professional consultation."
+    description: "This touches on health or wellbeing."
+    mode_note: "Not a healthcare provider - encouraging professional support."
 
   spirituality:
-    name: "Spiritual/Religious"
+    name: "Spiritual"
     icon: "star"
-    description: "This topic touches on spiritual, religious, or existential matters."
-    mode_note: "Reflective mode - these questions deserve human wisdom, not software output."
+    description: "This touches on spiritual or existential questions."
+    mode_note: "These questions deserve human wisdom, not software."
 
   emotional:
     name: "Emotional"
     icon: "cloud"
-    description: "This topic involves general emotional expressions or feelings."
-    mode_note: "Reflective mode - brief responses, encouraging human connection."
+    description: "This involves emotional expression or feelings."
+    mode_note: "Keeping it brief and pointing toward real people."
 
   crisis:
     name: "Crisis Detected"

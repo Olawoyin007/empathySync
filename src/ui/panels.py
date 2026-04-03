@@ -82,10 +82,16 @@ def display_transparency_panel():
             st.caption(policy_note)
 
         # Human-readable tag line - no numeric score
-        risk_label = "sensitive topic" if risk_weight >= 5 else "standard"
         if risk_weight >= 8:
-            risk_label = "high sensitivity"
-        st.caption(f"{domain_info.get('name', domain.title())} - {risk_label}")
+            risk_label = "sensitive"
+        elif risk_weight >= 5:
+            risk_label = "personal topic"
+        else:
+            risk_label = None
+        tag = domain_info.get("name", domain.title())
+        if risk_label:
+            tag = f"{tag} · {risk_label}"
+        st.caption(tag)
 
 
 def display_session_summary():
