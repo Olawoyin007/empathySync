@@ -2442,16 +2442,20 @@ class TestHealthChecks:
             assert result.ok is False
             assert result.critical is True
 
-    def test_check_ollama_server_unreachable(self):
+    @patch("utils.health_check.get_http_client")
+    def test_check_ollama_server_unreachable(self, mock_get_client):
         """Test Ollama check when server is not running."""
+        import httpx
         from utils.health_check import check_ollama_server
 
-        with patch("utils.health_check.settings") as mock_settings:
-            mock_settings.OLLAMA_HOST = "http://localhost:99999"
-            result = check_ollama_server()
-            assert result.ok is False
-            assert "Cannot connect" in result.message or "Unexpected" in result.message
-            assert result.details is not None
+        mock_client = Mock()
+        mock_get_client.return_value = mock_client
+        mock_client.get.side_effect = httpx.ConnectError("Connection refused")
+
+        result = check_ollama_server()
+        assert result.ok is False
+        assert "Cannot connect" in result.message
+        assert result.details is not None
 
     @patch("utils.health_check.get_http_client")
     def test_check_ollama_server_success(self, mock_get_client):
@@ -3002,8 +3006,10 @@ class TestStreaming:
 
         call_kwargs = mock_client.stream.call_args
         payload = call_kwargs.kwargs["json"]
-        assert payload["options"]["num_predict"] == 2000
-        assert call_kwargs.kwargs["timeout"] == 120
+        expected_tokens = guide.ollama_client.practical_max_tokens
+        expected_timeout = guide.ollama_client.practical_timeout
+        assert payload["options"]["num_predict"] == expected_tokens
+        assert call_kwargs.kwargs["timeout"] == expected_timeout
         assert payload["stream"] is True
 
     # --- generate_response_stream tests ---
