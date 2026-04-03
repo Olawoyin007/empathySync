@@ -114,14 +114,11 @@ def display_chat_interface(wellness_mode):
         with st.chat_message("user", avatar=USER_AVATAR):
             st.markdown(prompt)
 
-        # Show thinking indicator outside chat bubble so it renders immediately
-        # (Streamlit batches renders inside with-blocks, so inner placeholders
-        # never paint until the block exits)
-        thinking = st.empty()
-        thinking.markdown("&nbsp;&nbsp;▪▪▪")
-
-        result = session.process_message_stream(prompt)
-        thinking.empty()
+        # st.spinner() is the only mechanism that flushes to the browser
+        # before a blocking call - it sends an immediate WebSocket message
+        # to the frontend rather than queuing a delta like st.empty() does.
+        with st.spinner(""):
+            result = session.process_message_stream(prompt)
 
         with st.chat_message("assistant", avatar=ASSISTANT_AVATAR):
             if result.is_streaming:
