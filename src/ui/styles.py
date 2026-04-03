@@ -190,6 +190,11 @@ def apply_custom_css():
         border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
+    /* -- Hide Streamlit deploy button -- */
+    [data-testid="stAppDeployButton"] {
+        display: none !important;
+    }
+
     /* -- Top padding on main area (clear Streamlit toolbar) -- */
     .stMainBlockContainer {
         padding-top: 3.5rem !important;
