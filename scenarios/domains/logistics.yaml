@@ -81,7 +81,6 @@ practical_mode_rules:
   - "When the user asks for 'comprehensive', 'detailed', 'in-depth', or 'thorough' content: treat that as an instruction to elaborate fully on every point. A one-line bullet is not a comprehensive answer."
   - "Avoid stopping at a surface-level list when depth is clearly expected. Each major point should have enough explanation to be actionable."
   - "Use markdown formatting when it helps readability"
-  - "Offer to refine or adjust if they want changes"
   - "Be practical and helpful, not therapeutic"
   - "Act like a capable AI assistant, not a wellness coach"
 
