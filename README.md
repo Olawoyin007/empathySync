@@ -17,11 +17,7 @@
 
 </div>
 
-<details>
-<summary><strong>▶ Watch the demo (58s)</strong></summary>
-<br>
-<video src="assets/empathySync.mp4" controls muted style="max-width:100%;border-radius:8px;"></video>
-</details>
+![Demo](assets/empathySync.mp4)
 
 ## What It Is
 
