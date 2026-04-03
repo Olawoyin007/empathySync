@@ -17,8 +17,11 @@
 
 </div>
 
-<!-- Screenshot: place image in assets/ and uncomment the line below once available -->
-<!-- ![empathySync interface showing the transparency panel](assets/screenshot.png) -->
+<details>
+<summary><strong>▶ Watch the demo (58s)</strong></summary>
+<br>
+<video src="assets/empathySync.mp4" controls muted style="max-width:100%;border-radius:8px;"></video>
+</details>
 
 ## What It Is
 
