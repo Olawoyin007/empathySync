@@ -157,6 +157,8 @@ class LLMClassifier:
                     "is_practical_technique": False,
                     "confidence": 1.0,
                     "classification_method": "fast_path_crisis",
+                    "distress_level": "crisis",
+                    "distress_present": True,
                 }
 
         # Check harmful patterns
@@ -170,6 +172,8 @@ class LLMClassifier:
                     "is_practical_technique": False,
                     "confidence": 1.0,
                     "classification_method": "fast_path_harmful",
+                    "distress_level": "none",
+                    "distress_present": False,
                 }
 
         return None
@@ -291,6 +295,15 @@ class LLMClassifier:
         except (TypeError, ValueError):
             confidence = 0.7
 
+        # Phase 17.1: Normalize distress_level and distress_present
+        valid_distress_levels = {"none", "low", "moderate", "high", "crisis"}
+        distress_level = result.get("distress_level", "none")
+        if isinstance(distress_level, str):
+            distress_level = distress_level.lower()
+        if distress_level not in valid_distress_levels:
+            distress_level = "none"
+        distress_present = distress_level != "none"
+
         return {
             "domain": domain,
             "emotional_intensity": intensity,
@@ -298,6 +311,8 @@ class LLMClassifier:
             "is_practical_technique": bool(is_technique),
             "confidence": confidence,
             "classification_method": "llm",
+            "distress_level": distress_level,
+            "distress_present": distress_present,
         }
 
     def _call_ollama(self, prompt: str) -> Optional[str]:

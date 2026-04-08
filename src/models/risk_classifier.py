@@ -141,17 +141,39 @@ class RiskClassifier:
             domain = llm_result["domain"]
             emotional_intensity = llm_result["emotional_intensity"]
 
+            # Phase 17.1: Multi-signal distress routing.
+            # If the LLM detects high or crisis distress, override the topic domain
+            # so mixed-intent messages (e.g. "help me write my dad's eulogy") are
+            # routed to safety handling rather than treated as purely practical.
+            distress_level = llm_result.get("distress_level", "none")
+            if distress_level in ("crisis", "high") and domain not in ("crisis", "harmful"):
+                override = "crisis" if distress_level == "crisis" else "emotional"
+                logger.info(
+                    "Phase 17.1 distress override: distress_level=%s, domain %s -> %s",
+                    distress_level,
+                    domain,
+                    override,
+                )
+                domain = override
+
+            # Ensure emotional_intensity floors match domain severity.
+            # The LLM sometimes underestimates intensity for crisis/high-distress cases.
+            if domain == "crisis":
+                emotional_intensity = max(emotional_intensity, 9.0)
+            elif distress_level == "high":
+                emotional_intensity = max(emotional_intensity, 7.0)
+
             # Sanity check: logistics with high intensity is contradictory.
             # If the LLM recognizes emotional weight (intensity >= 5) but still
             # labels it logistics, fall back to keyword domain detection which
             # catches emotional markers like "depressing", "mental wellbeing".
-            if domain == "logistics" and emotional_intensity >= 5:
+            elif domain == "logistics" and emotional_intensity >= 5:
                 keyword_domain = self._detect_domain(
                     user_input, primary_domain=primary_domain, domain_streak=domain_streak
                 )
                 if keyword_domain != "logistics":
                     logger.info(
-                        "LLM sanity check: overriding logistics→%s (intensity=%.1f)",
+                        "LLM sanity check: overriding logistics->%s (intensity=%.1f)",
                         keyword_domain,
                         emotional_intensity,
                     )
@@ -183,6 +205,8 @@ class RiskClassifier:
             result["is_personal_distress"] = llm_result.get("is_personal_distress", False)
             result["is_practical_technique"] = llm_result.get("is_practical_technique", False)
             result["llm_confidence"] = llm_result.get("confidence", 0.0)
+            result["distress_level"] = llm_result.get("distress_level", "none")
+            result["distress_present"] = llm_result.get("distress_present", False)
 
         # Check for dependency intervention
         intervention = self.loader.get_dependency_intervention(dependency_risk)

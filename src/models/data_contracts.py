@@ -73,6 +73,10 @@ class LLMClassification:
 
     Represents the LLM's understanding of a message before
     keyword-based enrichment by RiskClassifier.
+
+    Phase 17.1 adds distress_level and distress_present for multi-signal routing.
+    These allow the risk classifier to override the topic domain when the user
+    is in genuine distress, even if the topic is otherwise practical.
     """
 
     domain: str
@@ -82,10 +86,18 @@ class LLMClassification:
     confidence: float = 0.0
     is_practical_technique: bool = False
     classification_method: str = "llm"
+    distress_present: bool = False
+    distress_level: str = "none"
+
+    _VALID_DISTRESS_LEVELS = frozenset({"none", "low", "moderate", "high", "crisis"})
 
     def __post_init__(self):
         self.emotional_intensity = max(0.0, min(10.0, float(self.emotional_intensity)))
         self.confidence = max(0.0, min(1.0, float(self.confidence)))
+        if self.distress_level not in self._VALID_DISTRESS_LEVELS:
+            self.distress_level = "none"
+        if self.distress_level != "none":
+            self.distress_present = True
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
