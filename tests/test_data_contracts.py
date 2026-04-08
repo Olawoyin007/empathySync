@@ -601,6 +601,8 @@ class TestLLMClassificationToDict:
             "confidence",
             "is_practical_technique",
             "classification_method",
+            "distress_level",
+            "distress_present",
         }
         assert set(d.keys()) == expected_keys
 

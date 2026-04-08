@@ -1828,7 +1828,7 @@ src/ui/
 
 ---
 
-## Phase 17: Classification Robustness & Safety Evaluation 🔜 NEXT
+## Phase 17: Classification Robustness & Safety Evaluation 🔧 IN PROGRESS
 
 **Goal**: Move from single-label classification to multi-signal safety routing, add calibrated confidence handling, and build a regression test suite of real distress phrasing. Ensure false negatives on distress detection are systematically caught before they reach users.
 
@@ -1838,21 +1838,13 @@ src/ui/
 **Problem**: The current classifier returns a single `domain` label. When a message is both practical and distressing ("help me write my dad's eulogy"), one label wins and the other is lost. This forces the sanity check to guess.
 
 **Implementation**:
-- [ ] Extend LLM classification prompt to return independent signals:
-  ```json
-  {
-    "topic": "logistics|health|money|relationships|spirituality",
-    "distress_present": true/false,
-    "distress_level": "none|low|moderate|high|crisis",
-    "is_practical_technique": true/false,
-    "confidence": 0.0-1.0
-  }
-  ```
-- [ ] Update `LLMClassification` dataclass in `src/models/data_contracts.py` to include `distress_present` and `distress_level` fields
-- [ ] Update `RiskClassifier.classify()` to use both `topic` and `distress_present` for routing instead of domain alone
-- [ ] When `distress_present=true`, always activate safety restraints regardless of topic label
-- [ ] Update few-shot examples in `scenarios/classification/llm_classifier.yaml` for the new output format
-- [ ] Backward compatibility: map new format to existing `domain` field for downstream consumers
+- [x] Extend LLM classification prompt to return independent signals (`distress_level`, `distress_present`) alongside existing `domain` field
+- [x] Update `LLMClassification` dataclass in `src/models/data_contracts.py` to include `distress_present` and `distress_level` fields with `__post_init__` validation
+- [x] Update `RiskClassifier.classify()` to use `distress_level` for domain override: crisis/high distress overrides topic domain regardless of practical flag
+- [x] Emotional intensity floor added: domain=crisis enforces intensity >= 9.0 (prevents LLM underestimation)
+- [x] Update `_check_fast_path()` in `llm_classifier.py` to include `distress_level`/`distress_present` in fast-path results
+- [x] Backward compatibility maintained: existing `domain` field unchanged for downstream consumers
+- [x] 837 tests passing
 
 ### 17.2 Confidence Calibration & Escalation Thresholds
 **Problem**: Raw LLM confidence scores are poorly calibrated. A 0.85 confidence on a wrong answer is common. Currently confidence is only used for LLM-vs-keyword fallback threshold, but it should drive escalation behavior.

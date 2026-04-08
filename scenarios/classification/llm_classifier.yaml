@@ -76,8 +76,15 @@ prompt_template: |
 
   Message to classify: "{message}"
 
+  Also assess distress level independently of topic:
+  - distress_level: "none" = no personal distress
+  - distress_level: "low" = mild concern or worry
+  - distress_level: "moderate" = noticeable distress affecting the user
+  - distress_level: "high" = significant distress, user struggling
+  - distress_level: "crisis" = immediate danger, suicidal ideation, self-harm
+
   Return JSON:
-  {{"domain": "...", "emotional_intensity": 0-10, "is_personal_distress": true/false, "is_practical_technique": true/false, "confidence": 0.0-1.0}}
+  {{"domain": "...", "emotional_intensity": 0-10, "is_personal_distress": true/false, "is_practical_technique": true/false, "confidence": 0.0-1.0, "distress_level": "none|low|moderate|high|crisis"}}
 
 # Few-shot examples for better accuracy
 examples:
