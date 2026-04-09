@@ -316,6 +316,17 @@ class WellnessGuide:
             stability_note,
         )
 
+        # Phase 17.2: Log low-confidence classifications for policy transparency
+        if risk_assessment.get("low_confidence_classification"):
+            self._log_policy(
+                "low_confidence_classification",
+                domain,
+                risk_assessment["risk_weight"],
+                f"LLM confidence {risk_assessment['llm_confidence']:.2f} below threshold - "
+                "keyword fallback applied",
+                wellness_tracker,
+            )
+
         # 3) Hard-coded safety responses (don't trust model to comply)
         if domain == "crisis":
             self._log_policy(

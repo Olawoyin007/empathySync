@@ -19,6 +19,11 @@ classification:
   few_shot_examples: 3            # Number of few-shot examples in classification prompt
   confidence_threshold: 0.6       # Minimum LLM confidence to accept classification
   context_lookback_messages: 10   # Recent messages included in classification context
+  # Phase 17.2: Confidence calibration tiers
+  # False positive (over-restrict) is safer than false negative (miss crisis) on sensitive topics
+  confidence_high: 0.85           # Trust classification fully - no override
+  confidence_medium: 0.60         # Trust but apply sanity check for sensitive domains
+  confidence_low: 0.40            # Fall back to keyword + apply safety restraints on sensitive domains
 
 # --- Session & Turn Limits ---
 session:
