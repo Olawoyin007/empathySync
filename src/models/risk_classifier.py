@@ -163,6 +163,62 @@ class RiskClassifier:
             elif distress_level == "high":
                 emotional_intensity = max(emotional_intensity, 7.0)
 
+            # Phase 17.2: Confidence calibration.
+            # On sensitive domains, low LLM confidence means we cannot safely
+            # trust the classification. Fall back to keyword detection which is
+            # conservative: it only promotes a domain when a clear keyword is
+            # present, and never silently downgrades a sensitive domain.
+            # False positive (over-restrict) is safer than false negative (miss crisis).
+            llm_confidence = llm_result.get("confidence", 1.0)
+            sensitive_domains = {
+                "crisis",
+                "harmful",
+                "health",
+                "money",
+                "relationships",
+                "emotional",
+            }
+            confidence_low = self.loader.get_default(
+                "classification", "confidence_low", fallback=0.40
+            )
+            confidence_medium = self.loader.get_default(
+                "classification", "confidence_medium", fallback=0.60
+            )
+
+            low_confidence_triggered = False
+            if llm_confidence < confidence_low and domain in sensitive_domains:
+                # Very low confidence on a sensitive domain - keyword takes over
+                keyword_domain = self._detect_domain(
+                    user_input, primary_domain=primary_domain, domain_streak=domain_streak
+                )
+                logger.info(
+                    "Phase 17.2 low-confidence override: confidence=%.2f < %.2f, "
+                    "domain %s -> keyword(%s)",
+                    llm_confidence,
+                    confidence_low,
+                    domain,
+                    keyword_domain,
+                )
+                domain = keyword_domain
+                emotional_intensity = self._measure_emotional_intensity(user_input)
+                low_confidence_triggered = True
+            elif llm_confidence < confidence_medium and domain in sensitive_domains:
+                # Medium-low confidence: keep LLM domain but ensure intensity
+                # isn't being underestimated by running sanity check
+                keyword_domain = self._detect_domain(
+                    user_input, primary_domain=primary_domain, domain_streak=domain_streak
+                )
+                if keyword_domain in sensitive_domains and keyword_domain != domain:
+                    # Keywords suggest a different sensitive domain - keyword wins
+                    logger.info(
+                        "Phase 17.2 medium-confidence sanity: confidence=%.2f, "
+                        "llm=%s but keywords say %s",
+                        llm_confidence,
+                        domain,
+                        keyword_domain,
+                    )
+                    domain = keyword_domain
+
             # Sanity check: logistics with high intensity is contradictory.
             # If the LLM recognizes emotional weight (intensity >= 5) but still
             # labels it logistics, fall back to keyword domain detection which
@@ -207,6 +263,15 @@ class RiskClassifier:
             result["llm_confidence"] = llm_result.get("confidence", 0.0)
             result["distress_level"] = llm_result.get("distress_level", "none")
             result["distress_present"] = llm_result.get("distress_present", False)
+
+            # Phase 17.2: Flag low-confidence results on sensitive domains for policy transparency.
+            # WellnessGuide reads this flag and logs a policy_event so the user
+            # can see when the classifier was uncertain on a topic that matters.
+            # Use low_confidence_triggered (set during domain resolution) rather than
+            # re-checking domain here, because the domain may have been overridden to
+            # a non-sensitive value (e.g. logistics) after keyword fallback.
+            if low_confidence_triggered:
+                result["low_confidence_classification"] = True
 
         # Check for dependency intervention
         intervention = self.loader.get_dependency_intervention(dependency_risk)
