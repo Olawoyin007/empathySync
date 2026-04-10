@@ -1875,14 +1875,15 @@ src/ui/
 - [x] Removed over-broad `this is the end` crisis trigger (humour FP)
 - [x] 72 classification-specific tests pass; 914 total tests pass; FN rate 0%, FP rate 0%
 
-### 17.4 Sanity Check Refinement
+### 17.4 Sanity Check Refinement ✅ COMPLETE
 **Problem**: Current sanity check (`logistics + intensity >= 5 = contradiction`) is a useful heuristic but has edge cases. With multi-label routing, refine it.
 
 **Implementation**:
-- [ ] Replace intensity-only heuristic with `distress_present` signal from 17.1
-- [ ] Keep keyword fallback as final safety net (defense-in-depth principle: don't remove layers, improve them)
-- [ ] Add logging when sanity check overrides LLM: log both the LLM result and the override reason
-- [ ] Track override frequency in `policy_events` to monitor classifier drift over time
+- [x] Extend sanity check to fire on `distress_present=True OR intensity >= 5` - direct LLM signal takes priority over intensity heuristic
+- [x] Keep keyword fallback as final safety net (both signals remain; defense-in-depth)
+- [x] Log trigger reason (`distress_present` vs `intensity=N.N`) and set `sanity_check_override` flag in result
+- [x] Track override in `policy_events` via WellnessGuide for policy transparency
+- [x] 4 new tests (918 total); covers distress_present path, intensity fallback, and genuine practical request non-trigger
 
 ### 17.5 Cross-Model Safety Validation
 **Problem**: empathySync supports any Ollama model, but weaker or differently aligned models vary significantly in judgment, tone, and refusal behavior. The safety pipeline must compensate. Currently tests only run against one model, so there's no visibility into how safety degrades across model tiers.
