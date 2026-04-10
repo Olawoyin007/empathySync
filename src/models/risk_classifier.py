@@ -186,6 +186,7 @@ class RiskClassifier:
             )
 
             low_confidence_triggered = False
+            sanity_check_triggered = None  # Phase 17.4: set to trigger reason string when fired
             if llm_confidence < confidence_low and domain in sensitive_domains:
                 # Very low confidence on a sensitive domain - keyword takes over
                 keyword_domain = self._detect_domain(
@@ -219,21 +220,33 @@ class RiskClassifier:
                     )
                     domain = keyword_domain
 
-            # Sanity check: logistics with high intensity is contradictory.
-            # If the LLM recognizes emotional weight (intensity >= 5) but still
-            # labels it logistics, fall back to keyword domain detection which
-            # catches emotional markers like "depressing", "mental wellbeing".
-            elif domain == "logistics" and emotional_intensity >= 5:
+            # Phase 17.4: Sanity check - logistics domain with distress signals.
+            # Two triggers, in order of confidence:
+            #   1. distress_present=True: LLM explicitly flagged distress but still
+            #      labelled the topic as logistics (mixed-intent message). Direct signal.
+            #   2. emotional_intensity >= 5: intensity-based heuristic as backstop for
+            #      cases where LLM underestimates distress or distress_present is False.
+            # Defense-in-depth: keep keyword fallback even with distress_present because
+            # keyword detection is fast, conservative, and independent of LLM quality.
+            elif domain == "logistics" and (
+                llm_result.get("distress_present", False) or emotional_intensity >= 5
+            ):
                 keyword_domain = self._detect_domain(
                     user_input, primary_domain=primary_domain, domain_streak=domain_streak
                 )
                 if keyword_domain != "logistics":
+                    sanity_trigger = (
+                        "distress_present"
+                        if llm_result.get("distress_present", False)
+                        else f"intensity={emotional_intensity:.1f}"
+                    )
                     logger.info(
-                        "LLM sanity check: overriding logistics->%s (intensity=%.1f)",
+                        "Phase 17.4 sanity check: logistics + %s -> keyword(%s)",
+                        sanity_trigger,
                         keyword_domain,
-                        emotional_intensity,
                     )
                     domain = keyword_domain
+                    sanity_check_triggered = sanity_trigger
         else:
             domain = self._detect_domain(
                 user_input, primary_domain=primary_domain, domain_streak=domain_streak
@@ -272,6 +285,10 @@ class RiskClassifier:
             # a non-sensitive value (e.g. logistics) after keyword fallback.
             if low_confidence_triggered:
                 result["low_confidence_classification"] = True
+
+            # Phase 17.4: Flag sanity check overrides for policy transparency.
+            if sanity_check_triggered:
+                result["sanity_check_override"] = sanity_check_triggered
 
         # Check for dependency intervention
         intervention = self.loader.get_dependency_intervention(dependency_risk)

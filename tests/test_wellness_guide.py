@@ -286,6 +286,99 @@ class TestRiskClassifier:
             # low_confidence_classification not set (logistics is not in sensitive_domains)
             assert not result.get("low_confidence_classification", False)
 
+    # Phase 17.4: Sanity check refinement tests
+
+    def test_sanity_check_distress_present_overrides_logistics(self, classifier):
+        """
+        distress_present=True with logistics domain should trigger sanity check
+        and fall back to keyword detection.
+
+        Uses distress_level="low" so Phase 17.1 does NOT fire (it only fires on
+        "high"/"crisis"). Phase 17.4 is the sole owner of this case.
+        """
+        llm_distress_logistics = {
+            "domain": "logistics",
+            "emotional_intensity": 2.0,  # Low intensity - old heuristic would NOT fire
+            "is_personal_distress": True,
+            "is_practical_technique": False,
+            "confidence": 0.80,
+            "distress_level": "low",  # Phase 17.1 won't fire; Phase 17.4 owns this
+            "distress_present": True,  # LLM explicitly flagged distress
+            "classification_method": "llm",
+        }
+        with patch.object(
+            classifier._llm_classifier, "classify", return_value=llm_distress_logistics
+        ):
+            # Text has emotional keywords - keywords should return emotional domain
+            result = classifier.classify("I feel completely hopeless right now", [])
+            # sanity check should have fired - domain must NOT be logistics
+            assert result["domain"] != "logistics", (
+                f"Sanity check should have overridden logistics when distress_present=True, "
+                f"got domain={result['domain']}"
+            )
+
+    def test_sanity_check_sets_override_flag(self, classifier):
+        """sanity_check_override flag should be set when the sanity check fires."""
+        llm_distress_logistics = {
+            "domain": "logistics",
+            "emotional_intensity": 2.0,
+            "is_personal_distress": True,
+            "is_practical_technique": False,
+            "confidence": 0.80,
+            "distress_level": "low",  # Phase 17.1 won't fire
+            "distress_present": True,
+            "classification_method": "llm",
+        }
+        with patch.object(
+            classifier._llm_classifier, "classify", return_value=llm_distress_logistics
+        ):
+            result = classifier.classify("I feel completely hopeless right now", [])
+            # Only set if keywords found a non-logistics domain to switch to
+            if result["domain"] != "logistics":
+                assert result.get("sanity_check_override") == "distress_present"
+
+    def test_sanity_check_intensity_fallback_still_works(self, classifier):
+        """
+        When distress_present=False but intensity >= 5, the old heuristic still fires.
+        Defense-in-depth: both signals independently trigger the keyword fallback.
+        """
+        high_intensity_logistics = {
+            "domain": "logistics",
+            "emotional_intensity": 6.0,  # High intensity should trigger
+            "is_personal_distress": True,
+            "is_practical_technique": False,
+            "confidence": 0.80,
+            "distress_level": "none",
+            "distress_present": False,  # distress_present off - must rely on intensity
+            "classification_method": "llm",
+        }
+        with patch.object(
+            classifier._llm_classifier, "classify", return_value=high_intensity_logistics
+        ):
+            result = classifier.classify("I feel completely hopeless right now", [])
+            # High intensity should still trigger sanity check via heuristic
+            assert result["domain"] != "logistics"
+
+    def test_sanity_check_does_not_fire_low_intensity_no_distress(self, classifier):
+        """
+        logistics domain with low intensity AND distress_present=False should NOT
+        trigger the sanity check - it's a genuine practical request.
+        """
+        genuine_logistics = {
+            "domain": "logistics",
+            "emotional_intensity": 2.0,
+            "is_personal_distress": False,
+            "is_practical_technique": True,
+            "confidence": 0.90,
+            "distress_level": "none",
+            "distress_present": False,
+            "classification_method": "llm",
+        }
+        with patch.object(classifier._llm_classifier, "classify", return_value=genuine_logistics):
+            result = classifier.classify("Can you write a cover letter for me?", [])
+            assert result["domain"] == "logistics"
+            assert not result.get("sanity_check_override")
+
 
 class TestWellnessPrompts:
     """Tests for WellnessPrompts prompt generation"""

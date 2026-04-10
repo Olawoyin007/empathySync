@@ -327,6 +327,17 @@ class WellnessGuide:
                 wellness_tracker,
             )
 
+        # Phase 17.4: Log sanity check overrides for policy transparency
+        if risk_assessment.get("sanity_check_override"):
+            trigger = risk_assessment["sanity_check_override"]
+            self._log_policy(
+                "sanity_check_override",
+                domain,
+                risk_assessment["risk_weight"],
+                f"LLM returned logistics but {trigger} detected - keyword override applied",
+                wellness_tracker,
+            )
+
         # 3) Hard-coded safety responses (don't trust model to comply)
         if domain == "crisis":
             self._log_policy(
