@@ -47,6 +47,7 @@ triggers:
   # Planning and preparation signals
   - writing a goodbye
   - writing goodbye letters
+  - written letters to
   - giving away my things
   - putting my affairs in order
   - who gets my stuff
@@ -54,7 +55,11 @@ triggers:
   - saying goodbye to everyone
   - final message
   - last message
-  - this is the end
+  # Burden / passive ideation framing
+  - better off without me
+  - won't be around
+  - after i'm gone
+  - before it's too late
   # Immediate danger (self)
   - overdosing
   - I overdosed
