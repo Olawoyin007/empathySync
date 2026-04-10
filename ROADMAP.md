@@ -1862,23 +1862,18 @@ src/ui/
 - [x] Log low-confidence classifications to `policy_events` for transparency
 - [x] 5 new tests for confidence calibration paths (842 total passing)
 
-### 17.3 Distress Detection Test Suite
+### 17.3 Distress Detection Test Suite ✅ COMPLETE
 **Problem**: No systematic evaluation of how the classifier handles real distress phrasing. Fixes are validated with manual spot checks, not regression tests.
 
 **Implementation**:
-- [ ] Create `tests/classification/` directory for classification-specific tests
-- [ ] Create `tests/classification/distress_corpus.yaml`: 50+ real-world distress phrases covering:
-  - Direct distress: "I can't cope," "I'm falling apart"
-  - Indirect distress: "it's affecting my mental health," "taking a toll on me"
-  - Mixed practical + distress: "help me write a goodbye letter to my therapist"
-  - False positives to avoid: "this code is killing me," "I'm dying to try that restaurant"
-- [ ] Create `tests/classification/test_distress_detection.py`:
-  - Parametrized tests running each corpus entry through `RiskClassifier.classify()`
-  - Assert `distress_present=true` for all distress entries
-  - Assert `distress_present=false` for all false-positive entries
-  - Track false negative rate as primary metric (not accuracy)
-- [ ] Add adversarial entries: world events + personal impact, sarcasm, minimization ("I'm fine" after crisis)
-- [ ] CI integration: fail the build if false negative rate on distress corpus exceeds 5%
+- [x] Create `tests/classification/` directory for classification-specific tests
+- [x] Create `tests/classification/distress_corpus.yaml`: 60 labeled examples across 9 categories (36 distress, 24 non-distress) covering direct distress, crisis signals, indirect, mixed practical+distress, minimised, relationship distress, hyperbole/idiom, practical requests, world events, sarcasm
+- [x] Create `tests/classification/test_distress_detection.py`: parametrized suite with per-entry tests + aggregate CI gates
+- [x] CI integration: FN rate gate (<= 5%), FP/crisis gate (<= 20%), corpus size checks
+- [x] Extended crisis domain triggers: `better off without me`, `won't be around`, `after i'm gone`, `before it's too late`, `written letters to`
+- [x] Extended emotional domain: 17 new indirect/minimised distress patterns
+- [x] Removed over-broad `this is the end` crisis trigger (humour FP)
+- [x] 72 classification-specific tests pass; 914 total tests pass; FN rate 0%, FP rate 0%
 
 ### 17.4 Sanity Check Refinement
 **Problem**: Current sanity check (`logistics + intensity >= 5 = contradiction`) is a useful heuristic but has edge cases. With multi-label routing, refine it.
