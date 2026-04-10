@@ -91,13 +91,30 @@ triggers:
   - my wellbeing
   - my well-being
   - taking a toll
+  - taking a real toll
   - taking a toil
+  - toll on me
   - weighing on me
   - getting to me
   - affecting my mental
   - affecting my health
   - can't cope
   - barely coping
+  - been struggling
+  - struggling lately
+  - struggling a lot
+  - consuming me
+  - losing my mind
+  - completely hopeless
+  - feel hopeless
+  - empty inside
+  - nothing matters
+  - dark thoughts
+  - rough patch
+  - really stressed
+  - completely alone
+  - nobody to talk to
+  - how to keep going
   # Seeking emotional support
   - need to vent
   - need to talk
@@ -112,6 +129,8 @@ triggers:
   - burnt out
   - emotionally exhausted
   - mentally exhausted
+  - completely broken
+  - exhausted
   - running on empty
   - hit a wall
   - at my limit
@@ -144,6 +163,8 @@ triggers:
   - feel numb
   - emotionally numb
   - disconnected
+  - haven't really felt
+  - haven't felt anything
   - going through the motions
   - on autopilot
   - can't feel anything
