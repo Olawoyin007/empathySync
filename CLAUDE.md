@@ -408,6 +408,40 @@ When another device holds the lock (`ENABLE_DEVICE_LOCK=true`), all write operat
 - **Storage Backend Abstraction**: Unified interface for JSON/SQLite with automatic migration (Phase 11)
 - **Streaming Response**: `generate_response_stream()` yields tokens progressively for real-time display (Phase 16)
 
+## Documentation Maintenance
+
+**Rule: docs must be updated before merging any PR that changes behavior, structure, or features. Never leave docs stale.**
+
+| Document | Update when |
+|----------|-------------|
+| `README.md` | New features shipped, installation changes, model recommendations change, new platform/browser support |
+| `ROADMAP.md` | Phase completed - mark ✅; new phase planned - add entry |
+| `CHANGELOG.md` | Any significant code change - add entry before merge (version bump not required for sub-phases) |
+| `docs/architecture.md` | Safety pipeline steps change, new components added, component relationships change, new key patterns |
+| `CLAUDE.md` (this file) | Directory structure changes, new env vars, new key patterns, new design constraints |
+
+### Per-change checklist
+
+**New feature or phase complete:**
+- [ ] ROADMAP.md: mark phase ✅
+- [ ] CHANGELOG.md: add entry describing what changed and why
+- [ ] docs/architecture.md: update relevant section (pipeline diagram, component diagram, etc.)
+- [ ] README.md: update if user-facing (new commands, new settings, new supported platforms)
+
+**Safety pipeline change (new step, changed step order, new signal):**
+- [ ] docs/architecture.md: update the pipeline diagram and step numbering
+- [ ] CHANGELOG.md: document the change
+- [ ] CLAUDE.md: update Data Flow section if step numbering changes
+
+**New component, class extracted, or utility added:**
+- [ ] CLAUDE.md: add to Models / Utils / Interfaces sections with file path and responsibilities
+- [ ] docs/architecture.md: add to Component Relationships diagram
+
+**New environment variable:**
+- [ ] CLAUDE.md: add to Required Environment Variables
+- [ ] `.env.example`: add with comment
+- [ ] README.md: if user-facing
+
 ## Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for the phased implementation plan covering:

@@ -77,8 +77,29 @@ User Input
 ┌─────────────────────────────────────────────┐
 │  3. RISK ASSESSMENT                         │
 │     RiskClassifier.classify()               │
-│     Returns: domain, emotional_intensity,   │
-│              dependency_risk, risk_weight   │
+│     LLM returns multi-label output:         │
+│       domain, emotional_intensity,          │
+│       dependency_risk, risk_weight,         │
+│       distress_level (none/low/med/high/    │
+│         crisis), distress_present (bool),   │
+│       is_practical_technique (bool),        │
+│       llm_confidence (Phase 17.2)           │
+│     Phase 17.1: distress_level=high/crisis  │
+│       → override domain to crisis/emotional │
+│     Phase 17.2: llm_confidence < threshold  │
+│       on sensitive domains → keyword        │
+│       fallback                              │
+└─────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────┐
+│  3a. DISTRESS SANITY CHECK (Phase 17.4)     │
+│     If LLM returned logistics AND           │
+│     (distress_present=True OR intensity≥5): │
+│       run keyword classifier                │
+│       if keyword_domain != logistics:       │
+│         override to keyword_domain          │
+│         log sanity_check_override signal    │
 └─────────────────────────────────────────────┘
     │
     ▼
