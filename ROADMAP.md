@@ -2174,23 +2174,22 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 
 ---
 
-## Current Status (2026-02-10)
+## Current Status (2026-04-12)
 
-**Completed**: Phases 1, 2, 2.5, 3, 4, 5, 6, 6.5, 7, 8 (Core), 9, 9.1, 9.5, 11.1-11.7, 12, 13, 14 (Core), 15, and 16
+**Completed**: Phases 1-9.1, 11-16, 16.5-16.10 (all hardening), 17.1-17.4
 
-**In Progress**: Hardening Phases 16.5-16.10
-- Phase 16.9 Test Coverage: ✅ 83 new tests (443 total, all passing)
-- Phase 16.5 Type Safety: ✅ Enums and dataclasses defined (gradual adoption next)
+**Phase 17 progress**:
+- 17.1 ✅ Multi-label LLM classification (distress_level + distress_present alongside topic domain)
+- 17.2 ✅ Confidence calibration (keyword fallback when LLM confidence < threshold on sensitive domains)
+- 17.3 ✅ Distress detection test suite (60-entry labeled corpus, 72 parametrized tests, FN rate <= 5% CI gate)
+- 17.4 ✅ Sanity check refinement (distress_present as direct trigger alongside intensity heuristic)
+- 17.5 🔜 Cross-model safety validation (planned)
 
-**Why hardening before Phase 17?** The Persistent Agent Daemon (Phase 17) adds a long-running background process, cross-session memory, scheduled nudges, and self-governance. Building that on top of god classes, synchronous I/O, untested persistence, and 50+ magic numbers would compound every existing issue. Fix the foundation first, then build upward.
+**Safety pipeline depth**: 7 independent layers - post-crisis check, cooldown, keyword detection, LLM classification, confidence calibration (17.2), distress routing (17.1), sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
-**Recommended order**:
-1. Phase 16.9 (Test Coverage) -safety net before any refactoring
-2. Phase 16.5 (Type Safety) -enums and dataclasses make refactoring safer
-3. Phase 16.7 (Security) -fix race conditions and injection vectors
-4. Phase 16.6 (Async I/O) -unblock daemon architecture
-5. Phase 16.8 (God Class Decomposition) -clean architecture for Phase 17
-6. Phase 16.10 (Observability) -debug infrastructure for daemon development
+**Test suite**: 918 tests passing across all components. Distress corpus CI gate: 0% false negative rate on 36 distress entries, 0% false positive rate (crisis) on 24 benign entries.
+
+**Next**: Phase 17.5 (cross-model safety validation) - requires Ollama with multiple models available
 
 **Recent Bug Fixes**:
 - Fixed post-crisis apology bug: LLM no longer apologizes for crisis interventions
@@ -2328,7 +2327,7 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 **v1.2** (Phase 16.7-16.8): Security hardening, god class decomposition ✅ COMPLETE
 **v1.3** (Phase 16.9-16.10): Test coverage expansion, observability, configuration extraction ✅ COMPLETE
 **v1.4** (Phase 16.11): Conversation testing, voice tuning, golden response test suite
-**v1.5** (Phase 17): Persistent agent daemon, cross-session memory, self-restriction engine
+**v1.5** (Phase 17.1-17.4): Multi-label distress routing, confidence calibration, distress corpus CI gate, sanity check refinement ✅ IN PROGRESS
 **v2.0** (Phase 18): Messaging integration, safety parity across all interfaces
 **v2.1** (Phase 19): Multilingual support -crisis detection, restraint behaviour, and YAML knowledge base in priority languages
 
