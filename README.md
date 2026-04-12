@@ -71,6 +71,8 @@ We optimise for exit, not engagement.
 
 - **Crisis detection**: immediate redirect to professional resources, no exceptions
 - **Post-crisis protection**: never apologises for safety interventions
+- **Multi-label distress detection**: simultaneously tracks conversation topic AND distress level - catches mixed-intent messages ("help me write a goodbye letter") that single-label classifiers miss
+- **Confidence calibration**: when LLM confidence is low on sensitive domains, keyword detection takes over - false positive is always safer than false negative on crisis content
 
 ### Awareness & honesty
 
@@ -141,6 +143,8 @@ empathysync --mode cli  # Direct terminal mode
 - **LLM Classification**: Optional intelligent classification for nuanced context detection
 - **Framework-Agnostic Core**: `ConversationSession` class can be embedded in any Python project
 - **Transcript Export**: Download any conversation as a Markdown file from the Session & Data panel
+- **Multi-Label Safety Pipeline**: distress level and distress_present signals tracked alongside topic domain - catches mixed-intent messages single-label classifiers miss
+- **Distress Corpus CI Gate**: 60-entry labeled corpus gates every build - false negative rate on distress must stay below 5%
 
 ## Configuration
 
