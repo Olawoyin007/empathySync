@@ -2,6 +2,38 @@
 
 All notable changes to empathySync are documented here.
 
+## v1.6 (2026-04-12) - Distress Detection Layer
+
+**"Catches what the topic classifier misses."**
+
+Multi-label distress detection, confidence calibration, a 60-entry labeled corpus, and a sanity check that catches distress signals even when the LLM classifies a message as a practical (logistics) topic.
+
+### Classification (Phase 17.1)
+- **Multi-label LLM output**: Classifier now returns `distress_level` (none/low/medium/high/crisis) and `distress_present` (bool) alongside the topic domain
+- **Distress override**: `distress_level=high` or `distress_level=crisis` upgrades domain to `crisis` or `emotional` regardless of topic domain returned
+- **Separation of concerns**: topic domain and distress severity are now independent signals - a logistics message can also be a distress message
+
+### Confidence Calibration (Phase 17.2)
+- **Low-confidence fallback**: When `llm_confidence` drops below threshold on sensitive domains (health, crisis, emotional, relationships), keyword classifier runs as fallback
+- **Classification method logged**: `classification_method` field in risk assessment tracks whether LLM or keyword was the final arbiter
+
+### Distress Corpus & Tests (Phase 17.3)
+- **60-entry labeled corpus** (`tests/classification/distress_corpus.yaml`): 36 distress, 24 non-distress across 9 categories (passive ideation, grief, isolation, burnout, etc.)
+- **Parametrized test suite** (`tests/classification/test_distress_detection.py`): 72 tests with CI gates - FN rate <= 5%, FP/crisis rate <= 20%
+- **20+ new emotional triggers** added to `scenarios/domains/emotional.yaml`: `completely hopeless`, `empty inside`, `nothing matters`, `taking a real toll`, `toll on me`, `consuming me`, `haven't felt anything`, and more
+
+### Sanity Check (Phase 17.4)
+- **Logistics + distress guard**: If LLM returns `logistics` but `distress_present=True` OR `emotional_intensity >= 5`, keyword classifier re-runs and can override to the correct domain
+- **Override signal logged**: `sanity_check_override` field in risk assessment with trigger reason (`distress_present` or `intensity=X.X`)
+- **Policy transparency**: Sanity check overrides logged via `_log_policy()` for UI transparency panel
+
+### Quality
+- **Crisis trigger refinements**: Removed `this is the end` (humour false positive); added `better off without me`, `written letters to`, `won't be around`, `before it's too late`, `after i'm gone`
+- **Social greeting tone fix**: Casual greetings (`how are you`, `hey hommie`) no longer receive the robotic "I am software. I do not have evenings or feelings." response - now warm and brief
+- **Corpus-validated FN rate**: 0% false negatives on 36-example distress corpus (target was <= 5%)
+
+---
+
 ## v1.5 (2026-03-10) - UI Polish & Model Upgrade
 
 **"An archangel that doesn't want to be worshipped."**
