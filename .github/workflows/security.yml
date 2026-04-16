@@ -48,6 +48,8 @@ jobs:
   secrets-scan:
     name: Secrets Scan
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  # gitleaks has no Node.js 24 build yet
     steps:
       - uses: actions/checkout@v6
         with:
