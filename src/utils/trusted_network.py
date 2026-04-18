@@ -363,28 +363,32 @@ class TrustedNetwork:
             return random.choice(domain_prompts)
         return "Who in your life could you talk to about this?"
 
-    def get_reach_out_template(self, situation: str = "need_to_talk") -> Dict:
+    def get_reach_out_template(self, situation: str = "need_to_talk", name: str = None) -> Dict:
         """
         Get a template for reaching out.
 
         Args:
             situation: One of "reconnecting", "need_to_talk", "checking_in",
                       "hard_conversation", "asking_for_help", "after_argument", "gratitude"
+            name: Optional person's name to interpolate into the opening greeting.
+                  "Hey, I've been..." becomes "Hey Sarah, I've been..."
         """
         prompts = self.loader.get_all_prompts().get("human_connection", {})
         templates = prompts.get("reach_out_templates", {})
 
         if situation in templates:
             template_group = templates[situation]
-            return {
-                "name": template_group.get("name", situation),
-                "template": random.choice(template_group.get("templates", [])),
-            }
+            text = random.choice(template_group.get("templates", []))
+        else:
+            text = "Hey, I've been thinking about you. Could we talk sometime?"
+            template_group = {}
 
-        # Default
+        if name:
+            text = text.replace("Hey,", f"Hey {name},", 1).replace("Hi.", f"Hi {name}.", 1)
+
         return {
-            "name": "Reaching out",
-            "template": "Hey, I've been thinking about you. Could we talk sometime?",
+            "name": template_group.get("name", situation) if template_group else "Reaching out",
+            "template": text,
         }
 
     def get_exit_celebration(self, chose_human: bool = True) -> str:
@@ -401,13 +405,107 @@ class TrustedNetwork:
             return random.choice(messages)
         return "You're choosing human connection. That's the point."
 
-    def suggest_person_for_domain(self, domain: str) -> Optional[Dict]:
-        """Suggest a person from the network for a given domain."""
-        people = self.get_people_for_domain(domain)
+    # Relationship types considered relevant per domain for ranking purposes
+    _DOMAIN_RELATIONSHIP_KEYWORDS = {
+        "emotional": [
+            "therapist",
+            "counselor",
+            "psychologist",
+            "partner",
+            "spouse",
+            "friend",
+            "sibling",
+            "brother",
+            "sister",
+        ],
+        "health": ["therapist", "counselor", "doctor", "nurse", "partner", "spouse"],
+        "money": ["mentor", "advisor", "accountant", "financial"],
+        "relationships": [
+            "therapist",
+            "counselor",
+            "partner",
+            "spouse",
+            "parent",
+            "mom",
+            "dad",
+            "mother",
+            "father",
+            "sibling",
+            "friend",
+        ],
+        "spirituality": ["pastor", "priest", "imam", "rabbi", "mentor", "spiritual"],
+        "logistics": ["mentor", "colleague", "coworker", "friend"],
+    }
 
-        if people:
-            return random.choice(people)
-        return None
+    def _score_person_for_domain(self, person: Dict, domain: str) -> tuple:
+        """
+        Score a person's relevance for a domain.
+
+        Returns (score, suggestion_reason) where higher score = better match.
+        Scoring:
+          +3  explicit domain tag matches
+          +1  relationship type is relevant to domain
+          +2  contacted within 7 days (warm connection)
+          +1  contacted within 30 days
+        """
+        score = 0
+        reason = person.get("relationship", "")
+
+        # Explicit domain match
+        if domain in person.get("domains", []):
+            score += 3
+
+        # Relationship type relevance
+        rel = person.get("relationship", "").lower()
+        relevant_rels = self._DOMAIN_RELATIONSHIP_KEYWORDS.get(domain, [])
+        if any(kw in rel for kw in relevant_rels):
+            score += 1
+
+        # Recency
+        last_contact = person.get("last_contact")
+        if last_contact:
+            try:
+                from datetime import date as _date, timedelta
+
+                last_date = _date.fromisoformat(last_contact)
+                days_since = (_date.today() - last_date).days
+                if days_since <= 7:
+                    score += 2
+                    label = "day" if days_since == 1 else "days"
+                    reason = f"Spoke {days_since} {label} ago"
+                elif days_since <= 30:
+                    score += 1
+                else:
+                    reason = f"Haven't connected in {days_since} days"
+            except ValueError:
+                pass
+
+        return score, reason
+
+    def suggest_person_for_domain(self, domain: str) -> Optional[Dict]:
+        """
+        Suggest the most relevant person for a given domain.
+
+        Ranks candidates by domain match, relationship type relevance, and
+        recency of contact. Among equally scored candidates, picks randomly.
+        Returns the person dict with an extra `suggestion_reason` key.
+        """
+        people = self.get_people_for_domain(domain)
+        if not people:
+            return None
+
+        scored = []
+        for person in people:
+            score, reason = self._score_person_for_domain(person, domain)
+            scored.append((score, person, reason))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+
+        top_score = scored[0][0]
+        top_group = [s for s in scored if s[0] == top_score]
+        _, best_person, reason = random.choice(top_group)
+
+        return {**best_person, "suggestion_reason": reason}
 
     # ==================== CONNECTION BUILDING (PHASE 12) ====================
 

@@ -280,12 +280,14 @@ def display_bring_someone_in(domain: str = "general"):
         st.info(contextual["intro_prompt"])
 
     # Suggest someone if we have people
+    suggested = None
     if people:
         suggested = network.suggest_person_for_domain(domain)
         if suggested:
             st.markdown(f"**Consider reaching out to:** {suggested['name']}")
-            if suggested.get("relationship"):
-                st.caption(suggested["relationship"])
+            reason = suggested.get("suggestion_reason") or suggested.get("relationship", "")
+            if reason:
+                st.caption(reason)
     else:
         prompt = network.get_domain_prompt(domain)
         st.markdown(f"*{prompt}*")
@@ -328,10 +330,11 @@ def display_bring_someone_in(domain: str = "general"):
     )
 
     # Get message template - prefer contextual if available, fallback to standard
+    suggested_name = suggested["name"] if suggested else None
     if contextual.get("message_template"):
         base_message = contextual["message_template"]
     else:
-        template = network.get_reach_out_template(template_type)
+        template = network.get_reach_out_template(template_type, name=suggested_name)
         base_message = template["template"]
 
     # Build message with context from conversation
@@ -358,9 +361,7 @@ def display_bring_someone_in(domain: str = "general"):
     with col2:
         if st.button("I reached out!", use_container_width=True, type="primary"):
             # Log the reach out with context
-            person_name = (
-                suggested["name"] if people and "suggested" in dir() and suggested else "someone"
-            )
+            person_name = suggested["name"] if suggested else "someone"
 
             # Log in TrustedNetwork with handoff context
             network.log_handoff_initiated(
