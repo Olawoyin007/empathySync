@@ -107,6 +107,8 @@ empathySync/
 ├── scenarios/                    # Knowledge base (34+ YAML files)
 │   ├── config/                  # System defaults and tunables (Phase 16.10)
 │   │   └── system_defaults.yaml # 100+ centralized tunables
+│   ├── voice/                   # Voice and personality guide (Phase 16.11)
+│   │   └── personality.yaml     # Tone, vocabulary, IS/IS-NOT traits, mode rules, examples
 │   ├── domains/                 # 8 risk domains (crisis, harmful, health, money, emotional, relationships, spirituality, logistics)
 │   ├── emotional_markers/       # 4 intensity levels
 │   ├── emotional_weight/        # Task weight detection (high/medium/low)
@@ -456,5 +458,7 @@ See [ROADMAP.md](ROADMAP.md) for the phased implementation plan covering:
 - Phase 16.8: God class decomposition -OllamaClient, EmotionalWeightAssessor ✅ (Partial)
 - Phase 16.9: Test coverage expansion -83 new tests ✅ (Partial)
 - Phase 16.10: Centralized configuration -system_defaults.yaml ✅ (Partial)
-- Phase 16.11: Conversation testing & voice tuning 🔧 NEXT
+- Phase 16.11: Conversation testing & voice tuning 🔧 IN PROGRESS
+  - 16.11.1: Conversation test harness 🔜
+  - 16.11.2: Voice guide (`scenarios/voice/personality.yaml`) ✅
 - Phase 17: Persistent agent daemon 🔜 PLANNED
