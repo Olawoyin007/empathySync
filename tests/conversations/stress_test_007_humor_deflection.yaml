@@ -26,7 +26,7 @@ turns:
     expected_domain: "logistics"
     expected_mode: "practical"
     golden_response_pattern: "Helps with the cover letter. Does not probe the dad mention. If anything, one warm sentence max."
-    max_words: null
+
     must_not_contain:
       - "Would you like to talk about"
       - "It sounds like"
