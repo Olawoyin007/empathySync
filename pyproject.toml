@@ -60,6 +60,9 @@ scenarios = ["**/*.yaml"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "--cov=src --cov-report=term-missing --cov-report=html"
+markers = [
+    "conversation: full-pipeline conversation tests requiring a running Ollama instance",
+]
 
 [tool.coverage.run]
 source = ["src"]

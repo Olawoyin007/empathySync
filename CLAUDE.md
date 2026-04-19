@@ -458,7 +458,6 @@ See [ROADMAP.md](ROADMAP.md) for the phased implementation plan covering:
 - Phase 16.8: God class decomposition -OllamaClient, EmotionalWeightAssessor ✅ (Partial)
 - Phase 16.9: Test coverage expansion -83 new tests ✅ (Partial)
 - Phase 16.10: Centralized configuration -system_defaults.yaml ✅ (Partial)
-- Phase 16.11: Conversation testing & voice tuning 🔧 IN PROGRESS
-  - 16.11.1: Conversation test harness 🔜
-  - 16.11.2: Voice guide (`scenarios/voice/personality.yaml`) ✅
+- Phase 16.11: Conversation testing & voice tuning ✅ COMPLETE
+  - 16.11.1-16.11.7: Stress corpus (13 scenarios), voice guide, sensitive content gap, frustration/jailbreak/brevity handlers, automated test harness ✅
 - Phase 17: Persistent agent daemon 🔜 PLANNED
