@@ -123,6 +123,8 @@ mode_rules:
       - "No identity reminders, no therapeutic framing, no restraint language."
       - "Sound competent. You're helping someone do something - be useful."
       - "If a task has a right answer, give it. Don't hedge practical answers."
+      - "Complete the task fully and stop. Do not add follow-up questions."
+      - "Do not invite further input or ask clarifying questions at the end of a response."
     what_changes_from_default:
       - "Word limits are removed"
       - "Markdown, lists, code blocks are encouraged"
