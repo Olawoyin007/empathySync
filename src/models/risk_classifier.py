@@ -67,13 +67,19 @@ class RiskClassifier:
         if use_llm is None:
             use_llm = settings.LLM_CLASSIFICATION_ENABLED
 
-        # Initialize LLM classifier if available and enabled
+        # Initialize LLM classifier.
+        # Always created when available — the fast-path (crisis/harmful substring check)
+        # must run even when LLM_CLASSIFICATION_ENABLED=false, because it bypasses the
+        # expensive Ollama call entirely and is safety-critical.
         self._use_llm = use_llm and LLM_CLASSIFIER_AVAILABLE
         self._llm_classifier: Optional["LLMClassifier"] = None
-        if self._use_llm:
+        if LLM_CLASSIFIER_AVAILABLE:
             try:
                 self._llm_classifier = get_llm_classifier()
-                logger.info("LLM classifier initialized for hybrid classification")
+                if self._use_llm:
+                    logger.info("LLM classifier initialized for hybrid classification")
+                else:
+                    logger.debug("LLM classifier loaded for fast-path safety checks only")
             except Exception as e:
                 logger.warning(f"LLM classifier unavailable: {e}")
                 self._use_llm = False
@@ -127,7 +133,17 @@ class RiskClassifier:
             if skip_llm:
                 logger.debug("Skipping LLM classifier for short continuation message")
 
-        if self._use_llm and self._llm_classifier and not skip_llm:
+        # Fast-path safety check — always runs, even when LLM is disabled.
+        # Crisis/harmful substring patterns bypass Ollama entirely and must not be
+        # gated on _use_llm. Calling _check_fast_path() directly avoids triggering
+        # the expensive Ollama call when use_llm=False.
+        if self._llm_classifier:
+            fast_path_result = self._llm_classifier._check_fast_path(user_input)
+            if fast_path_result:
+                llm_result = fast_path_result
+
+        # Full LLM classification — only when enabled and fast-path didn't already trigger
+        if self._use_llm and self._llm_classifier and not skip_llm and llm_result is None:
             try:
                 llm_result = self._llm_classifier.classify(user_input, conversation_history)
                 if llm_result:

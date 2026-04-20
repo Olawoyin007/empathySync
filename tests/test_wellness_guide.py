@@ -332,7 +332,8 @@ class TestRiskClassifier:
         with patch.object(
             classifier._llm_classifier, "classify", return_value=llm_distress_logistics
         ):
-            result = classifier.classify("I feel completely hopeless right now", [])
+            # Use text that won't match fast_path_crisis (which would bypass the mock)
+            result = classifier.classify("I've been struggling a lot lately and feel stuck", [])
             # Only set if keywords found a non-logistics domain to switch to
             if result["domain"] != "logistics":
                 assert result.get("sanity_check_override") == "distress_present"
