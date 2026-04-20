@@ -701,6 +701,8 @@ class WellnessGuide:
             # so the model doesn't reinforce forbidden phrases in follow-up turns.
             # (Streamed tokens are already sent, but history shapes future responses.)
             final_response = self._apply_voice_filter(final_response)
+            if prepared.is_practical:
+                final_response = self._strip_trailing_questions(final_response)
             self._last_streamed_response = prefix + final_response + suffix
 
         except Exception as e:
@@ -1153,9 +1155,10 @@ class WellnessGuide:
         # Post-LLM: catch corporate jailbreak explanations Ollama sometimes generates
         response = self._catch_corporate_leaks(response)
 
-        # For practical tasks, return the full response without truncation
+        # For practical tasks, return the full response without truncation.
+        # Strip trailing follow-up questions (engagement-bait, structurally enforced).
         if is_practical:
-            return response
+            return self._strip_trailing_questions(response)
 
         # Enforce brevity for high-risk contexts (sensitive topics only)
         risk_weight = risk_assessment.get("risk_weight", 0)
@@ -1209,6 +1212,74 @@ class WellnessGuide:
         response = re.sub(r"  +", " ", response)
         response = re.sub(r"\n\s*\n\s*\n", "\n\n", response)
         response = response.strip()
+
+        return response
+
+    # Hook phrases that signal engagement-bait follow-up questions
+    _FOLLOWUP_HOOKS = (
+        "to help me",
+        "to better",
+        "to refine",
+        "to assist",
+        "could you tell",
+        "can you tell",
+        "can you share",
+        "would you mind",
+        "would it help",
+        "would you like to",
+        "what is your",
+        "what are your",
+        "what's your",
+        "may i ask",
+        "do you have any",
+        "is there anything else",
+        "shall i",
+        "should i tailor",
+    )
+
+    def _strip_trailing_questions(self, response: str) -> str:
+        """Strip follow-up / clarifying questions from the end of practical responses.
+
+        The LLM often appends engagement-hook questions like:
+            'To help me refine this, could you tell me: What is your profession?'
+        These contradict the voice rule 'complete the task and stop'. This method
+        removes them structurally regardless of whether the system prompt was obeyed.
+
+        Only strips when the response is substantial enough to stand without the tail.
+        """
+        import re
+
+        stripped = response.rstrip()
+        if not stripped:
+            return response
+
+        # Bail out if the response is very short — it might be a legitimate question
+        if len(stripped.split()) < 20:
+            return response
+
+        # --- Pass 1: trailing paragraph (separated by blank line) ending with '?' ---
+        # e.g., "\n\nTo help me refine this further, could you tell me: What is your role?"
+        last_blank = stripped.rfind("\n\n")
+        if last_blank != -1:
+            trailing_para = stripped[last_blank:].strip()
+            if trailing_para.endswith("?"):
+                lower_para = trailing_para.lower()
+                if any(hook in lower_para for hook in self._FOLLOWUP_HOOKS):
+                    before = stripped[:last_blank].rstrip()
+                    if before and len(before.split()) >= 10:
+                        return before
+
+        # --- Pass 2: last sentence in the final paragraph ending with '?' ---
+        sentences = re.split(r"(?<=[.!?])\s+", stripped)
+        if len(sentences) > 1:
+            last_sentence = sentences[-1].strip()
+            if last_sentence.endswith("?"):
+                lower_last = last_sentence.lower()
+                if any(hook in lower_last for hook in self._FOLLOWUP_HOOKS):
+                    cut_point = stripped.rfind(last_sentence)
+                    before = stripped[:cut_point].rstrip()
+                    if before and len(before.split()) >= 10:
+                        return before
 
         return response
 

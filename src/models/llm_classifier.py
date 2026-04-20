@@ -361,10 +361,6 @@ class LLMClassifier:
             Classification dict with domain, emotional_intensity, etc.
             Returns None if classification fails (caller should use keyword fallback)
         """
-        if not self.is_enabled():
-            logger.debug("LLM classification disabled")
-            return None
-
         if not message or not message.strip():
             return None
 
@@ -376,10 +372,15 @@ class LLMClassifier:
             )
             message = message[:MAX_CLASSIFY_LENGTH]
 
-        # Check fast-path first (safety-critical)
+        # Fast-path runs BEFORE is_enabled() check — safety-critical patterns
+        # must be caught even when LLM_CLASSIFICATION_ENABLED=false.
         fast_path_result = self._check_fast_path(message)
         if fast_path_result:
             return fast_path_result
+
+        if not self.is_enabled():
+            logger.debug("LLM classification disabled")
+            return None
 
         # Build context from conversation history
         recent_context = ""
