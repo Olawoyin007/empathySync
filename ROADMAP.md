@@ -1942,10 +1942,12 @@ src/ui/
 
 ---
 
-## Phase 18: Messaging Integration 🔜 PLANNED
+## Phase 18: Messaging Integration ⏸ DEFERRED
 **Goal**: empathySync meets users where they are -WhatsApp, Signal, Slack -while maintaining all safety guarantees identically.
 
 **Why this matters**: Not everyone will open a Streamlit app or terminal. Messaging integration lets empathySync exist as a quiet presence in the tools people already use. But this is also the highest-risk phase for dependency: always-available AI in your messaging app is exactly what the restraint philosophy warns against.
+
+> **Deferred** - requires resolving a fundamental tension with the local-first manifesto. WhatsApp and Slack route conversations through third-party servers, which contradicts the core privacy promise. Signal is the only candidate that partially holds up. Needs deeper design thinking before committing to implementation.
 
 **Prerequisite**: Phase 16 (InterfaceAdapter) and Phase 17 (daemon) must be complete.
 
@@ -2111,6 +2113,61 @@ src/ui/
 
 ---
 
+## Phase 20: Native Installer & Non-Technical Access ⏸ DEFERRED
+
+**Goal**: Make empathySync installable by people who do not know what a terminal is, on Windows, Mac, and Linux.
+
+> **Deferred** - projects are still in active development. Distribution infrastructure adds maintenance overhead before APIs stabilise.
+
+### 20.1 Native Installer (briefcase or PyInstaller)
+
+**Problem**: `install.sh` is Linux/Mac only. Windows users have no automated setup path. Even on Mac and Linux, a user who does not know what a terminal is cannot get empathySync running.
+
+- [ ] Evaluate `briefcase` (BeeWare) vs PyInstaller + minimal Tauri or Electron shell
+- [ ] Bundle the Streamlit app into a native installer package
+- [ ] Targets: `.exe` installer (Windows), `.dmg` (Mac), `.AppImage` (Linux)
+- [ ] Installer handles the Python runtime internally - no Python required on the host machine
+
+### 20.2 First-Run Wizard
+
+**Problem**: Even with a native installer, users need Ollama and a model. New users have no guidance.
+
+- [ ] On first launch, detect whether Ollama is installed and running
+- [ ] If Ollama not found: offer guided install with OS-specific download link and step-by-step instructions
+- [ ] If Ollama running but no model pulled: prompt model selection, pull automatically with a progress indicator
+- [ ] Wizard stores the chosen model in `.env`; subsequent launches skip the wizard
+
+### 20.3 GitHub Actions Release Builds
+
+**Problem**: Platform-specific builds require the target OS. No single machine can produce all three.
+
+- [ ] Set up GitHub Actions matrix build on release tags (`windows-latest`, `macos-latest`, `ubuntu-latest`)
+- [ ] Publish `.exe`, `.dmg`, and `.AppImage` to GitHub Releases automatically
+- [ ] Publish checksums alongside binaries for verification
+
+### 20.4 Code Signing
+
+**Problem**: Unsigned binaries are blocked by Windows SmartScreen and Mac Gatekeeper before the user can even run the installer.
+
+- [ ] Windows: EV certificate or Windows trusted developer account
+- [ ] Mac: Apple Developer Program membership, notarize `.dmg` via `notarytool`
+- [ ] Add signing steps to the GitHub Actions release workflow
+
+### 20.5 Landing Page with Platform-Specific Downloads (Long-Term)
+
+- [ ] Simple static site with three download buttons: Windows / Mac / Linux
+- [ ] Auto-detects the user's OS and highlights the appropriate button
+- [ ] Links to documentation and a short video walkthrough
+
+### 20.6 Auto-Update Mechanism (Long-Term)
+
+- [ ] On startup, check the GitHub Releases API for a newer version
+- [ ] Show a non-blocking update notification in the sidebar
+- [ ] User clicks to open the download page - does not auto-install silently
+- [ ] Opt-out via `.env` setting: `AUTO_UPDATE_CHECK=false`
+
+---
+
 ## Philosophical Safeguards (Phases 16-19)
 
 Each agent evolution phase must maintain these cross-cutting guarantees:
@@ -2157,8 +2214,9 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 | **16.9 Test Coverage Expansion** | **High** | **Medium** | 🟠 Do Before 17 |
 | **16.10 Observability & Configuration** | **Medium** | **Medium** | 🟠 Do Before 17 |
 | **17. Persistent Agent Daemon** | **High** | **High** | 🔵 After Hardening |
-| **18. Messaging Integration** | **Medium** | **High** | 🔵 After 17 |
+| **18. Messaging Integration** | **Medium** | **High** | ⏸ DEFERRED - local-first tension with WhatsApp/Slack |
 | **19. Multilingual Support** | **High** | **High** | 🔵 After 18 |
+| **20. Native Installer** | **High** | **High** | ⏸ DEFERRED - infra overhead before APIs stabilise |
 | 10. Advanced Detection | High | High | 🔵 Long-term |
 
 ---
@@ -2317,8 +2375,9 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 **v1.3** (Phase 16.9-16.10): Test coverage expansion, observability, configuration extraction ✅ COMPLETE
 **v1.4** (Phase 16.11): Conversation testing, voice tuning, golden response test suite
 **v1.5** (Phase 17.1-17.4): Multi-label distress routing, confidence calibration, distress corpus CI gate, sanity check refinement ✅ IN PROGRESS
-**v2.0** (Phase 18): Messaging integration, safety parity across all interfaces
+**v2.0** (Phase 18): Messaging integration, safety parity across all interfaces - DEFERRED
 **v2.1** (Phase 19): Multilingual support -crisis detection, restraint behaviour, and YAML knowledge base in priority languages
+**v2.2** (Phase 20): Native installer (Windows/Mac/Linux), first-run wizard, release CI builds - DEFERRED
 
 ---
 
