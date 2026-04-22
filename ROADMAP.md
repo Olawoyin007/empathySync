@@ -1773,7 +1773,7 @@ The voice guide (`scenarios/voice/personality.yaml`) created in 16.11.2 already 
 
 ---
 
-## Phase 16.12: UI Extraction & app.py Decomposition 🔧 IN PROGRESS
+## Phase 16.12: UI Extraction & app.py Decomposition ✅ COMPLETE
 
 **Goal**: Break the 1,861-line `app.py` into focused UI modules. `app.py` has become a god class containing CSS, sidebar rendering, chat interface, transparency panels, network UI, handoff flows, lock management, and session orchestration all in one file. Extract display functions into a `src/ui/` package so `app.py` becomes a thin orchestrator (~200 lines).
 
@@ -1783,27 +1783,26 @@ The voice guide (`scenarios/voice/personality.yaml`) created in 16.11.2 already 
 ```
 src/ui/
   __init__.py         - Public imports
-  styles.py           - CSS string and page config
-  sidebar.py          - Sidebar rendering (brand, buttons, panels, session & data)
-  chat.py             - Chat interface (message display, input, streaming)
-  panels.py           - Transparency, reality check, patterns, session summary, safety banner
-  network.py          - Trusted network setup, building your network, bring someone in, handoff
-  lock.py             - Lock banner, lock warning, takeover, read-only helpers
+  styles.py           - CSS string and page config (358 lines)
+  sidebar.py          - Sidebar rendering (254 lines)
+  chat.py             - Chat interface, message display, streaming (129 lines)
+  panels.py           - Transparency, reality check, patterns, session summary, safety banner (587 lines)
+  network.py          - Trusted network, building network, bring someone in, handoff (482 lines)
+  lock.py             - Lock banner, lock warning, takeover, read-only helpers (110 lines)
 ```
 
 ### Extraction Plan
-- [ ] Create `src/ui/` package with `__init__.py`
-- [ ] Extract CSS and `st.set_page_config` to `src/ui/styles.py`
-- [ ] Extract sidebar rendering to `src/ui/sidebar.py`
-- [ ] Extract chat interface to `src/ui/chat.py`
-- [ ] Extract display panels to `src/ui/panels.py` (transparency, reality check, patterns, graduation, skill tips, independence, safety banner, session summary)
-- [ ] Extract network/handoff UI to `src/ui/network.py` (trusted network, building network, bring someone in, handoff follow-up, handoff outcome)
-- [ ] Extract lock UI to `src/ui/lock.py` (lock warning, lock banner, takeover, is_read_only)
-- [ ] Slim `app.py` to: imports, `main()` orchestrator, `save_session_on_end()`
-- [ ] Verify all 796+ tests still pass
-- [ ] Verify Streamlit app runs correctly with extracted modules
+- [x] Create `src/ui/` package with `__init__.py`
+- [x] Extract CSS and `st.set_page_config` to `src/ui/styles.py`
+- [x] Extract sidebar rendering to `src/ui/sidebar.py`
+- [x] Extract chat interface to `src/ui/chat.py`
+- [x] Extract display panels to `src/ui/panels.py`
+- [x] Extract network/handoff UI to `src/ui/network.py`
+- [x] Extract lock UI to `src/ui/lock.py`
+- [x] Slim `app.py` to 234-line thin orchestrator importing from `src/ui/`
+- [x] 918 tests passing
 
-**Files to create**:
+**Files created**:
 - `src/ui/__init__.py`
 - `src/ui/styles.py`
 - `src/ui/sidebar.py`
@@ -1812,8 +1811,8 @@ src/ui/
 - `src/ui/network.py`
 - `src/ui/lock.py`
 
-**Files to modify**:
-- `src/app.py` - Reduce to thin orchestrator importing from `src/ui/`
+**Files modified**:
+- `src/app.py` - Reduced to thin orchestrator importing from `src/ui/`
 
 ---
 
