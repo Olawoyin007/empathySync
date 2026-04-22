@@ -1160,18 +1160,18 @@ class WellnessGuide:
         if is_practical:
             return self._strip_trailing_questions(response)
 
-        # Enforce brevity for high-risk contexts (sensitive topics only)
+        # Enforce brevity for reflective mode (sensitive topics only).
+        # Truncate at sentence boundary so responses don't end mid-thought.
+        # Voice guide target: 25-30 words for reflective responses.
         risk_weight = risk_assessment.get("risk_weight", 0)
         if risk_weight >= 7:
-            # High risk: truncate to 50 words
-            words = response.split()
-            if len(words) > 60:
-                response = " ".join(words[:50]) + "..."
+            # High risk (health, money, crisis-adjacent): aim for ≤30 words
+            if len(response.split()) > 32:
+                response = self._truncate_at_sentence_boundary(response, 30)
         elif risk_weight >= 4:
-            # Medium risk (relationships, emotional, spirituality): cap at 80 words
-            words = response.split()
-            if len(words) > 90:
-                response = " ".join(words[:80]) + "..."
+            # Medium risk (relationships, emotional, spirituality): aim for ≤50 words
+            if len(response.split()) > 52:
+                response = self._truncate_at_sentence_boundary(response, 50)
 
         return response
 
@@ -1295,6 +1295,30 @@ class WellnessGuide:
                 filtered.append(sentence)
 
         return " ".join(filtered) if filtered else text
+
+    def _truncate_at_sentence_boundary(self, text: str, max_words: int) -> str:
+        """Truncate text at a sentence boundary within max_words.
+
+        Prefers complete sentences over mid-sentence cuts. Falls back to
+        word-level truncation (with "...") when no sentence fits the limit.
+        """
+        import re
+
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+        result = []
+        count = 0
+        for sentence in sentences:
+            words = len(sentence.split())
+            if count + words <= max_words:
+                result.append(sentence)
+                count += words
+            else:
+                break
+        if result:
+            return " ".join(result)
+        # No complete sentence fits: word-level fallback
+        words = text.split()
+        return " ".join(words[:max_words]) + "..."
 
     def _replace_phrase_preserve_case(self, text: str, old: str, new: str) -> str:
         """Replace a phrase, preserving the case of the first character."""
