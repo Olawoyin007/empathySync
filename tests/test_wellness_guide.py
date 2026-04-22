@@ -503,7 +503,7 @@ class TestWellnessGuide:
         assert "supportive" in result.lower() or "?" in result  # Asks a question
 
     def test_process_response_passes_safe_content(self, guide):
-        safe = "I understand your concern about AI usage. Let's explore this together."
+        safe = "Here's how it works. Let me break it down step by step."
         risk_assessment = {"risk_weight": 3.0, "domain": "logistics", "emotional_intensity": 2.0}
         result = guide._process_response(safe, "test input", risk_assessment)
         assert result == safe

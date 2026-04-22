@@ -77,10 +77,29 @@ triggers:
   - counterfeit
   - fake identity
   - false identity
+  - fake id
+  - fake identification
+  - fake driver
+  - forged id
   - insurance fraud
   - tax evasion
   - launder money
   - money laundering
+
+  # === Surveillance and account access ===
+  - someone's private messages
+  - their private messages
+  - see their messages
+  - read their messages
+  - get into their account
+  - access their account
+  - pick a lock
+  - lock picking
+  - lockpicking
+  - aggressive porn
+  - violent porn
+  - how to get into someone
+  - get into someone's
 
   # === Modern digital threats ===
   - doxxing
