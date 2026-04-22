@@ -195,13 +195,20 @@ class TestConversationQuality:
         """Fresh ConversationSession per scenario."""
         from unittest.mock import MagicMock
 
+        from models.ai_wellness_guide import WellnessGuide
         from models.conversation_session import ConversationSession
+        from utils.trusted_network import TrustedNetwork
+        from utils.wellness_tracker import WellnessTracker
 
-        mock_tracker = MagicMock()
-        mock_tracker.should_enforce_cooldown.return_value = False
-        mock_tracker.get_dependency_score.return_value = 0.0
-        mock_tracker.get_wellness_summary.return_value = {"sessions_today": 1}
-        self._session = ConversationSession(wellness_tracker=mock_tracker)
+        mock_tracker = MagicMock(spec=WellnessTracker)
+        mock_tracker.should_enforce_cooldown.return_value = (False, "")
+        mock_tracker.should_show_graduation_prompt.return_value = (False, "")
+        mock_tracker.calculate_dependency_signals.return_value = {"dependency_score": 0.0}
+        self._session = ConversationSession(
+            guide=WellnessGuide(),
+            tracker=mock_tracker,
+            network=MagicMock(spec=TrustedNetwork),
+        )
 
     def test_response_quality(self, path, scenario):
         """
@@ -219,7 +226,7 @@ class TestConversationQuality:
 
         for i, turn in enumerate(turns):
             user_input = turn["input"]
-            result = self._session.process_message(user_input, wellness_mode="standard")
+            result = self._session.process_message(user_input)
             response = result.response if hasattr(result, "response") else str(result)
 
             turn_id = f"Turn {i + 1}: '{user_input[:50]}'"
