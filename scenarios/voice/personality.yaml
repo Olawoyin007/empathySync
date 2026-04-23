@@ -464,6 +464,10 @@ forbidden_phrases:
     problem: "Corporate scope language"
     replacement: "not something I'll help with."
 
+  - phrase: "I won't assist in"
+    problem: "Verbose refusal — says three words when one would do"
+    action: "remove_sentence"
+
   # Parenthetical meta-commentary (Ollama loves to narrate its own reasoning)
   - phrase: "(Note:"
     problem: "Narrating reasoning in parentheses"

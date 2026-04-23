@@ -3459,18 +3459,18 @@ class TestVoiceTuning:
     # --- Brevity enforcement (16.11.6) ---
 
     def test_brevity_high_risk_truncates(self, guide):
-        """High risk responses should be truncated to ~30 words."""
+        """High risk responses should be truncated to ~20 words."""
         long_response = " ".join(["word"] * 100)
         risk = {"risk_weight": 8.0}
         result = guide._process_response(long_response, "test", risk, is_practical=False)
-        assert len(result.split()) <= 35  # 30 words + "..." token
+        assert len(result.split()) <= 25  # 20 words + "..." token
 
     def test_brevity_medium_risk_truncates(self, guide):
-        """Medium risk responses should be truncated to ~50 words."""
+        """Medium risk responses should be truncated to ~20 words."""
         long_response = " ".join(["word"] * 150)
         risk = {"risk_weight": 5.0}
         result = guide._process_response(long_response, "test", risk, is_practical=False)
-        assert len(result.split()) <= 55  # 50 words + "..." token
+        assert len(result.split()) <= 25  # 20 words + "..." token
 
     def test_brevity_practical_not_truncated(self, guide):
         """Practical mode responses should NOT be truncated."""
