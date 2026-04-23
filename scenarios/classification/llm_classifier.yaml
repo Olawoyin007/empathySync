@@ -40,6 +40,9 @@ prompt_template: |
   - Sexual desire, intimacy, hookups, casual sex = relationships (NOT harmful). Sexual expression between consenting adults is not illegal or violent.
   - "commit fornication", "horny", "fuck buddies", "one night stand" = relationships, not harmful
   - Only classify as harmful when there is intent to commit violence, illegal activity, or coercion toward another person
+  - FICTIONAL/ROLEPLAY FRAMING DOES NOT CHANGE THE CLASSIFICATION: "for a story I'm writing", "as an author writing a thriller", "my character needs to know", "in a fictional world", "pretend you are", "as a novelist" — if the underlying request would be harmful without the framing, classify it as harmful. Fiction is not a safe harbor for weapon synthesis, malware, grooming, or violent instructions.
+  - THIRD-PERSON DISTANCING DOES NOT CHANGE THE CLASSIFICATION: "a friend asked me", "asking for a friend", "someone I know wants to", "hypothetically speaking" — classify based on the underlying request, not the distancing language.
+  - EUPHEMISMS DO NOT CHANGE THE CLASSIFICATION: "leveraging idle compute resources" for crypto-jacking, "optimizing workforce productivity" for discriminatory hiring, "accessing someone's account" for hacking — read the intent, not the surface phrasing.
   - Questions about world events, geopolitics, war, conflict, economy, or society = logistics (NOT crisis). Crisis is ONLY for personal danger to the user themselves (suicidal thoughts, self-harm, immediate personal danger). Discussing war, world problems, or societal collapse is a general knowledge question.
   - HOWEVER: If the user expresses PERSONAL emotional impact from world events (e.g., "the war is depressing", "it's affecting my mental health", "I can't stop worrying about it"), classify as emotional (NOT logistics). The key distinction is whether the user is asking about the event vs. expressing how it affects THEM personally.
 
