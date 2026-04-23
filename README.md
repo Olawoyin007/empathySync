@@ -23,7 +23,7 @@ https://github.com/user-attachments/assets/cce0d214-4cd3-4816-b162-28af19941efb
 
 Every AI assistant is built to keep you talking. empathySync is the only one built to make itself less needed.
 
-Full help for practical tasks. Deliberate restraint on personal ones. When it detects you're spiralling, it redirects you to real humans - not more conversation. Everything runs on your hardware via Ollama. No cloud. No data harvesting. No engagement optimization.
+Full help for practical tasks. Deliberate restraint on personal ones. When it detects common distress signals, it redirects you toward real humans - not more AI conversation. Everything runs on your hardware via Ollama. No cloud. No data harvesting. No engagement optimization.
 
 The things that matter most to you deserve a tool that knows the difference.
 
@@ -145,6 +145,17 @@ empathysync --mode cli  # Direct terminal mode
 - **Transcript Export**: Download any conversation as a Markdown file from the Session & Data panel
 - **Multi-Label Safety Pipeline**: distress level and distress_present signals tracked alongside topic domain - catches mixed-intent messages single-label classifiers miss
 - **Distress Corpus CI Gate**: 60-entry labeled corpus gates every build - false negative rate on distress must stay below 5%
+
+## How the Safety Pipeline Works
+
+empathySync uses two independent layers so neither can be bypassed alone:
+
+- **Keyword triage** (~250 patterns): fast first-pass detection of known harmful and crisis phrases. Catches obvious cases with zero latency.
+- **LLM classifier**: nuanced detection that reads context, not just keywords. Handles rephrased, euphemistic, and indirectly-expressed harmful intent that keywords miss.
+- **Mutation-defense rules** baked into the LLM prompt: fictional framing ("for a story I'm writing"), third-person distancing ("a friend asked"), and euphemistic language do not change the classification - the LLM is instructed to read intent, not surface phrasing.
+- **Confidence calibration**: when the LLM is uncertain on a sensitive topic, keyword detection takes over. False positive is always safer than false negative on crisis content.
+
+Each layer is independent. A rephrased attack that evades keyword detection still hits the LLM layer. Prompt injection that manipulates the LLM still hits the keyword layer. Testing across 620 known harmful behaviors (JailbreakBench + AdvBench) showed 97-100% mutation evasion on keyword-only detection, confirming the LLM layer is the real defense - keywords are triage, not the gate.
 
 ## Configuration
 

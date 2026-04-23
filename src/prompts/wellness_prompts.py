@@ -39,11 +39,13 @@ class WellnessPrompts:
         For logistics domain (practical tasks): removes word limits, enables full assistance
         For sensitive domains: applies restraint and word limits
         """
-        # Check if this is a practical task (logistics domain)
+        # Check if this is a practical task (logistics domain OR practical technique question)
         is_practical = False
         if risk_context:
             domain = risk_context.get("domain", "logistics")
-            is_practical = domain == "logistics"
+            is_practical = domain == "logistics" or risk_context.get(
+                "is_practical_technique", False
+            )
 
         # For practical mode, use simplified base rules (no forbidden_topics redirect)
         # This prevents the model from over-applying restrictions to general questions

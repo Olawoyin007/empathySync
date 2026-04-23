@@ -776,6 +776,13 @@ class WellnessGuide:
 
         Returns intervention response if needed, None otherwise.
         """
+        # Dependency interventions are not appropriate for practical tasks.
+        # A 12-turn coding conversation is not dependency - it's just help.
+        domain = risk_assessment.get("domain", "logistics")
+        is_practical = domain == "logistics" or risk_assessment.get("is_practical_technique", False)
+        if is_practical:
+            return None
+
         # Get dependency risk from classifier
         dependency_risk = risk_assessment.get("dependency_risk", 0)
 

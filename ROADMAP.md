@@ -1901,6 +1901,57 @@ on legitimate content.
 the remaining 65% use indirect, contextual, or euphemistic language that only LLM classification
 can catch. The right next step is Phase 21 (trained safety classifier), not more keywords.
 
+### 17.8 False Positive Reduction 🔜 PLANNED
+**Problem**: The JBB benign behavior scan found 11/100 (11%) of academic/journalism content
+triggers harmful.yaml patterns. 2 new FPs were fixed in 17.7 (ethnic genocide, insider trading).
+The remaining 9 are pre-existing broad triggers that catch phrases like "weapon" or "attack"
+in legitimate research/journalism contexts.
+
+**Implementation**:
+- [ ] Re-run `scripts/scan_harmful_gaps.py --benign` to get the current FP list
+- [ ] For each of the 9 remaining FP triggers: decide whether to narrow the pattern (add action
+  verb qualifier, like we did for `ethnic genocide` → `commit/carry out ethnic genocide`) or
+  demote to context-dependent classification (move to `context_dependent` block in harmful.yaml)
+- [ ] Add regression entries for each fixed FP to tests as must-not-trigger cases
+- [ ] Target: FP rate below 5% on the JBB benign corpus (currently 9%)
+- [ ] Note: Do not eliminate all FPs at the cost of reducing true positive coverage. Precision
+  matters but false negatives on genuinely harmful content are always worse than false positives.
+
+### 17.9 False Reassurance Audit 🔜 PLANNED
+**Problem**: The dependency intervention system has 5 levels (none, early_pattern, mild,
+concerning, high) but it's untested at realistic usage levels. If thresholds are set too high,
+users in a dependency loop will never see an intervention. The system could be silently failing
+its core mission.
+
+**Implementation**:
+- [ ] Audit `WellnessTracker.should_enforce_cooldown()` thresholds against realistic usage:
+  are 7 sessions/day and 120 minutes realistic limits, or should they be lower?
+- [ ] Verify graduated dependency interventions fire in `tests/` by constructing a 12-message
+  conversation history that should trigger `mild` and `concerning` levels
+- [ ] Check that reflective-mode responses always include a human redirect, not just on first
+  occurrence - scan the prompt templates for any path that responds without redirecting
+- [ ] Add 3-5 conversation tests simulating dependency escalation over multiple turns to
+  `tests/conversations/` with `expected_contains` assertions for redirect language
+- [ ] If thresholds are wrong, update `scenarios/config/system_defaults.yaml` - not hardcoded values
+
+### 17.10 Framing & Architecture Documentation 🔜 PLANNED
+**Problem**: Two gaps identified by external review: (1) the README overpromises on "detecting
+what a post is trying to do" when the honest claim is "detecting common manipulation patterns";
+(2) the mutation-evasion defense architecture (two-tier keyword + LLM) is not visible in the
+README, which means a legitimate strength of the system is invisible to potential users and
+contributors.
+
+**Implementation**:
+- [ ] README: Replace "detects when you're spiralling" with bounded language: "detects common
+  distress signals and prompts you toward humans when they appear"
+- [ ] README: Add a "How the safety pipeline works" section (3-4 bullet points max) explaining
+  the keyword triage + LLM nuance layer + mutation-defense rules. Turns the mutation-evasion
+  commit footnote into a visible design feature.
+- [ ] README: Update the opening to lead with practical capability ("Full help for practical
+  tasks") before the restraint framing - consistent with the actual product thesis
+- [ ] docs/architecture.md: Add a "Defense-in-depth" section summarizing why keyword + LLM
+  beats either layer alone, with the mutation evasion finding (97-100% evasion rate) as evidence
+
 ### 17.5 Cross-Model Safety Validation
 **Problem**: empathySync supports any Ollama model, but weaker or differently aligned models vary significantly in judgment, tone, and refusal behavior. The safety pipeline must compensate. Currently tests only run against one model, so there's no visibility into how safety degrades across model tiers.
 
@@ -2309,6 +2360,9 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 | **20. Native Installer** | **High** | **High** | ⏸ DEFERRED - infra overhead before APIs stabilise |
 | 10. Advanced Detection | High | High | 🔵 Long-term |
 | **17.7 Adversarial Coverage & FP Testing** | **High** | **Low** | ✅ COMPLETE |
+| **17.8 False Positive Reduction** | **Medium** | **Low** | 🔵 After 17.7 |
+| **17.9 False Reassurance Audit** | **High** | **Low** | 🔵 After 17.7 |
+| **17.10 Framing & Architecture Docs** | **Medium** | **Low** | 🔵 After 17.7 |
 | **21. Safety Classifier Upgrade** | **High** | **Medium** | 🔵 After Phase 17 complete |
 
 ---
@@ -2325,12 +2379,15 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 - 17.5 🔜 Cross-model safety validation (planned)
 - 17.6 🔧 Transparency panel (partially done - inline response summary pending)
 - 17.7 ✅ Adversarial pattern coverage + false positive regression (JBB+AdvBench gap scan, mutation evasion testing, 7 new stress test files, 34.2% keyword coverage)
+- 17.8 🔜 False positive reduction (tighten 9 remaining broad triggers, target FP < 5%)
+- 17.9 🔜 False reassurance audit (verify dependency thresholds, add escalation conversation tests)
+- 17.10 🔜 Framing & architecture documentation (README bounded language, mutation-evasion docs)
 
 **Safety pipeline depth**: 7 independent layers - post-crisis check, cooldown, keyword detection, LLM classification, confidence calibration (17.2), distress routing (17.1), sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
 **Test suite**: 918 structural tests + 20 conversation scenario files (stress_test_001-020). Distress corpus CI gate: 0% FN rate. Keyword FP rate on benign content: 11% (all from pre-existing broad triggers).
 
-**Next**: Phase 17.5 (cross-model safety validation) or Phase 21 (safety classifier upgrade) - see evaluation decision gate in Phase 21.1
+**Next**: Phase 17.8/17.9/17.10 (FP reduction, false reassurance audit, framing docs) - all low effort and unlocked. Then 17.5 (cross-model) or 21 (safety classifier) - see evaluation decision gate in Phase 21.1
 
 **Recent Bug Fixes**:
 - Fixed post-crisis apology bug: LLM no longer apologizes for crisis interventions
