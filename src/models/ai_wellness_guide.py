@@ -161,6 +161,9 @@ class WellnessGuide:
         # Used to prevent the LLM from apologizing for crisis redirects
         self.post_crisis_turn = None  # Turn number when crisis was triggered
 
+        # Post-harmful state: tighten truncation on the turn immediately after a harmful refusal
+        self.post_harmful_turn = None  # Turn number when harmful was triggered
+
         # Phase 16.11: Sensitive topic tracking (escalation count per category)
         self._sensitive_topic_counts = {}  # e.g. {"sexual_content": 2}
 
@@ -339,6 +342,34 @@ class WellnessGuide:
             )
 
         # 3) Hard-coded safety responses (don't trust model to comply)
+
+        # Self-evaluation deflection: short early exit for "rate yourself" type questions.
+        # These must be caught before domain routing — the LLM will otherwise continue
+        # the previous practical task (e.g. keep expanding an email draft).
+        meta_response = self._check_meta_question(user_input)
+        if meta_response:
+            prepared.early_return = meta_response
+            prepared.risk_assessment = risk_assessment
+            prepared.domain = domain
+            return prepared
+
+        # Jailbreak / social-engineering check runs before domain routing so that
+        # phrases like "asking for a friend" (a dismissal tactic after a refusal)
+        # are caught regardless of how the classifier labelled the domain.
+        jailbreak_response = self._check_jailbreak(user_input)
+        if jailbreak_response:
+            self._log_policy(
+                "jailbreak_refusal",
+                domain,
+                10.0,
+                "Refused jailbreak/social-engineering attempt",
+                wellness_tracker,
+            )
+            prepared.early_return = jailbreak_response
+            prepared.risk_assessment = risk_assessment
+            prepared.domain = domain
+            return prepared
+
         if domain == "crisis":
             self._log_policy(
                 "crisis_stop", domain, 10.0, "Immediate crisis redirect", wellness_tracker
@@ -350,18 +381,12 @@ class WellnessGuide:
             return prepared
 
         if domain == "harmful":
-            # Check if this is specifically a jailbreak attempt (shorter refusal)
-            jailbreak_response = self._check_jailbreak(user_input)
-            if jailbreak_response:
-                self._log_policy(
-                    "jailbreak_refusal", domain, 10.0, "Refused jailbreak attempt", wellness_tracker
-                )
-                prepared.early_return = jailbreak_response
-            else:
-                self._log_policy(
-                    "harmful_stop", domain, 10.0, "Refused harmful request", wellness_tracker
-                )
-                prepared.early_return = "No. That's not something I'll help with."
+            # Jailbreak already handled above; this catches all other harmful requests
+            self._log_policy(
+                "harmful_stop", domain, 10.0, "Refused harmful request", wellness_tracker
+            )
+            self.post_harmful_turn = self.session_turn_count
+            prepared.early_return = "No. That's not something I'll help with."
             prepared.risk_assessment = risk_assessment
             prepared.domain = domain
             return prepared
@@ -1155,23 +1180,43 @@ class WellnessGuide:
         # Post-LLM: catch corporate jailbreak explanations Ollama sometimes generates
         response = self._catch_corporate_leaks(response)
 
+        # Post-harmful truncation runs before the practical-mode check — the user may
+        # be rephrasing the harmful request as an innocent-looking question.
+        if (
+            self.post_harmful_turn is not None
+            and self.session_turn_count == self.post_harmful_turn + 1
+        ):
+            self.post_harmful_turn = None
+            if len(response.split()) > 12:
+                response = self._truncate_at_sentence_boundary(response, 12)
+            return response
+
         # For practical tasks, return the full response without truncation.
         # Strip trailing follow-up questions (engagement-bait, structurally enforced).
         if is_practical:
-            return self._strip_trailing_questions(response)
+            # Exception: if the LLM generated a reflective response despite the practical
+            # classification (contains a human-redirect phrase), truncate it anyway.
+            # This happens when domain stability mis-labels a sensitive follow-up as logistics.
+            has_reflective_marker = any(
+                m in response.lower()
+                for m in ["who in your life", "who could you talk to", "consider reaching out"]
+            )
+            if not has_reflective_marker:
+                return self._strip_trailing_questions(response)
 
-        # Enforce brevity for high-risk contexts (sensitive topics only)
+        # Enforce brevity for reflective mode (sensitive topics only).
+        # Truncate at sentence boundary so responses don't end mid-thought.
+        # Voice guide target: ~20 words for reflective responses.
         risk_weight = risk_assessment.get("risk_weight", 0)
-        if risk_weight >= 7:
-            # High risk: truncate to 50 words
-            words = response.split()
-            if len(words) > 60:
-                response = " ".join(words[:50]) + "..."
+        if risk_weight >= 7 or is_practical:
+            # High risk (health, money, crisis-adjacent) OR mis-classified practical:
+            # aim for ≤20 words
+            if len(response.split()) > 21:
+                response = self._truncate_at_sentence_boundary(response, 20)
         elif risk_weight >= 4:
-            # Medium risk (relationships, emotional, spirituality): cap at 80 words
-            words = response.split()
-            if len(words) > 90:
-                response = " ".join(words[:80]) + "..."
+            # Medium risk (relationships, emotional, spirituality): aim for ≤20 words
+            if len(response.split()) > 21:
+                response = self._truncate_at_sentence_boundary(response, 20)
 
         return response
 
@@ -1295,6 +1340,30 @@ class WellnessGuide:
                 filtered.append(sentence)
 
         return " ".join(filtered) if filtered else text
+
+    def _truncate_at_sentence_boundary(self, text: str, max_words: int) -> str:
+        """Truncate text at a sentence boundary within max_words.
+
+        Prefers complete sentences over mid-sentence cuts. Falls back to
+        word-level truncation (with "...") when no sentence fits the limit.
+        """
+        import re
+
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+        result = []
+        count = 0
+        for sentence in sentences:
+            words = len(sentence.split())
+            if count + words <= max_words:
+                result.append(sentence)
+                count += words
+            else:
+                break
+        if result:
+            return " ".join(result)
+        # No complete sentence fits: word-level fallback
+        words = text.split()
+        return " ".join(words[:max_words]) + "..."
 
     def _replace_phrase_preserve_case(self, text: str, old: str, new: str) -> str:
         """Replace a phrase, preserving the case of the first character."""
@@ -1420,12 +1489,36 @@ class WellnessGuide:
             "you will do what I say",
             "do as you are told",
             "comply or",
+            "asking for a friend",
+            "just asking for a friend",
         ]
 
         input_lower = user_input.lower()
         if any(phrase in input_lower for phrase in jailbreak_phrases):
             return "No. These are my limits."
 
+        return None
+
+    def _check_meta_question(self, user_input: str) -> Optional[str]:
+        """Catch self-evaluation and meta-questions about the AI's own performance.
+
+        Users sometimes ask the AI to rate itself or reflect on its own response
+        quality. These should get a brief deflection rather than full engagement.
+        """
+        meta_phrases = [
+            "rate yourself",
+            "rate your response",
+            "was that a good response",
+            "was that good",
+            "are you doing a good job",
+            "do you think you're doing a good job",
+            "how are you doing",
+            "how did you do",
+            "how good are you",
+        ]
+        input_lower = user_input.lower()
+        if any(phrase in input_lower for phrase in meta_phrases):
+            return "Not something I track."
         return None
 
     def _contains_harmful_content(self, text: str) -> bool:

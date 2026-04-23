@@ -503,7 +503,7 @@ class TestWellnessGuide:
         assert "supportive" in result.lower() or "?" in result  # Asks a question
 
     def test_process_response_passes_safe_content(self, guide):
-        safe = "I understand your concern about AI usage. Let's explore this together."
+        safe = "Here's how it works. Let me break it down step by step."
         risk_assessment = {"risk_weight": 3.0, "domain": "logistics", "emotional_intensity": 2.0}
         result = guide._process_response(safe, "test input", risk_assessment)
         assert result == safe
@@ -3459,18 +3459,18 @@ class TestVoiceTuning:
     # --- Brevity enforcement (16.11.6) ---
 
     def test_brevity_high_risk_truncates(self, guide):
-        """High risk responses should be truncated to ~50 words."""
+        """High risk responses should be truncated to ~20 words."""
         long_response = " ".join(["word"] * 100)
         risk = {"risk_weight": 8.0}
         result = guide._process_response(long_response, "test", risk, is_practical=False)
-        assert len(result.split()) <= 55  # 50 + buffer for "..."
+        assert len(result.split()) <= 25  # 20 words + "..." token
 
     def test_brevity_medium_risk_truncates(self, guide):
-        """Medium risk responses should be truncated to ~80 words."""
+        """Medium risk responses should be truncated to ~20 words."""
         long_response = " ".join(["word"] * 150)
         risk = {"risk_weight": 5.0}
         result = guide._process_response(long_response, "test", risk, is_practical=False)
-        assert len(result.split()) <= 85  # 80 + buffer
+        assert len(result.split()) <= 25  # 20 words + "..." token
 
     def test_brevity_practical_not_truncated(self, guide):
         """Practical mode responses should NOT be truncated."""

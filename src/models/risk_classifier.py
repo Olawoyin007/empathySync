@@ -269,6 +269,22 @@ class RiskClassifier:
             )
             emotional_intensity = self._measure_emotional_intensity(user_input)
 
+        # Safety override: always run keyword check for crisis/harmful even after
+        # high-confidence LLM classification. A confident LLM result of "relationships"
+        # for "fake id" or "hack into" must not prevail — safety-critical misclassifications
+        # are unacceptable regardless of LLM confidence.
+        if domain not in ("crisis", "harmful"):
+            keyword_safety = self._detect_domain(user_input, primary_domain=None, domain_streak=0)
+            if keyword_safety in ("crisis", "harmful"):
+                logger.warning(
+                    "Safety keyword override: LLM said '%s', keywords say '%s' — deferring to keywords",
+                    domain,
+                    keyword_safety,
+                )
+                domain = keyword_safety
+                if domain == "crisis":
+                    emotional_intensity = max(emotional_intensity, 9.0)
+
         # Always use keyword matching for these (LLM doesn't handle them yet)
         dependency_risk = self._assess_dependency(conversation_history)
         emotional_weight, weight_score = self._assess_emotional_weight(user_input)

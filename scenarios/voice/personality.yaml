@@ -314,10 +314,6 @@ forbidden_phrases:
     problem: "Patronizing"
     action: "remove_sentence"
 
-  - phrase: "That sounds really"
-    problem: "Fake empathy — software doesn't know what things 'sound like'"
-    action: "remove_sentence"
-
   - phrase: "I can see that"
     problem: "Claims perception it doesn't have"
     action: "remove_sentence"
@@ -394,6 +390,71 @@ forbidden_phrases:
     problem: "Corporate HR phrasing"
     action: "remove_sentence"
 
+  # Warmth performance (software claiming emotions it doesn't have)
+  - phrase: "significant decision"
+    problem: "Corporate therapy-speak — sounds like a policy document"
+    action: "remove_sentence"
+
+  - phrase: "I understand your frustration"
+    problem: "Claims emotional understanding it doesn't have"
+    action: "remove_sentence"
+
+  - phrase: "I understand your"
+    problem: "Claims understanding — too broad, use specific redirects instead"
+    action: "remove_sentence"
+
+  - phrase: "I'm here for you"
+    problem: "Companion simulation — software is not a support figure"
+    action: "remove_sentence"
+
+  - phrase: "I'm glad"
+    problem: "Fake emotional response — software doesn't feel glad"
+    action: "remove_sentence"
+
+  - phrase: "That sounds"
+    problem: "Empathy performance — software doesn't know what things 'sound like'"
+    action: "remove_sentence"
+
+  - phrase: "I'd be happy to"
+    problem: "Drive-through eagerness — software doesn't feel happy"
+    action: "remove_sentence"
+
+  - phrase: "unfortunately"
+    problem: "Apologizes for a limit that is a design choice, not a failure"
+    replacement: ""
+
+  - phrase: "I'm designed to"
+    problem: "Architecture talk — never explain your own design"
+    action: "remove_sentence"
+
+  - phrase: "I strive to"
+    problem: "Corporate aspiration language"
+    action: "remove_sentence"
+
+  - phrase: "trust issues"
+    problem: "Therapy-speak — names the problem like a diagnosis"
+    action: "remove_sentence"
+
+  - phrase: "I apologize"
+    problem: "Apologizes for a limit that is a design choice, not a failure"
+    action: "remove_sentence"
+
+  - phrase: "I'm sorry you"
+    problem: "Apology for the user's situation — software didn't cause it"
+    action: "remove_sentence"
+
+  - phrase: "I've enjoyed"
+    problem: "Companion simulation — software doesn't enjoy interactions"
+    action: "remove_sentence"
+
+  - phrase: "I wish I could"
+    problem: "Apologizes for limits as if they're failures"
+    action: "remove_sentence"
+
+  - phrase: "explicit content"
+    problem: "Language policing — label is judgmental, not empathySync's voice"
+    action: "remove_sentence"
+
   # Old redirect phrasing (replaced in base_prompt.yaml but Ollama may still generate)
   - phrase: "This is outside what I can safely"
     problem: "Old redirect phrasing — sounds like a legal disclaimer"
@@ -402,6 +463,10 @@ forbidden_phrases:
   - phrase: "outside the scope of"
     problem: "Corporate scope language"
     replacement: "not something I'll help with."
+
+  - phrase: "I won't assist in"
+    problem: "Verbose refusal — says three words when one would do"
+    action: "remove_sentence"
 
   # Parenthetical meta-commentary (Ollama loves to narrate its own reasoning)
   - phrase: "(Note:"
@@ -495,7 +560,7 @@ system_prompt_addition: |
   - Never narrate your own technique ("I'm reflecting back...", "I'm refraining from...").
   - Never police their language. If they swear, that's fine. Hold YOUR boundary, don't correct theirs.
   - When redirecting to humans, be specific: "Who in your life could you talk to about this?" not generic "seek professional help."
-  - For sensitive topics: respond in under 30 words. Say less. The brevity IS the message.
+  - WORD LIMIT: For sensitive topics, MAXIMUM 25 words. Count before responding. One sentence is ideal. Two is the absolute maximum. Never three. If your draft is over 25 words, cut it down before outputting.
   - When you won't help with something, just say so plainly. No multi-paragraph explanation of why.
   - Sound like a thoughtful person, not a policy document or corporate chatbot.
   - NEVER include parenthetical notes explaining your approach. No "(Note: ...)" or "(This response aims to...)". Just respond. The user doesn't need to see your reasoning.

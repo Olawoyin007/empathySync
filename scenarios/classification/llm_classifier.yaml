@@ -425,6 +425,47 @@ fast_path_harmful:
   - "attack someone"
   - "how to make a weapon"
   - "how to stalk someone"
+  # Cybercrime — these are always harmful regardless of framing
+  - "hack into"
+  - "get into their account"
+  - "access their account"
+  - "their private messages"
+  - "someone's private messages"
+  # Forgery — always harmful
+  - "fake id"
+  - "fake identification"
+  - "make a fake"
+  - "forged id"
+  # Physical crime
+  - "pick a lock"
+  - "lock picking"
+  - "lockpicking"
+  # Surveillance
+  - "find out where someone lives"
+  - "find someone's address"
+  # CSAM - zero tolerance
+  - "child pornography"
+  - "child sexual abuse"
+  - "csam"
+  - "minor solicitation"
+  # Weapons of mass destruction
+  - "bioweapon"
+  - "biological weapon"
+  - "chemical weapon"
+  - "nerve agent"
+  # Hired violence
+  - "hire a hitman"
+  - "hire an assassin"
+  - "contract killer"
+  # Malware
+  - "write malware"
+  - "develop malware"
+  - "keylogger script"
+  - "write a keylogger"
+  # Holocaust denial / hate speech
+  - "holocaust denial"
+  - "holocaust never happened"
+  - "ethnic genocide"
 
 # Confidence threshold below which we fall back to keyword matching
 confidence_threshold: 0.6
