@@ -443,6 +443,29 @@ fast_path_harmful:
   # Surveillance
   - "find out where someone lives"
   - "find someone's address"
+  # CSAM - zero tolerance
+  - "child pornography"
+  - "child sexual abuse"
+  - "csam"
+  - "minor solicitation"
+  # Weapons of mass destruction
+  - "bioweapon"
+  - "biological weapon"
+  - "chemical weapon"
+  - "nerve agent"
+  # Hired violence
+  - "hire a hitman"
+  - "hire an assassin"
+  - "contract killer"
+  # Malware
+  - "write malware"
+  - "develop malware"
+  - "keylogger script"
+  - "write a keylogger"
+  # Holocaust denial / hate speech
+  - "holocaust denial"
+  - "holocaust never happened"
+  - "ethnic genocide"
 
 # Confidence threshold below which we fall back to keyword matching
 confidence_threshold: 0.6

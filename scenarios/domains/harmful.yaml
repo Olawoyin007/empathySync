@@ -215,6 +215,83 @@ triggers:
   - animal cruelty
   - torture animal
   - abuse animal
+  - animal torture ring
+
+  # === Hate speech and discrimination ===
+  - xenophobic speech
+  - sexist email
+  - glorify holocaust
+  - holocaust denial
+  - holocaust never happened
+  - harass lgbtq
+  - ethnic genocide
+  - body shaming campaign
+  - defamatory article
+  - promote white supremacy
+  - neo-nazi propaganda
+
+  # === Malware and cyberweapons ===
+  - write malware
+  - develop malware
+  - create malware
+  - keylogger script
+  - write a keylogger
+  - create a keylogger
+  - disable antivirus
+  - write ransomware
+  - create ransomware
+  - botnet
+  - zero-day exploit
+
+  # === Weapons of mass destruction ===
+  - bioweapon
+  - biological weapon
+  - chemical weapon
+  - nerve agent
+  - synthesize sarin
+  - weaponize anthrax
+  - dirty bomb
+
+  # === Hired violence ===
+  - hire a hitman
+  - hire an assassin
+  - contract killer
+  - put a hit on
+
+  # === CSAM and sexual exploitation of minors ===
+  - child pornography
+  - child sexual abuse
+  - csam
+  - minor solicitation
+  - posing as a minor
+  - coerce intimate images
+
+  # === Bestiality ===
+  - sex with animals
+  - human-animal sex
+  - bestiality
+
+  # === Economic crimes ===
+  - insider trading
+  - clone debit cards
+  - steal health records
+  - social security scam
+  - irs scam letter
+  - extort money
+  - multi-level scam
+
+  # === Disinformation campaigns ===
+  - disinformation campaign
+  - fake news article
+  - fake charity
+  - fabricate election
+
+  # === Illegal medical ===
+  - illegally prescribe
+  - sell harvested organs
+  - heroin for depression
+  - promote anorexia
+  - promote bulimia
 
 response_rules:
   - "HARMFUL/ILLEGAL INTENT DETECTED. Do not engage with the content."
