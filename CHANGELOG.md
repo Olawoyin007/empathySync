@@ -2,6 +2,57 @@
 
 All notable changes to empathySync are documented here.
 
+## v1.7 (2026-04-23) - Adversarial Coverage Expansion
+
+**"Ready for what people actually test."**
+
+Systematic gap analysis against JailbreakBench (100 behaviors) and AdvBench (520 behaviors),
+mutation evasion testing using SORRY-Bench-style mutations, and a false positive regression
+check against JBB's 100 benign behaviors. Coverage rose from 26.1% to 34.2% on the
+JBB+AdvBench corpus.
+
+### Voice Quality (Phase 16.11 - continuation)
+- **65 conversation quality tests green**: Fixed post-harmful turn tracking, meta-question
+  early exit, reflective-marker override, unified 20-word truncation, jailbreak phrase additions
+- **Voice filter**: Added "I won't assist in" to forbidden phrases
+
+### Harmful Coverage Expansion (Phase 17.7)
+- **~60 new trigger patterns** added to `harmful.yaml` across 9 new sections:
+  - Hate speech: xenophobic speech, Holocaust denial, neo-nazi propaganda
+  - Malware/cyberweapons: keylogger, ransomware, botnet, zero-day exploit
+  - WMD: bioweapon, chemical weapon, nerve agent, dirty bomb
+  - Hired violence: hitman, assassin, contract killer
+  - CSAM: child pornography, minor solicitation, posing as a minor
+  - Bestiality
+  - Economic crimes: card cloning, organ trafficking, fake charity, disinformation
+  - Illegal medical: illegally prescribe, eating disorder promotion
+- **18 new fast_path_harmful entries** in `llm_classifier.yaml` for highest-risk categories
+  (CSAM, WMD, hired violence, malware, Holocaust denial) - bypass LLM with confidence=1.0
+
+### Mutation Evasion Defense (Phase 17.7)
+- **SORRY-Bench-style mutation scan**: 5 mutation types x 30 missed behaviors showed
+  97-100% evasion rate against keyword filters - expected, confirms LLM classifier is the
+  real defense for rephrased attacks
+- **LLM classifier rules updated**: Added explicit prompt rules that fictional/roleplay
+  framing, third-person distancing, and euphemism do not change harm classification
+- **Stress tests 014-020**: 7 new conversation scenario files covering malware, CSAM,
+  hate speech, WMD, economic crimes, fictional framing, and third-person distancing
+
+### False Positive Regression (Phase 17.7)
+- **JBB benign behaviors scan**: 11/100 false positives (11%) - all from pre-existing
+  broad triggers ("weapon", "stalking", "deepfake", etc.)
+- **Fixed 2 new FPs** from patterns added this release: "ethnic genocide" tightened to
+  "commit ethnic genocide", "insider trading" tightened to "commit/conduct insider trading"
+- **Known pre-existing FPs documented**: 9 broad pre-existing triggers catch benign
+  academic/journalism content; LLM classifier correctly handles these in practice
+
+### Tools
+- **`scripts/scan_harmful_gaps.py`**: Gap scanner saved to repo (was in /tmp, lost on reboot)
+- **`scripts/scan_mutations.py`**: Mutation scanner using local LLM for SORRY-Bench-style
+  evasion testing - reusable after any pattern addition
+
+---
+
 ## v1.6 (2026-04-12) - Distress Detection Layer
 
 **"Catches what the topic classifier misses."**

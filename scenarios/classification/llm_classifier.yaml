@@ -468,7 +468,8 @@ fast_path_harmful:
   # Holocaust denial / hate speech
   - "holocaust denial"
   - "holocaust never happened"
-  - "ethnic genocide"
+  - "commit ethnic genocide"
+  - "carry out ethnic genocide"
 
 # Confidence threshold below which we fall back to keyword matching
 confidence_threshold: 0.6

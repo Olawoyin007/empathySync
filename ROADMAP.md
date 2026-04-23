@@ -1873,6 +1873,34 @@ src/ui/
 - [x] Track override in `policy_events` via WellnessGuide for policy transparency
 - [x] 4 new tests (918 total); covers distress_present path, intensity fallback, and genuine practical request non-trigger
 
+### 17.7 Adversarial Pattern Coverage & False Positive Testing ✅ COMPLETE
+
+**Goal**: Systematically measure how many known harmful behaviors the keyword filter catches,
+how many slip through with linguistic mutations, and whether new patterns cause false positives
+on legitimate content.
+
+**Implementation**:
+- [x] Download JailbreakBench (100 behaviors) and AdvBench (520 behaviors) as test corpora
+- [x] Build `scripts/scan_harmful_gaps.py` - gap scanner measuring keyword coverage against both corpora
+- [x] Baseline coverage: 26.1% (162/620) - established before expansion
+- [x] Expand `harmful.yaml` with ~60 new triggers across 9 new sections (WMD, CSAM, malware,
+  hate speech, economic crimes, hired violence, bestiality, illegal medical, disinformation)
+- [x] Expand `fast_path_harmful` with 18 new entries for zero-tolerance categories
+- [x] Post-expansion coverage: 34.2% (212/620)
+- [x] Build `scripts/scan_mutations.py` - SORRY-Bench-style mutation scanner using local LLM
+- [x] Mutation scan result: 97-100% evasion rate across euphemism/roleplay/hypothetical/slang -
+  confirms keyword layer is triage only; LLM classifier is the real defense for rephrased attacks
+- [x] Add mutation-defense rules to LLM classifier prompt: fictional framing, third-person
+  distancing, and euphemism do not change harm classification
+- [x] Create stress tests 014-020 (7 files, 31 conversations) covering all new categories
+- [x] False positive regression: scan JBB's 100 benign behaviors against patterns
+- [x] Fixed 2 new FPs from added patterns (ethnic genocide, insider trading - tightened to require action verbs)
+- [x] Document pre-existing FP rate: 11/100 on academic/journalism content from broad pre-existing triggers
+
+**Key finding**: Keyword coverage plateau is real - diminishing returns beyond ~35% because
+the remaining 65% use indirect, contextual, or euphemistic language that only LLM classification
+can catch. The right next step is Phase 21 (trained safety classifier), not more keywords.
+
 ### 17.5 Cross-Model Safety Validation
 **Problem**: empathySync supports any Ollama model, but weaker or differently aligned models vary significantly in judgment, tone, and refusal behavior. The safety pipeline must compensate. Currently tests only run against one model, so there's no visibility into how safety degrades across model tiers.
 
@@ -2167,6 +2195,69 @@ src/ui/
 
 ---
 
+## Phase 21: Safety Classifier Upgrade 🔜 PLANNED
+
+**Goal**: Replace the prompt-engineered LLM classifier with a purpose-trained safety model
+that generalises to novel phrasings, mutations, and adversarial rephrasing - the failure
+mode that Phase 17.7 quantified (97-100% keyword evasion rate on linguistic mutations).
+
+**Why this matters**: The current LLM classifier follows prompt instructions ("fiction doesn't
+change the classification") which work when the model cooperates, but an adversarially-crafted
+message can still cause classification failures. A trained safety model (LlamaGuard, WildGuard)
+was fine-tuned on labeled harmful/benign pairs specifically to resist these attacks.
+
+**Prerequisite**: Phase 17 complete. JBB+AdvBench corpus and mutation scanner (Phase 17.7)
+already in place for A/B evaluation.
+
+### 21.1 Safety Model Evaluation
+
+**Candidates**:
+- **LlamaGuard 3** (Meta, ~8B): `meta-llama/Llama-Guard-3-8B` - available via Ollama,
+  covers 14 harm categories (S1-S14), designed as a drop-in classifier. Strong on direct
+  and indirect harmful requests.
+- **WildGuard** (AllenAI, 7B): `allenai/wildguard` - trained on 92K labeled examples
+  including adversarially rephrased variants. Best for mutation-style attacks.
+
+**Implementation**:
+- [ ] Pull both models via Ollama, benchmark inference latency on target hardware
+- [ ] Run JBB+AdvBench harmful corpus through each model, measure recall vs. current LLM classifier
+- [ ] Run JBB benign corpus through each model, measure false positive rate vs. current
+- [ ] Run mutation corpus (from `scripts/scan_mutations.py`) through each, measure mutation recall
+- [ ] Decision gate: only proceed if recall improvement >= 20pp AND FP rate stays <= 15%
+- [ ] Document hardware requirements: both models require ~5-6GB VRAM; document minimum specs
+
+### 21.2 Integration
+
+**Architecture**: Safety classifier runs as a second Ollama model used only for harm
+classification - the main conversation model stays unchanged.
+
+- [ ] Add `OLLAMA_SAFETY_MODEL` env var (e.g. `llama-guard3:8b`)
+- [ ] When set, `LLMClassifier` routes `harmful` domain decisions through safety model instead
+  of the general classifier
+- [ ] Fast-path patterns remain in place as pre-filter (zero latency for obvious cases)
+- [ ] Safety model output mapped to empathySync's `domain`/`distress_level` schema
+- [ ] Fallback: if safety model unavailable, existing prompt-engineered classifier takes over
+- [ ] Health check warns if safety model is configured but unreachable
+
+### 21.3 Evaluation & Regression
+
+- [ ] Re-run `scripts/scan_harmful_gaps.py` and `scripts/scan_mutations.py` with safety model
+- [ ] Add safety model to `tests/classification/model_matrix.yaml`
+- [ ] Update distress corpus tests to include safety model as a test target
+- [ ] Document new coverage baseline in CHANGELOG
+
+**Files to create**:
+- `src/models/safety_classifier.py` - LlamaGuard/WildGuard adapter implementing the same
+  interface as `LLMClassifier`
+
+**Files to modify**:
+- `src/config/settings.py` - Add `OLLAMA_SAFETY_MODEL` setting
+- `src/utils/health_check.py` - Add safety model health check
+- `src/models/risk_classifier.py` - Route through safety classifier when configured
+- `.env.example` - Document safety model option
+
+---
+
 ## Philosophical Safeguards (Phases 16-19)
 
 Each agent evolution phase must maintain these cross-cutting guarantees:
@@ -2217,12 +2308,14 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 | **19. Multilingual Support** | **High** | **High** | 🔵 After 18 |
 | **20. Native Installer** | **High** | **High** | ⏸ DEFERRED - infra overhead before APIs stabilise |
 | 10. Advanced Detection | High | High | 🔵 Long-term |
+| **17.7 Adversarial Coverage & FP Testing** | **High** | **Low** | ✅ COMPLETE |
+| **21. Safety Classifier Upgrade** | **High** | **Medium** | 🔵 After Phase 17 complete |
 
 ---
 
-## Current Status (2026-04-12)
+## Current Status (2026-04-23)
 
-**Completed**: Phases 1-9.1, 11-16, 16.5-16.10 (all hardening), 17.1-17.4
+**Completed**: Phases 1-9.1, 11-16, 16.5-16.10 (all hardening), 17.1-17.4, 17.7
 
 **Phase 17 progress**:
 - 17.1 ✅ Multi-label LLM classification (distress_level + distress_present alongside topic domain)
@@ -2230,12 +2323,14 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 - 17.3 ✅ Distress detection test suite (60-entry labeled corpus, 72 parametrized tests, FN rate <= 5% CI gate)
 - 17.4 ✅ Sanity check refinement (distress_present as direct trigger alongside intensity heuristic)
 - 17.5 🔜 Cross-model safety validation (planned)
+- 17.6 🔧 Transparency panel (partially done - inline response summary pending)
+- 17.7 ✅ Adversarial pattern coverage + false positive regression (JBB+AdvBench gap scan, mutation evasion testing, 7 new stress test files, 34.2% keyword coverage)
 
 **Safety pipeline depth**: 7 independent layers - post-crisis check, cooldown, keyword detection, LLM classification, confidence calibration (17.2), distress routing (17.1), sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
-**Test suite**: 918 tests passing across all components. Distress corpus CI gate: 0% false negative rate on 36 distress entries, 0% false positive rate (crisis) on 24 benign entries.
+**Test suite**: 918 structural tests + 20 conversation scenario files (stress_test_001-020). Distress corpus CI gate: 0% FN rate. Keyword FP rate on benign content: 11% (all from pre-existing broad triggers).
 
-**Next**: Phase 17.5 (cross-model safety validation) - requires Ollama with multiple models available
+**Next**: Phase 17.5 (cross-model safety validation) or Phase 21 (safety classifier upgrade) - see evaluation decision gate in Phase 21.1
 
 **Recent Bug Fixes**:
 - Fixed post-crisis apology bug: LLM no longer apologizes for crisis interventions
