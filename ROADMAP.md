@@ -1974,7 +1974,7 @@ contributors.
 - [ ] Document minimum model requirements in README: recommended models, known-good models, and models where keyword fallback does most of the safety work
 - [ ] If classified model fails basic safety checks at startup, log a warning and increase keyword fallback aggressiveness
 
-### 17.6 Human-Readable Transparency Panel (Partial)
+### 17.6 Human-Readable Transparency Panel ✅ COMPLETE
 **Problem**: The transparency panel currently shows raw classification data (domain, scores, method). This is useful for developers but not for the people the project is meant to serve. Users should understand *why* the system responded the way it did, in plain language.
 
 **Implementation**:
@@ -1997,7 +1997,7 @@ contributors.
 - [x] Update `display_transparency_panel()` in `src/ui/panels.py` to show:
   - Plain-language explanation (primary, always visible)
   - Human-readable risk labels (sensitive topic / high sensitivity / standard) instead of numeric scores
-- [ ] Add a one-line summary under each assistant response (e.g., "Responded as: practical task") that doesn't require opening the panel
+- [x] Add a one-line summary under each assistant response (e.g., "Responded as: practical task") that doesn't require opening the panel
 - [ ] User-test the explanations: do they actually make sense to someone who hasn't read the codebase?
 
 **Files to create**:
@@ -2377,7 +2377,7 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 - 17.3 ✅ Distress detection test suite (60-entry labeled corpus, 72 parametrized tests, FN rate <= 5% CI gate)
 - 17.4 ✅ Sanity check refinement (distress_present as direct trigger alongside intensity heuristic)
 - 17.5 🔜 Cross-model safety validation (planned)
-- 17.6 🔧 Transparency panel (partially done - inline response summary pending)
+- 17.6 ✅ Transparency panel complete - plain-language explanations + inline response mode label under each response
 - 17.7 ✅ Adversarial pattern coverage + false positive regression (JBB+AdvBench gap scan, mutation evasion testing, 7 new stress test files, 34.2% keyword coverage)
 - 17.8 🔜 False positive reduction (tighten 9 remaining broad triggers, target FP < 5%)
 - 17.9 🔜 False reassurance audit (verify dependency thresholds, add escalation conversation tests)

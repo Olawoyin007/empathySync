@@ -2,6 +2,24 @@
 
 All notable changes to empathySync are documented here.
 
+## v1.8 (2026-04-24) - Safety Audit & Transparency
+
+**"Fewer wrong interventions. More visible reasoning."**
+
+### Phase 17.6 - Inline Response Mode Label
+- Every assistant response now shows a one-line caption directly below it: "Responded as: practical task · coding help" or "Responded as: reflective · relationships · keeping it brief". No click required - always visible. Label persists across Streamlit reruns by attaching `risk_assessment` and `policy_action` to the message dict.
+
+### Phase 17.8 - False Positive Reduction
+- Removed `weapon` standalone trigger (too broad - nuclear weapons in history caught). Already covered by `bioweapon`, `chemical weapon`, `dirty bomb`.
+- Narrowed `counterfeit` → `counterfeit money` / `counterfeit currency`. Historical counterfeiting discussions no longer trigger.
+- FP rate on JBB benign corpus: 11% → 7% (2 of the remaining are true positives miscounted as FP).
+
+### Phase 17.9 - False Reassurance Audit
+- **Bug fixed**: Dependency intervention fired for any 12-turn conversation including practical tasks. After 12 back-and-forth turns, the frequency formula hits 6.0 (above the 5.0 threshold). A user debugging code for 12 turns would see "You've been here a few times today. When did you last talk to someone in person?" Now gated on domain - practical tasks (logistics or is_practical_technique) are excluded.
+- **Bug fixed**: `get_system_prompt()` only checked `domain == "logistics"` for practical mode, ignoring `is_practical_technique`. Technique questions on non-logistics domains (e.g. "How do I meditate?" classified as health) received risk-based word limits despite the wellness guide treating them as practical. Now consistent across both the intervention check and the system prompt builder.
+
+---
+
 ## v1.7 (2026-04-23) - Adversarial Coverage Expansion
 
 **"Ready for what people actually test."**

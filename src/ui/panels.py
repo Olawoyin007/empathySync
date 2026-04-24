@@ -10,6 +10,48 @@ from utils.scenario_loader import get_scenario_loader
 from models.risk_classifier import INTENT_PRACTICAL, INTENT_CONNECTION
 
 
+def display_response_mode_label(risk_assessment: dict, policy_action: dict = None) -> None:
+    """
+    Inline one-line summary shown directly under each assistant response (Phase 17.6).
+
+    Examples:
+      Responded as: practical task  ·  coding help
+      Responded as: reflective  ·  relationships  ·  keeping it brief
+      Responded as: reflective  ·  crisis detected  ·  redirected to support
+    """
+    if not risk_assessment:
+        return
+
+    loader = get_scenario_loader()
+    domain = risk_assessment.get("domain", "logistics")
+    is_practical = domain == "logistics" or risk_assessment.get("is_practical_technique", False)
+
+    domain_info = loader.get_domain_explanation(domain)
+    domain_name = domain_info.get("name", domain.title())
+
+    mode = "practical task" if is_practical else "reflective"
+
+    parts = [f"Responded as: **{mode}**", domain_name.lower()]
+
+    if policy_action:
+        policy_type = policy_action.get("type", "")
+        policy_labels = {
+            "crisis_stop": "crisis detected · redirected to support",
+            "harmful_stop": "declined · harmful content",
+            "turn_limit_reached": "session limit reached",
+            "dependency_intervention": "dependency pattern noticed",
+            "high_risk_response": "keeping it brief",
+            "cooldown_enforced": "usage limit reached",
+            "sensitive_redirect": "redirected to trusted network",
+        }
+        if policy_type in policy_labels:
+            parts.append(policy_labels[policy_type])
+    elif not is_practical:
+        parts.append("keeping it brief")
+
+    st.caption("  ·  ".join(parts))
+
+
 def display_safety_banner():
     """Display session safety banner when guardrails are active."""
     guide = st.session_state.wellness_guide

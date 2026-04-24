@@ -10,6 +10,7 @@ import streamlit as st
 from ui.lock import is_read_only
 from ui.panels import (
     display_transparency_panel,
+    display_response_mode_label,
     display_skill_tips,
     display_intent_shift_prompt,
     display_graduation_prompt,
@@ -57,6 +58,11 @@ def display_chat_interface(wellness_mode):
             avatar=ASSISTANT_AVATAR if message["role"] == "assistant" else USER_AVATAR,
         ):
             st.markdown(message["content"])
+            if message["role"] == "assistant" and message.get("risk_assessment"):
+                display_response_mode_label(
+                    message["risk_assessment"],
+                    message.get("policy_action"),
+                )
 
     # Welcome screen when no messages yet
     if not session.messages:
@@ -121,6 +127,16 @@ def display_chat_interface(wellness_mode):
                 result = session.finalize_stream()
             else:
                 st.markdown(result.response)
+            display_response_mode_label(
+                result.risk_assessment,
+                guide.last_policy_action,
+            )
+
+        # Attach risk data to the last assistant message so the label
+        # can be replayed on reruns without re-running the pipeline
+        if session.messages and session.messages[-1]["role"] == "assistant":
+            session.messages[-1]["risk_assessment"] = result.risk_assessment
+            session.messages[-1]["policy_action"] = guide.last_policy_action
 
         # Sync messages reference for backward compatibility
         st.session_state.messages = session.messages
