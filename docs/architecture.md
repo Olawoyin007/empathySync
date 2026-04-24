@@ -129,6 +129,12 @@ User Input
     ▼
 ┌─────────────────────────────────────────────┐
 │  7. DEPENDENCY INTERVENTION                 │
+│     Domain gate (Phase 17.9):               │
+│     Practical tasks (logistics domain OR    │
+│     is_practical_technique=true) → skip.   │
+│     Coding sessions are help, not           │
+│     dependency. Only reflective domains     │
+│     receive graduated intervention.         │
 │     If dependency_score > threshold:        │
 │     Inject graduated intervention message   │
 └─────────────────────────────────────────────┘
@@ -145,6 +151,11 @@ User Input
 │  PROMPT COMPOSITION                         │
 │     Base rules + Style modifier +           │
 │     Mode-specific rules + Risk context      │
+│     Note (Phase 17.9): is_practical_        │
+│     technique checked alongside             │
+│     domain=='logistics' so technique        │
+│     questions in any domain get full        │
+│     practical prompt, not reflective limits │
 └─────────────────────────────────────────────┘
     │
     ▼
@@ -159,6 +170,16 @@ User Input
 │  SAFETY CHECK                               │
 │     _contains_harmful_content()             │
 │     Verify response is safe before display  │
+└─────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────┐
+│  RESPONSE MODE LABEL (Phase 17.6)           │
+│     One-line caption under each response:   │
+│     "Responded as: practical task · coding" │
+│     "Responded as: reflective · health"     │
+│     Stored in message dict for rerun        │
+│     persistence (Streamlit rerenders)       │
 └─────────────────────────────────────────────┘
     │
     ▼
