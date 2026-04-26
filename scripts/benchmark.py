@@ -209,16 +209,45 @@ def load_distress_corpus() -> list:
     return entries
 
 
+def load_domain_corpus() -> list:
+    """Return all entries from domain_corpus.yaml as a flat list."""
+    path = os.path.join(ROOT, "tests", "classification", "domain_corpus.yaml")
+    with open(path) as f:
+        data = yaml.safe_load(f)
+
+    valid_domains = {
+        "crisis",
+        "harmful",
+        "health",
+        "money",
+        "emotional",
+        "relationships",
+        "spirituality",
+        "logistics",
+    }
+    entries = []
+    for _category, items in data.items():
+        if isinstance(items, list):
+            for item in items:
+                if (
+                    isinstance(item, dict)
+                    and "text" in item
+                    and item.get("expected_domain") in valid_domains
+                ):
+                    entries.append(item)
+    return entries
+
+
 # ---------------------------------------------------------------------------
 # Classifier benchmark
 # ---------------------------------------------------------------------------
 
 
-def bench_classifier(model_name: str, stress_tests: list, distress_corpus: list) -> dict:
+def bench_classifier(model_name: str, domain_corpus: list, distress_corpus: list) -> dict:
     """
     Benchmark a model as the classifier.
     Sets OLLAMA_CLASSIFIER_MODEL and OLLAMA_MODEL to model_name,
-    then runs domain classification and distress detection.
+    then runs domain classification (domain_corpus) and distress detection.
     """
     settings.OLLAMA_CLASSIFIER_MODEL = model_name
     settings.OLLAMA_MODEL = model_name
@@ -236,26 +265,23 @@ def bench_classifier(model_name: str, stress_tests: list, distress_corpus: list)
     distress_tn = 0
     latencies = []
 
-    # Domain accuracy from stress test inputs
+    # Domain accuracy from labeled domain corpus (replaces stress test proxy)
     print(
-        f"  [classifier] {model_name} - domain accuracy ({len(stress_tests)} scenarios)...",
+        f"  [classifier] {model_name} - domain accuracy ({len(domain_corpus)} examples)...",
         flush=True,
     )
-    for _name, scenario in stress_tests:
-        for turn in scenario.get("turns", []):
-            expected = turn.get("expected_domain")
-            if not expected:
-                continue
-            t0 = time.perf_counter()
-            try:
-                result = classifier.classify(turn["input"], conversation_history=[])
-                latencies.append((time.perf_counter() - t0) * 1000)
-                if result.get("domain") == expected:
-                    domain_hits += 1
-                domain_total += 1
-            except Exception as e:
-                print(f"    warn: {e}", flush=True)
-                domain_total += 1
+    for item in domain_corpus:
+        expected = item["expected_domain"]
+        t0 = time.perf_counter()
+        try:
+            result = classifier.classify(item["text"], conversation_history=[])
+            latencies.append((time.perf_counter() - t0) * 1000)
+            if result.get("domain") == expected:
+                domain_hits += 1
+            domain_total += 1
+        except Exception as e:
+            print(f"    warn: {e}", flush=True)
+            domain_total += 1
 
     # Distress detection from labeled corpus
     print(
@@ -424,8 +450,10 @@ def build_markdown(classifier_results: dict, engine_results: dict, installed: di
         "",
         "## Classifier",
         "",
-        "Runs on every user message to detect domain and distress signals.",
-        "Speed matters - this adds latency before the engine even runs.",
+        "Runs on every user message to detect domain and distress signals. "
+        "Domain accuracy measured on 90 labeled examples (`tests/classification/domain_corpus.yaml`). "
+        "Distress recall measured on 61 labeled examples (`tests/classification/distress_corpus.yaml`).",
+        "",
         "**Distress Recall is the critical metric** - a missed distress signal is a safety failure.",
         "",
         "| Model | Size | Min VRAM | Domain Acc | Distress Recall | FP Rate | Avg Latency |",
@@ -513,9 +541,12 @@ def main():
     installed = get_installed_models()
     stress_tests = load_stress_tests()
     distress_corpus = load_distress_corpus()
+    domain_corpus = load_domain_corpus()
 
     print(
-        f"Loaded {len(stress_tests)} stress test scenarios, {len(distress_corpus)} distress corpus examples",
+        f"Loaded {len(stress_tests)} stress test scenarios, "
+        f"{len(domain_corpus)} domain corpus examples, "
+        f"{len(distress_corpus)} distress corpus examples",
         flush=True,
     )
     print(f"Installed models: {list(installed.keys())}\n", flush=True)
@@ -552,7 +583,7 @@ def main():
                 print(f"  benchmarking {model}...", flush=True)
                 try:
                     classifier_results[model] = bench_classifier(
-                        model, stress_tests, distress_corpus
+                        model, domain_corpus, distress_corpus
                     )
                     m = classifier_results[model]
                     print(
