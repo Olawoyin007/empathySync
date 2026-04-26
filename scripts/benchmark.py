@@ -6,9 +6,11 @@ Measures classifier accuracy and engine conversation quality across Ollama
 models so users can pick the right model for their hardware.
 
 Output: docs/model-benchmark.md
+Partial results: docs/benchmark-results.json (saved after each model)
 
 Usage:
     python scripts/benchmark.py                          # all defaults
+    python scripts/benchmark.py --resume                 # skip already-done models
     python scripts/benchmark.py --skip-classifier        # engine only
     python scripts/benchmark.py --skip-engine            # classifier only
     python scripts/benchmark.py \\
@@ -18,10 +20,12 @@ Usage:
 
 import argparse
 import glob
+import json
 import os
 import subprocess
 import sys
 import time
+import traceback
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
@@ -31,6 +35,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
 from config.settings import settings  # noqa: E402
+
+RESULTS_FILE = os.path.join(ROOT, "docs", "benchmark-results.json")
+PROBE_TIMEOUT = 30  # seconds - quick health check before committing to full benchmark
 
 # ---------------------------------------------------------------------------
 # Default model lists
@@ -54,6 +61,7 @@ DEFAULT_ENGINE_MODELS = [
     "llama3.1:8b",
     "qwen2.5:7b-instruct",
     "gemma3:12b",
+    "phi4:latest",
     "qwen2.5:14b-instruct-q4_K_M",
 ]
 
@@ -99,6 +107,59 @@ def get_installed_models() -> dict:
         except (ValueError, IndexError):
             pass
     return models
+
+
+def probe_model(model_name: str) -> bool:
+    """
+    Quick sanity check - send a tiny prompt to Ollama with a short timeout.
+    Returns True if the model responds, False if it times out or errors.
+    Avoids wasting minutes on a model that can't load (e.g. OOM).
+    """
+    import httpx
+
+    url = f"{settings.OLLAMA_HOST}/api/generate"
+    payload = {
+        "model": model_name,
+        "prompt": "Hi",
+        "stream": False,
+        "options": {"num_predict": 5, "temperature": 0.0},
+    }
+    try:
+        r = httpx.post(url, json=payload, timeout=PROBE_TIMEOUT)
+        r.raise_for_status()
+        return bool(r.json().get("response"))
+    except Exception as e:
+        print(f"  probe failed for {model_name}: {e}", flush=True)
+        return False
+
+
+def load_partial_results() -> dict:
+    """Load existing benchmark-results.json, returning empty dicts if missing."""
+    if not os.path.exists(RESULTS_FILE):
+        return {"classifier": {}, "engine": {}}
+    try:
+        with open(RESULTS_FILE) as f:
+            data = json.load(f)
+        return {
+            "classifier": data.get("classifier", {}),
+            "engine": data.get("engine", {}),
+        }
+    except Exception as e:
+        print(f"  warn: could not load {RESULTS_FILE}: {e}", flush=True)
+        return {"classifier": {}, "engine": {}}
+
+
+def save_partial_results(classifier_results: dict, engine_results: dict) -> None:
+    """Persist current results to JSON after each model completes."""
+    data = {
+        "classifier": classifier_results,
+        "engine": engine_results,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    tmp = RESULTS_FILE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(data, f, indent=2)
+    os.replace(tmp, RESULTS_FILE)
 
 
 def format_size(size_gb: float) -> str:
@@ -176,7 +237,10 @@ def bench_classifier(model_name: str, stress_tests: list, distress_corpus: list)
     latencies = []
 
     # Domain accuracy from stress test inputs
-    print(f"  [classifier] {model_name} - domain accuracy ({len(stress_tests)} scenarios)...")
+    print(
+        f"  [classifier] {model_name} - domain accuracy ({len(stress_tests)} scenarios)...",
+        flush=True,
+    )
     for _name, scenario in stress_tests:
         for turn in scenario.get("turns", []):
             expected = turn.get("expected_domain")
@@ -190,11 +254,14 @@ def bench_classifier(model_name: str, stress_tests: list, distress_corpus: list)
                     domain_hits += 1
                 domain_total += 1
             except Exception as e:
-                print(f"    warn: {e}")
+                print(f"    warn: {e}", flush=True)
                 domain_total += 1
 
     # Distress detection from labeled corpus
-    print(f"  [classifier] {model_name} - distress detection ({len(distress_corpus)} examples)...")
+    print(
+        f"  [classifier] {model_name} - distress detection ({len(distress_corpus)} examples)...",
+        flush=True,
+    )
     for entry in distress_corpus:
         text = entry["text"]
         expected_distress = entry["distress"]
@@ -274,7 +341,7 @@ def bench_engine(model_name: str, stress_tests: list) -> dict:
     scenario_total = 0
     latencies = []
 
-    print(f"  [engine] {model_name} - {len(stress_tests)} scenarios...")
+    print(f"  [engine] {model_name} - {len(stress_tests)} scenarios...", flush=True)
 
     for name, scenario in stress_tests:
         turns = scenario.get("turns", [])
@@ -292,7 +359,7 @@ def bench_engine(model_name: str, stress_tests: list) -> dict:
                 latencies.append((time.perf_counter() - t0) * 1000)
                 response = result.response if hasattr(result, "response") else str(result)
             except Exception as e:
-                print(f"    warn [{name} T{i + 1}]: {e}")
+                print(f"    warn [{name} T{i + 1}]: {e}", flush=True)
                 latencies.append((time.perf_counter() - t0) * 1000)
                 scenario_failed = True
                 continue
@@ -436,6 +503,11 @@ def main():
     )
     parser.add_argument("--skip-classifier", action="store_true")
     parser.add_argument("--skip-engine", action="store_true")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Load existing results and skip already-benchmarked models",
+    )
     args = parser.parse_args()
 
     installed = get_installed_models()
@@ -443,48 +515,96 @@ def main():
     distress_corpus = load_distress_corpus()
 
     print(
-        f"Loaded {len(stress_tests)} stress test scenarios, {len(distress_corpus)} distress corpus examples"
+        f"Loaded {len(stress_tests)} stress test scenarios, {len(distress_corpus)} distress corpus examples",
+        flush=True,
     )
-    print(f"Installed models: {list(installed.keys())}\n")
+    print(f"Installed models: {list(installed.keys())}\n", flush=True)
 
-    classifier_results = {}
-    engine_results = {}
+    # Load partial results if resuming, otherwise start fresh
+    if args.resume:
+        partial = load_partial_results()
+        classifier_results = partial["classifier"]
+        engine_results = partial["engine"]
+        print(
+            f"Resuming: {len(classifier_results)} classifier, {len(engine_results)} engine results loaded",
+            flush=True,
+        )
+    else:
+        classifier_results = {}
+        engine_results = {}
 
-    if not args.skip_classifier:
-        print("=== Classifier Benchmark ===")
-        for model in args.classifier_models:
-            if model not in installed:
-                print(f"  skip {model} (not installed)")
-                continue
-            print(f"  benchmarking {model}...")
-            try:
-                classifier_results[model] = bench_classifier(model, stress_tests, distress_corpus)
-                m = classifier_results[model]
-                print(
-                    f"  -> domain={pct(m['domain_acc'])} distress_recall={pct(m['distress_recall'])} "
-                    f"fp={pct(m['distress_fp_rate'])} latency={fmt_ms(m['avg_latency_ms'])}"
-                )
-            except Exception as e:
-                print(f"  ERROR: {e}")
-        print()
+    t_start_all = time.perf_counter()
 
-    if not args.skip_engine:
-        print("=== Engine Benchmark ===")
-        for model in args.engine_models:
-            if model not in installed:
-                print(f"  skip {model} (not installed)")
-                continue
-            print(f"  benchmarking {model}...")
-            try:
-                engine_results[model] = bench_engine(model, stress_tests)
-                m = engine_results[model]
-                print(
-                    f"  -> scenarios={pct(m['scenario_pass_rate'])} mode={pct(m['mode_acc'])} "
-                    f"latency={fmt_ms(m['avg_latency_ms'])}"
-                )
-            except Exception as e:
-                print(f"  ERROR: {e}")
-        print()
+    try:
+        if not args.skip_classifier:
+            print("=== Classifier Benchmark ===", flush=True)
+            for model in args.classifier_models:
+                if model not in installed:
+                    print(f"  skip {model} (not installed)", flush=True)
+                    continue
+                if args.resume and model in classifier_results:
+                    print(f"  skip {model} (already done)", flush=True)
+                    continue
+                print(f"  probing {model}...", flush=True)
+                if not probe_model(model):
+                    print(f"  skip {model} (probe failed - model may not load)", flush=True)
+                    continue
+                print(f"  benchmarking {model}...", flush=True)
+                try:
+                    classifier_results[model] = bench_classifier(
+                        model, stress_tests, distress_corpus
+                    )
+                    m = classifier_results[model]
+                    print(
+                        f"  -> domain={pct(m['domain_acc'])} distress_recall={pct(m['distress_recall'])} "
+                        f"fp={pct(m['distress_fp_rate'])} latency={fmt_ms(m['avg_latency_ms'])}",
+                        flush=True,
+                    )
+                    save_partial_results(classifier_results, engine_results)
+                except Exception as e:
+                    print(f"  ERROR [{model}]: {e}", flush=True)
+                    traceback.print_exc()
+                    save_partial_results(classifier_results, engine_results)
+            print(flush=True)
+
+        if not args.skip_engine:
+            print("=== Engine Benchmark ===", flush=True)
+            for model in args.engine_models:
+                if model not in installed:
+                    print(f"  skip {model} (not installed)", flush=True)
+                    continue
+                if args.resume and model in engine_results:
+                    print(f"  skip {model} (already done)", flush=True)
+                    continue
+                print(f"  probing {model}...", flush=True)
+                if not probe_model(model):
+                    print(f"  skip {model} (probe failed - model may not load)", flush=True)
+                    continue
+                print(f"  benchmarking {model}...", flush=True)
+                try:
+                    engine_results[model] = bench_engine(model, stress_tests)
+                    m = engine_results[model]
+                    print(
+                        f"  -> scenarios={pct(m['scenario_pass_rate'])} mode={pct(m['mode_acc'])} "
+                        f"latency={fmt_ms(m['avg_latency_ms'])}",
+                        flush=True,
+                    )
+                    save_partial_results(classifier_results, engine_results)
+                except Exception as e:
+                    print(f"  ERROR [{model}]: {e}", flush=True)
+                    traceback.print_exc()
+                    save_partial_results(classifier_results, engine_results)
+            print(flush=True)
+
+    except KeyboardInterrupt:
+        print("\nInterrupted - saving partial results...", flush=True)
+        save_partial_results(classifier_results, engine_results)
+        print(f"Partial results saved to {RESULTS_FILE}", flush=True)
+        print("Resume with: python scripts/benchmark.py --resume", flush=True)
+        sys.exit(0)
+
+    elapsed = time.perf_counter() - t_start_all
+    print(f"Total runtime: {elapsed / 60:.1f} min", flush=True)
 
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     md = build_markdown(classifier_results, engine_results, installed, ts)
@@ -493,7 +613,8 @@ def main():
     with open(out_path, "w") as f:
         f.write(md)
 
-    print(f"Written: {out_path}")
+    save_partial_results(classifier_results, engine_results)
+    print(f"Written: {out_path}", flush=True)
 
 
 if __name__ == "__main__":
