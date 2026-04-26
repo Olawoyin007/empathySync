@@ -2,6 +2,24 @@
 
 All notable changes to empathySync are documented here.
 
+## v1.9.0 (2026-04-26) - Model Benchmark & Test Reliability
+
+**"Know which model to run. Know your tests are telling the truth."**
+
+### Model Benchmark (new)
+- `scripts/benchmark.py` measures classifier accuracy (domain, distress recall, FP rate) and engine conversation quality (scenario pass rate, mode accuracy, latency) across all locally installed Ollama models
+- Results written to `docs/model-benchmark.md` as a markdown table organized by hardware tier (CPU-only through 16 GB GPU) - replaces vague model recommendations with measured data
+- Probe-before-benchmark: a quick 30s health check skips models that fail to load (OOM, wrong quantization) rather than hanging for minutes
+- Partial results saved to `docs/benchmark-results.json` after each model - a crash or interruption never loses progress; `--resume` picks up exactly where it stopped
+- `phi4:latest` added to the default engine candidate list (9 GB, fits 12 GB VRAM)
+
+### OLLAMA_SEED - Deterministic Test Output
+- Ollama's `seed` option makes sampling fully deterministic: same prompt + same seed + same model = identical tokens every run
+- New `OLLAMA_SEED` env var flows through `settings.py` into both `generate()` and `generate_stream()` payloads
+- `tests/conftest.py` session fixture pins `seed=42` for all test runs - eliminates `max_words` assertion flakiness from LLM non-determinism without requiring any env var setup in CI
+
+---
+
 ## v1.8 (2026-04-24) - Safety Audit & Transparency
 
 **"Fewer wrong interventions. More visible reasoning."**
