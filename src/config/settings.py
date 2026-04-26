@@ -46,6 +46,10 @@ class Settings:
         float(os.getenv("OLLAMA_TEMPERATURE", "0.7")) if os.getenv("OLLAMA_TEMPERATURE") else 0.7
     )
 
+    # Optional fixed seed for Ollama generation (makes output deterministic).
+    # Set OLLAMA_SEED=42 in test environments to eliminate LLM non-determinism.
+    OLLAMA_SEED: Optional[int] = int(os.getenv("OLLAMA_SEED")) if os.getenv("OLLAMA_SEED") else None
+
     # Dedicated classifier model (optional)
     # Uses a smaller, faster model for classification while the main model handles responses.
     # Falls back to OLLAMA_MODEL if not set. Recommended: mistral:7b-instruct
