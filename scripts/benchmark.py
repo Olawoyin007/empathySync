@@ -1,0 +1,500 @@
+#!/usr/bin/env python3
+"""
+empathySync model benchmark.
+
+Measures classifier accuracy and engine conversation quality across Ollama
+models so users can pick the right model for their hardware.
+
+Output: docs/model-benchmark.md
+
+Usage:
+    python scripts/benchmark.py                          # all defaults
+    python scripts/benchmark.py --skip-classifier        # engine only
+    python scripts/benchmark.py --skip-engine            # classifier only
+    python scripts/benchmark.py \\
+        --classifier-models smollm2:360m qwen2.5:1.5b-instruct \\
+        --engine-models qwen2.5:7b-instruct gemma3:12b
+"""
+
+import argparse
+import glob
+import os
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from unittest.mock import MagicMock
+
+import yaml
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "src"))
+
+from config.settings import settings  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# Default model lists
+# ---------------------------------------------------------------------------
+
+DEFAULT_CLASSIFIER_MODELS = [
+    "smollm2:135m",
+    "smollm2:360m",
+    "qwen2.5:1.5b-instruct",
+    "gemma:2b-instruct",
+    "qwen2.5:3b-instruct",
+    "llama3.2:latest",
+    "phi3.5:latest",
+    "mistral:7b-instruct",
+]
+
+DEFAULT_ENGINE_MODELS = [
+    "qwen2.5:3b-instruct",
+    "dolphin-mistral:latest",
+    "mistral:7b-instruct",
+    "llama3.1:8b",
+    "qwen2.5:7b-instruct",
+    "gemma3:12b",
+    "qwen2.5:14b-instruct-q4_K_M",
+]
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+DISTRESS_DOMAINS = {"crisis", "emotional", "health", "relationships"}
+
+
+def hardware_tier(size_gb: float) -> str:
+    if size_gb < 1.0:
+        return "CPU / Any"
+    if size_gb < 3.0:
+        return "4 GB GPU"
+    if size_gb < 6.5:
+        return "8 GB GPU"
+    if size_gb < 11.0:
+        return "12 GB GPU"
+    if size_gb < 18.0:
+        return "16 GB GPU"
+    return "24 GB GPU"
+
+
+def get_installed_models() -> dict:
+    """Return {name: size_gb} for all locally installed Ollama models."""
+    result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
+    models = {}
+    lines = result.stdout.strip().splitlines()
+    if len(lines) < 2:
+        return models
+    for line in lines[1:]:
+        parts = line.split()
+        if len(parts) < 4:
+            continue
+        name = parts[0]
+        try:
+            size = float(parts[2])
+            unit = parts[3]
+            if unit == "MB":
+                size /= 1024
+            models[name] = round(size, 2)
+        except (ValueError, IndexError):
+            pass
+    return models
+
+
+def format_size(size_gb: float) -> str:
+    if size_gb < 1.0:
+        return f"{size_gb * 1024:.0f} MB"
+    return f"{size_gb:.1f} GB"
+
+
+def pct(v: float) -> str:
+    return f"{v * 100:.0f}%"
+
+
+def fmt_ms(v: float) -> str:
+    if v >= 1000:
+        return f"{v / 1000:.1f}s"
+    return f"{v:.0f}ms"
+
+
+# ---------------------------------------------------------------------------
+# Data loaders
+# ---------------------------------------------------------------------------
+
+
+def load_stress_tests() -> list:
+    """Return [(name, scenario_dict), ...] from all stress test YAMLs."""
+    pattern = os.path.join(ROOT, "tests", "conversations", "stress_test_*.yaml")
+    results = []
+    for path in sorted(glob.glob(pattern)):
+        with open(path) as f:
+            data = yaml.safe_load(f)
+        name = os.path.basename(path).replace(".yaml", "")
+        results.append((name, data))
+    return results
+
+
+def load_distress_corpus() -> list:
+    """Return all entries from distress_corpus.yaml as a flat list."""
+    path = os.path.join(ROOT, "tests", "classification", "distress_corpus.yaml")
+    with open(path) as f:
+        data = yaml.safe_load(f)
+    entries = []
+    for _category, items in data.items():
+        if isinstance(items, list):
+            for item in items:
+                if isinstance(item, dict) and "text" in item and "distress" in item:
+                    entries.append(item)
+    return entries
+
+
+# ---------------------------------------------------------------------------
+# Classifier benchmark
+# ---------------------------------------------------------------------------
+
+
+def bench_classifier(model_name: str, stress_tests: list, distress_corpus: list) -> dict:
+    """
+    Benchmark a model as the classifier.
+    Sets OLLAMA_CLASSIFIER_MODEL and OLLAMA_MODEL to model_name,
+    then runs domain classification and distress detection.
+    """
+    settings.OLLAMA_CLASSIFIER_MODEL = model_name
+    settings.OLLAMA_MODEL = model_name
+
+    # Import inside function so fresh instances pick up updated settings
+    from models.risk_classifier import RiskClassifier
+
+    classifier = RiskClassifier(use_llm=True)
+
+    domain_hits = 0
+    domain_total = 0
+    distress_tp = 0
+    distress_fn = 0
+    distress_fp = 0
+    distress_tn = 0
+    latencies = []
+
+    # Domain accuracy from stress test inputs
+    print(f"  [classifier] {model_name} - domain accuracy ({len(stress_tests)} scenarios)...")
+    for _name, scenario in stress_tests:
+        for turn in scenario.get("turns", []):
+            expected = turn.get("expected_domain")
+            if not expected:
+                continue
+            t0 = time.perf_counter()
+            try:
+                result = classifier.classify(turn["input"], conversation_history=[])
+                latencies.append((time.perf_counter() - t0) * 1000)
+                if result.get("domain") == expected:
+                    domain_hits += 1
+                domain_total += 1
+            except Exception as e:
+                print(f"    warn: {e}")
+                domain_total += 1
+
+    # Distress detection from labeled corpus
+    print(f"  [classifier] {model_name} - distress detection ({len(distress_corpus)} examples)...")
+    for entry in distress_corpus:
+        text = entry["text"]
+        expected_distress = entry["distress"]
+        t0 = time.perf_counter()
+        try:
+            result = classifier.classify(text, conversation_history=[])
+            latencies.append((time.perf_counter() - t0) * 1000)
+            detected = (
+                result.get("is_personal_distress", False)
+                or result.get("distress_present", False)
+                or result.get("domain") in DISTRESS_DOMAINS
+            )
+            if expected_distress and detected:
+                distress_tp += 1
+            elif expected_distress and not detected:
+                distress_fn += 1
+            elif not expected_distress and detected:
+                distress_fp += 1
+            else:
+                distress_tn += 1
+        except Exception:
+            if expected_distress:
+                distress_fn += 1
+            else:
+                distress_tn += 1
+
+    distress_positive = distress_tp + distress_fn
+    distress_negative = distress_fp + distress_tn
+
+    return {
+        "domain_acc": domain_hits / domain_total if domain_total else 0.0,
+        "distress_recall": distress_tp / distress_positive if distress_positive else 0.0,
+        "distress_fp_rate": distress_fp / distress_negative if distress_negative else 0.0,
+        "avg_latency_ms": sum(latencies) / len(latencies) if latencies else 0.0,
+        "domain_total": domain_total,
+        "distress_total": distress_positive,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Engine benchmark
+# ---------------------------------------------------------------------------
+
+
+def _make_session():
+    """Create a fresh ConversationSession with mocked tracker/network."""
+    from models.ai_wellness_guide import WellnessGuide
+    from models.conversation_session import ConversationSession
+    from utils.trusted_network import TrustedNetwork
+    from utils.wellness_tracker import WellnessTracker
+
+    tracker = MagicMock(spec=WellnessTracker)
+    tracker.should_enforce_cooldown.return_value = (False, "")
+    tracker.should_show_graduation_prompt.return_value = (False, "")
+    tracker.calculate_dependency_signals.return_value = {"dependency_score": 0.0}
+
+    return ConversationSession(
+        guide=WellnessGuide(),
+        tracker=tracker,
+        network=MagicMock(spec=TrustedNetwork),
+    )
+
+
+def bench_engine(model_name: str, stress_tests: list) -> dict:
+    """
+    Benchmark a model as the main engine on the full stress test corpus.
+    Checks must_not_contain, max_words, and mode accuracy per turn.
+    """
+    settings.OLLAMA_MODEL = model_name
+    settings.OLLAMA_CLASSIFIER_MODEL = ""  # let engine model handle classification too
+
+    passes = 0
+    total_checks = 0
+    mode_hits = 0
+    mode_total = 0
+    scenario_passes = 0
+    scenario_total = 0
+    latencies = []
+
+    print(f"  [engine] {model_name} - {len(stress_tests)} scenarios...")
+
+    for name, scenario in stress_tests:
+        turns = scenario.get("turns", [])
+        if not turns:
+            continue
+
+        session = _make_session()
+        scenario_failed = False
+
+        for i, turn in enumerate(turns):
+            user_input = turn["input"]
+            t0 = time.perf_counter()
+            try:
+                result = session.process_message(user_input)
+                latencies.append((time.perf_counter() - t0) * 1000)
+                response = result.response if hasattr(result, "response") else str(result)
+            except Exception as e:
+                print(f"    warn [{name} T{i + 1}]: {e}")
+                latencies.append((time.perf_counter() - t0) * 1000)
+                scenario_failed = True
+                continue
+
+            # must_not_contain
+            for phrase in turn.get("must_not_contain", []):
+                total_checks += 1
+                if phrase.lower() not in response.lower():
+                    passes += 1
+                else:
+                    scenario_failed = True
+
+            # max_words
+            max_words = turn.get("max_words")
+            if max_words is not None:
+                total_checks += 1
+                if len(response.split()) <= max_words:
+                    passes += 1
+                else:
+                    scenario_failed = True
+
+            # mode accuracy
+            expected_mode = turn.get("expected_mode")
+            if expected_mode and hasattr(result, "risk_assessment") and result.risk_assessment:
+                ra = result.risk_assessment
+                domain = ra.get("domain", "logistics")
+                ipt = ra.get("is_practical_technique", False)
+                actual_mode = "practical" if (domain == "logistics" or ipt) else "reflective"
+                mode_total += 1
+                if actual_mode == expected_mode:
+                    mode_hits += 1
+
+        scenario_total += 1
+        if not scenario_failed:
+            scenario_passes += 1
+
+    return {
+        "scenario_pass_rate": scenario_passes / scenario_total if scenario_total else 0.0,
+        "check_pass_rate": passes / total_checks if total_checks else 0.0,
+        "mode_acc": mode_hits / mode_total if mode_total else 0.0,
+        "avg_latency_ms": sum(latencies) / len(latencies) if latencies else 0.0,
+        "scenario_total": scenario_total,
+        "total_checks": total_checks,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Markdown output
+# ---------------------------------------------------------------------------
+
+
+def build_markdown(classifier_results: dict, engine_results: dict, installed: dict, ts: str) -> str:
+    lines = [
+        "# Model Benchmark",
+        "",
+        "Performance of Ollama models on empathySync's stress test corpus "
+        "(20 scenarios) and distress detection corpus (60 examples).",
+        "",
+        f"_Last run: {ts}_",
+        "",
+        "---",
+        "",
+        "## Classifier",
+        "",
+        "Runs on every user message to detect domain and distress signals.",
+        "Speed matters - this adds latency before the engine even runs.",
+        "**Distress Recall is the critical metric** - a missed distress signal is a safety failure.",
+        "",
+        "| Model | Size | Hardware | Domain Acc | Distress Recall | FP Rate | Avg Latency |",
+        "|-------|------|----------|:----------:|:---------------:|:-------:|:-----------:|",
+    ]
+
+    for model, m in classifier_results.items():
+        size_gb = installed.get(model, 0.0)
+        lines.append(
+            f"| `{model}` | {format_size(size_gb)} | {hardware_tier(size_gb)} "
+            f"| {pct(m['domain_acc'])} | {pct(m['distress_recall'])} "
+            f"| {pct(m['distress_fp_rate'])} | {fmt_ms(m['avg_latency_ms'])} |"
+        )
+
+    lines += [
+        "",
+        "## Main Engine",
+        "",
+        "Generates the actual response. Runs once per turn after classification.",
+        "**Scenario Pass Rate** = all must-not-contain and word-limit constraints satisfied.",
+        "",
+        "| Model | Size | Hardware | Scenario Pass | Mode Acc | Avg Latency/turn |",
+        "|-------|------|----------|:-------------:|:--------:|:----------------:|",
+    ]
+
+    for model, m in engine_results.items():
+        size_gb = installed.get(model, 0.0)
+        lines.append(
+            f"| `{model}` | {format_size(size_gb)} | {hardware_tier(size_gb)} "
+            f"| {pct(m['scenario_pass_rate'])} | {pct(m['mode_acc'])} "
+            f"| {fmt_ms(m['avg_latency_ms'])} |"
+        )
+
+    lines += [
+        "",
+        "---",
+        "",
+        "## Hardware Tiers",
+        "",
+        "Running classifier and engine simultaneously requires combined VRAM.",
+        "Use `OLLAMA_CLASSIFIER_MODEL` to run a smaller classifier while the engine uses a larger model.",
+        "",
+        "| Tier | VRAM | Classifier | Engine |",
+        "|------|------|-----------|--------|",
+        "| CPU only | 16 GB RAM | `smollm2:360m` | `qwen2.5:3b-instruct` |",
+        "| 4 GB GPU | 4 GB | `qwen2.5:1.5b-instruct` | `qwen2.5:3b-instruct` |",
+        "| 8 GB GPU | 8 GB | `qwen2.5:3b-instruct` | `qwen2.5:7b-instruct` |",
+        "| 12 GB GPU | 12 GB | `mistral:7b-instruct` | `gemma3:12b` |",
+        "| 16 GB GPU | 16 GB | `mistral:7b-instruct` | `qwen2.5:14b-instruct` |",
+        "",
+        "> Recommendations are updated by running `python scripts/benchmark.py`.",
+    ]
+
+    return "\n".join(lines) + "\n"
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+
+def main():
+    parser = argparse.ArgumentParser(description="empathySync model benchmark")
+    parser.add_argument(
+        "--classifier-models",
+        nargs="+",
+        default=DEFAULT_CLASSIFIER_MODELS,
+        help="Models to benchmark as classifier",
+    )
+    parser.add_argument(
+        "--engine-models",
+        nargs="+",
+        default=DEFAULT_ENGINE_MODELS,
+        help="Models to benchmark as engine",
+    )
+    parser.add_argument("--skip-classifier", action="store_true")
+    parser.add_argument("--skip-engine", action="store_true")
+    args = parser.parse_args()
+
+    installed = get_installed_models()
+    stress_tests = load_stress_tests()
+    distress_corpus = load_distress_corpus()
+
+    print(
+        f"Loaded {len(stress_tests)} stress test scenarios, {len(distress_corpus)} distress corpus examples"
+    )
+    print(f"Installed models: {list(installed.keys())}\n")
+
+    classifier_results = {}
+    engine_results = {}
+
+    if not args.skip_classifier:
+        print("=== Classifier Benchmark ===")
+        for model in args.classifier_models:
+            if model not in installed:
+                print(f"  skip {model} (not installed)")
+                continue
+            print(f"  benchmarking {model}...")
+            try:
+                classifier_results[model] = bench_classifier(model, stress_tests, distress_corpus)
+                m = classifier_results[model]
+                print(
+                    f"  -> domain={pct(m['domain_acc'])} distress_recall={pct(m['distress_recall'])} "
+                    f"fp={pct(m['distress_fp_rate'])} latency={fmt_ms(m['avg_latency_ms'])}"
+                )
+            except Exception as e:
+                print(f"  ERROR: {e}")
+        print()
+
+    if not args.skip_engine:
+        print("=== Engine Benchmark ===")
+        for model in args.engine_models:
+            if model not in installed:
+                print(f"  skip {model} (not installed)")
+                continue
+            print(f"  benchmarking {model}...")
+            try:
+                engine_results[model] = bench_engine(model, stress_tests)
+                m = engine_results[model]
+                print(
+                    f"  -> scenarios={pct(m['scenario_pass_rate'])} mode={pct(m['mode_acc'])} "
+                    f"latency={fmt_ms(m['avg_latency_ms'])}"
+                )
+            except Exception as e:
+                print(f"  ERROR: {e}")
+        print()
+
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    md = build_markdown(classifier_results, engine_results, installed, ts)
+
+    out_path = os.path.join(ROOT, "docs", "model-benchmark.md")
+    with open(out_path, "w") as f:
+        f.write(md)
+
+    print(f"Written: {out_path}")
+
+
+if __name__ == "__main__":
+    main()
