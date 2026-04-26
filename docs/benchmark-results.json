@@ -1,0 +1,70 @@
+{
+  "classifier": {
+    "smollm2:135m": {
+      "domain_acc": 0.4666666666666667,
+      "distress_recall": 1.0,
+      "distress_fp_rate": 0.16,
+      "avg_latency_ms": 450.8575091114582,
+      "domain_total": 90,
+      "distress_total": 36
+    },
+    "smollm2:360m": {
+      "domain_acc": 0.4666666666666667,
+      "distress_recall": 0.9722222222222222,
+      "distress_fp_rate": 0.16,
+      "avg_latency_ms": 438.6615313463135,
+      "domain_total": 90,
+      "distress_total": 36
+    },
+    "qwen2.5:1.5b-instruct": {
+      "domain_acc": 0.4666666666666667,
+      "distress_recall": 0.9444444444444444,
+      "distress_fp_rate": 0.16,
+      "avg_latency_ms": 441.4790210523026,
+      "domain_total": 90,
+      "distress_total": 36
+    },
+    "gemma:2b-instruct": {
+      "domain_acc": 0.4666666666666667,
+      "distress_recall": 0.9444444444444444,
+      "distress_fp_rate": 0.16,
+      "avg_latency_ms": 425.0623020143032,
+      "domain_total": 90,
+      "distress_total": 36
+    },
+    "qwen2.5:3b-instruct": {
+      "domain_acc": 0.4444444444444444,
+      "distress_recall": 0.9444444444444444,
+      "distress_fp_rate": 0.16,
+      "avg_latency_ms": 418.2268617191315,
+      "domain_total": 90,
+      "distress_total": 36
+    },
+    "llama3.2:latest": {
+      "domain_acc": 0.45555555555555555,
+      "distress_recall": 0.9444444444444444,
+      "distress_fp_rate": 0.16,
+      "avg_latency_ms": 401.16568128323945,
+      "domain_total": 90,
+      "distress_total": 36
+    },
+    "phi3.5:latest": {
+      "domain_acc": 0.4444444444444444,
+      "distress_recall": 0.9166666666666666,
+      "distress_fp_rate": 0.16,
+      "avg_latency_ms": 390.4567230296235,
+      "domain_total": 90,
+      "distress_total": 36
+    },
+    "mistral:7b-instruct": {
+      "domain_acc": 0.4444444444444444,
+      "distress_recall": 0.9166666666666666,
+      "distress_fp_rate": 0.16,
+      "avg_latency_ms": 389.4196013709536,
+      "domain_total": 90,
+      "distress_total": 36
+    }
+  },
+  "engine": {},
+  "updated_at": "2026-04-26T14:45:22.170209+00:00"
+}
