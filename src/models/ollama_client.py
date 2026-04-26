@@ -86,11 +86,15 @@ class OllamaClient:
         max_tokens = self.practical_max_tokens if is_practical else self.reflective_max_tokens
         timeout_seconds = self.practical_timeout if is_practical else self.reflective_timeout
 
+        options: dict = {"temperature": self.temperature, "top_p": 0.9, "num_predict": max_tokens}
+        if settings.OLLAMA_SEED is not None:
+            options["seed"] = settings.OLLAMA_SEED
+
         payload = {
             "model": self.model,
             "prompt": prompt,
             "stream": False,
-            "options": {"temperature": self.temperature, "top_p": 0.9, "num_predict": max_tokens},
+            "options": options,
         }
 
         try:
@@ -131,11 +135,15 @@ class OllamaClient:
         max_tokens = self.practical_max_tokens if is_practical else self.reflective_max_tokens
         timeout_seconds = self.practical_timeout if is_practical else self.reflective_timeout
 
+        options: dict = {"temperature": self.temperature, "top_p": 0.9, "num_predict": max_tokens}
+        if settings.OLLAMA_SEED is not None:
+            options["seed"] = settings.OLLAMA_SEED
+
         payload = {
             "model": self.model,
             "prompt": prompt,
             "stream": True,
-            "options": {"temperature": self.temperature, "top_p": 0.9, "num_predict": max_tokens},
+            "options": options,
         }
 
         try:

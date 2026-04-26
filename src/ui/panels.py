@@ -31,21 +31,29 @@ def display_response_mode_label(risk_assessment: dict, policy_action: dict = Non
 
     mode = "practical task" if is_practical else "reflective"
 
-    parts = [f"Responded as: **{mode}**", domain_name.lower()]
+    policy_type = policy_action.get("type", "") if policy_action else ""
+    # Hard stops have self-describing policy labels; domain_name would duplicate them.
+    # e.g. harmful domain_name="Declined" + policy "declined · harmful content" → "declined · declined · ..."
+    hard_stop_types = {"harmful_stop", "crisis_stop", "jailbreak_refusal"}
 
-    if policy_action:
-        policy_type = policy_action.get("type", "")
-        policy_labels = {
-            "crisis_stop": "crisis detected · redirected to support",
-            "harmful_stop": "declined · harmful content",
-            "turn_limit_reached": "session limit reached",
-            "dependency_intervention": "dependency pattern noticed",
-            "high_risk_response": "keeping it brief",
-            "cooldown_enforced": "usage limit reached",
-            "sensitive_redirect": "redirected to trusted network",
-        }
-        if policy_type in policy_labels:
-            parts.append(policy_labels[policy_type])
+    parts = [f"Responded as: **{mode}**"]
+
+    # Only add domain_name when it's not a hard stop and doesn't repeat the mode string.
+    # logistics → name "Practical Task" → "practical task" == mode → skip
+    if policy_type not in hard_stop_types and domain_name.lower() != mode:
+        parts.append(domain_name.lower())
+
+    policy_labels = {
+        "crisis_stop": "crisis detected · redirected to support",
+        "harmful_stop": "declined · harmful content",
+        "turn_limit_reached": "session limit reached",
+        "dependency_intervention": "dependency pattern noticed",
+        "high_risk_response": "keeping it brief",
+        "cooldown_enforced": "usage limit reached",
+        "sensitive_redirect": "redirected to trusted network",
+    }
+    if policy_type in policy_labels:
+        parts.append(policy_labels[policy_type])
     elif not is_practical:
         parts.append("keeping it brief")
 

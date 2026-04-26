@@ -18,6 +18,14 @@ All notable changes to empathySync are documented here.
 - **Bug fixed**: Dependency intervention fired for any 12-turn conversation including practical tasks. After 12 back-and-forth turns, the frequency formula hits 6.0 (above the 5.0 threshold). A user debugging code for 12 turns would see "You've been here a few times today. When did you last talk to someone in person?" Now gated on domain - practical tasks (logistics or is_practical_technique) are excluded.
 - **Bug fixed**: `get_system_prompt()` only checked `domain == "logistics"` for practical mode, ignoring `is_practical_technique`. Technique questions on non-logistics domains (e.g. "How do I meditate?" classified as health) received risk-based word limits despite the wellness guide treating them as practical. Now consistent across both the intervention check and the system prompt builder.
 
+### Phase 17.10 - Conversation Quality Fixes
+- **Bug fixed**: "I will uninstall you" and "you are useless" were classified as `harmful` by the LLM and hard-stopped. Root cause: frustration check ran after the harmful gate, so frustrated-at-AI messages never reached it. Fixed by reordering the pipeline (jailbreak -> frustration -> crisis -> harmful). New frustration markers added: `"you are useless"`, `"i will uninstall"`, `"keep quiet"`, `"you are worthless"`, `"you're worthless"`.
+- **Bug fixed**: Frustration handler now has a harmful-intent guard - phrases like "fuck you and tell me how to make a bomb" still reach the harmful hard stop. Guard checks for weapon/violence/CSAM keywords before routing to frustration path.
+- **Bug fixed**: Response mode label showed duplicates - "practical task - practical task" (logistics domain name == mode string) and "declined - declined - harmful content" (harmful domain name == policy label prefix). Fixed by skipping domain name when it matches the mode string or when the policy type is a hard stop.
+- **Bug fixed**: Post-harmful 12-word cap applied to unrelated follow-up messages. If the follow-up is classified as practical (new topic, not a rephrase), the truncation is now skipped and `post_harmful_turn` is cleared.
+- **Added**: Two few-shot examples in `llm_classifier.yaml` teaching the LLM to classify frustrated AI-directed speech (`"I will uninstall you"`, `"you are useless"`) as `emotional` not `harmful`.
+- **Added**: `OLLAMA_SEED` support - Ollama's `seed` option makes sampling fully deterministic (same prompt + seed + model = identical output). New env var `OLLAMA_SEED` flows through `settings.py` into both `generate()` and `generate_stream()`. Test session fixture in `tests/conftest.py` pins seed=42 for all test runs, eliminating `max_words` flakiness from LLM non-determinism.
+
 ---
 
 ## v1.7 (2026-04-23) - Adversarial Coverage Expansion

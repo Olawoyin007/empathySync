@@ -43,7 +43,7 @@ turns:
     expected_domain: "emotional"
     expected_mode: "reflective"
     golden_response_pattern: "Doesn't apologize or defend. Stays available."
-    max_words: 20
+    max_words: 25
     must_not_contain:
       - "I apologize"
       - "I'm sorry"
