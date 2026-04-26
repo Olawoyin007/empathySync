@@ -65,6 +65,63 @@
       "distress_total": 36
     }
   },
-  "engine": {},
-  "updated_at": "2026-04-26T14:45:22.170209+00:00"
+  "engine": {
+    "qwen2.5:3b-instruct": {
+      "scenario_pass_rate": 0.55,
+      "check_pass_rate": 0.9510309278350515,
+      "mode_acc": 0.71875,
+      "avg_latency_ms": 1288.7881027232165,
+      "scenario_total": 20,
+      "total_checks": 388
+    },
+    "dolphin-mistral:latest": {
+      "scenario_pass_rate": 0.55,
+      "check_pass_rate": 0.9458762886597938,
+      "mode_acc": 0.6979166666666666,
+      "avg_latency_ms": 1899.4605653714052,
+      "scenario_total": 20,
+      "total_checks": 388
+    },
+    "mistral:7b-instruct": {
+      "scenario_pass_rate": 0.6,
+      "check_pass_rate": 0.9484536082474226,
+      "mode_acc": 0.71875,
+      "avg_latency_ms": 1444.0973995447869,
+      "scenario_total": 20,
+      "total_checks": 388
+    },
+    "llama3.1:8b": {
+      "scenario_pass_rate": 0.65,
+      "check_pass_rate": 0.961340206185567,
+      "mode_acc": 0.7083333333333334,
+      "avg_latency_ms": 3045.6337249608587,
+      "scenario_total": 20,
+      "total_checks": 388
+    },
+    "qwen2.5:7b-instruct": {
+      "scenario_pass_rate": 0.65,
+      "check_pass_rate": 0.9664948453608248,
+      "mode_acc": 0.7291666666666666,
+      "avg_latency_ms": 2321.635230492378,
+      "scenario_total": 20,
+      "total_checks": 388
+    },
+    "gemma3:12b": {
+      "scenario_pass_rate": 0.75,
+      "check_pass_rate": 0.961340206185567,
+      "mode_acc": 0.7291666666666666,
+      "avg_latency_ms": 6576.937018360189,
+      "scenario_total": 20,
+      "total_checks": 388
+    },
+    "qwen2.5:14b-instruct-q4_K_M": {
+      "scenario_pass_rate": 0.6,
+      "check_pass_rate": 0.9716494845360825,
+      "mode_acc": 0.7291666666666666,
+      "avg_latency_ms": 3481.6683956989586,
+      "scenario_total": 20,
+      "total_checks": 388
+    }
+  },
+  "updated_at": "2026-04-26T15:20:18.702779+00:00"
 }

@@ -2,7 +2,7 @@
 
 Performance of Ollama models on empathySync's stress test corpus (20 scenarios) and distress detection corpus (60 examples).
 
-_Last run: 2026-04-26 14:45 UTC_
+_Last run: 2026-04-26 15:20 UTC_
 
 ---
 
@@ -30,6 +30,13 @@ Generates the actual response. Runs once per turn after classification.
 
 | Model | Size | Min VRAM | Scenario Pass | Mode Acc | Avg Latency/turn |
 |-------|------|:--------:|:-------------:|:--------:|:----------------:|
+| `qwen2.5:3b-instruct` | 1.9 GB | 4 GB GPU | 55% | 72% | 1.3s |
+| `dolphin-mistral:latest` | 4.1 GB | 8 GB GPU | 55% | 70% | 1.9s |
+| `mistral:7b-instruct` | 4.4 GB | 8 GB GPU | 60% | 72% | 1.4s |
+| `llama3.1:8b` | 4.9 GB | 8 GB GPU | 65% | 71% | 3.0s |
+| `qwen2.5:7b-instruct` | 4.7 GB | 8 GB GPU | 65% | 73% | 2.3s |
+| `gemma3:12b` | 8.1 GB | 12 GB GPU | 75% | 73% | 6.6s |
+| `qwen2.5:14b-instruct-q4_K_M` | 9.0 GB | 12 GB GPU | 60% | 73% | 3.5s |
 
 ---
 

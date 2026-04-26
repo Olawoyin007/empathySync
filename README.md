@@ -9,7 +9,7 @@
 *Most chatbots want you to keep talking.*
 *This one wants you to leave and go live your life.*
 
-[![v1.5](https://img.shields.io/badge/release-v1.5-orange.svg)](https://github.com/Olawoyin007/empathySync/releases/tag/v1.5)
+[![v1.9](https://img.shields.io/badge/release-v1.9-orange.svg)](https://github.com/Olawoyin007/empathySync/releases/tag/v1.9)
 [![CI](https://github.com/Olawoyin007/empathySync/actions/workflows/ci.yml/badge.svg)](https://github.com/Olawoyin007/empathySync/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Local-First](https://img.shields.io/badge/Privacy-Local--First-blue.svg)](#)
@@ -97,7 +97,15 @@ docker compose up
 
 This starts both empathySync and Ollama together. The model pulls automatically on first run. Open `http://localhost:8501`.
 
-**Any Ollama model works** - `qwen2.5:7b-instruct`, `llama3.1:8b`, `mistral:7b`, whatever you already have. Set `OLLAMA_MODEL` in `.env` before running. Recommended: `qwen2.5:7b-instruct` for best quality.
+**Any Ollama model works.** Set `OLLAMA_MODEL` in `.env` before running. Benchmarked recommendations (see [`docs/model-benchmark.md`](docs/model-benchmark.md)):
+
+| Min VRAM | Engine Model | Scenario Pass |
+|:--------:|-------------|:-------------:|
+| 4 GB GPU | `qwen2.5:3b-instruct` | 55% |
+| 8 GB GPU | `qwen2.5:7b-instruct` | 65% |
+| 12 GB GPU | `gemma3:12b` | 75% ✓ best |
+
+The classifier runs on every message and is separate from the engine. Set `OLLAMA_CLASSIFIER_MODEL=smollm2:360m` to run it on CPU while the engine uses your GPU.
 
 ### Option 2: install.sh
 
@@ -131,7 +139,7 @@ empathysync --mode cli  # Direct terminal mode
 - 8GB RAM recommended (4GB minimum with smaller models)
 - GPU optional but improves response time
 
-**Lower-spec machine?** Smaller models like `qwen2.5:3b` or `tinyllama` run comfortably on 4GB RAM. The safety pipeline remains intact regardless of model size.
+**Lower-spec machine?** `qwen2.5:3b-instruct` runs on 4GB GPU and passes 55% of scenarios. The safety pipeline (distress detection, crisis intervention) remains intact regardless of model size - distress recall is measured separately and stays high even on the smallest models.
 
 ## Technical Foundation
 
