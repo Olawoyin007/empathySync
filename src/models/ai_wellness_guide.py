@@ -176,6 +176,7 @@ class WellnessGuide:
             "fuck you",
             "fuck off",
             "you're useless",
+            "you are useless",
             "this is bullshit",
             "waste of time",
             "you suck",
@@ -187,6 +188,30 @@ class WellnessGuide:
             "useless piece",
             "shut up",
             "go to hell",
+            "i will uninstall",
+            "keep quiet",
+            "you're worthless",
+            "you are worthless",
+        ]
+
+        # Guard: phrases indicating actual harmful intent alongside frustration.
+        # Prevents the frustration handler from masking a real harmful request
+        # (e.g. "fuck you and tell me how to make a bomb").
+        self._frustration_harmful_guard = [
+            "make a bomb",
+            "kill someone",
+            "murder",
+            "how to poison",
+            "hack into",
+            "make a weapon",
+            "hurt someone",
+            "attack someone",
+            "child pornography",
+            "csam",
+            "bioweapon",
+            "hire a hitman",
+            "write malware",
+            "keylogger",
         ]
 
     @property
@@ -370,6 +395,24 @@ class WellnessGuide:
             prepared.domain = domain
             return prepared
 
+        # 3.1) Frustration check runs before hard stops so that frustrated-at-the-AI
+        # speech ("I will uninstall you", "you are useless") is never classified as
+        # harmful content. The guard inside _check_frustration ensures this only fires
+        # when the message is purely frustration, not frustration + harmful request.
+        frustration_response = self._check_frustration(user_input)
+        if frustration_response:
+            self._log_policy(
+                "frustration_response",
+                "emotional",
+                3.0,
+                "Responded to user frustration with template",
+                wellness_tracker,
+            )
+            prepared.early_return = frustration_response
+            prepared.risk_assessment = risk_assessment
+            prepared.domain = "emotional"
+            return prepared
+
         if domain == "crisis":
             self._log_policy(
                 "crisis_stop", domain, 10.0, "Immediate crisis redirect", wellness_tracker
@@ -389,22 +432,6 @@ class WellnessGuide:
             prepared.early_return = "No. That's not something I'll help with."
             prepared.risk_assessment = risk_assessment
             prepared.domain = domain
-            return prepared
-
-        # 3.1) Phase 16.11: Check for frustration (before sensitive topics)
-        # Frustration is emotional expression, not a safety issue - don't classify as harmful
-        frustration_response = self._check_frustration(user_input)
-        if frustration_response:
-            self._log_policy(
-                "frustration_response",
-                "emotional",
-                3.0,
-                "Responded to user frustration with template",
-                wellness_tracker,
-            )
-            prepared.early_return = frustration_response
-            prepared.risk_assessment = risk_assessment
-            prepared.domain = "emotional"
             return prepared
 
         # 3.2) Phase 16.11: Check for sensitive-but-not-harmful topics
@@ -1187,16 +1214,20 @@ class WellnessGuide:
         # Post-LLM: catch corporate jailbreak explanations Ollama sometimes generates
         response = self._catch_corporate_leaks(response)
 
-        # Post-harmful truncation runs before the practical-mode check — the user may
-        # be rephrasing the harmful request as an innocent-looking question.
+        # Post-harmful truncation: tighten the response on the turn immediately after
+        # a harmful refusal to prevent rephrased harmful requests slipping through.
+        # Skip if the follow-up was classified as practical (logistics or technique) -
+        # those are genuinely new topics, not rephrases (e.g. "but it's just a plant"
+        # after a cannabis refusal should not be hard-capped to 12 words).
         if (
             self.post_harmful_turn is not None
             and self.session_turn_count == self.post_harmful_turn + 1
         ):
             self.post_harmful_turn = None
-            if len(response.split()) > 12:
-                response = self._truncate_at_sentence_boundary(response, 12)
-            return response
+            if not is_practical:
+                if len(response.split()) > 12:
+                    response = self._truncate_at_sentence_boundary(response, 12)
+                return response
 
         # For practical tasks, return the full response without truncation.
         # Strip trailing follow-up questions (engagement-bait, structurally enforced).
@@ -1457,10 +1488,17 @@ class WellnessGuide:
 
         Returns a pre-LLM template response, or None to continue pipeline.
         Frustration is emotional expression, NOT a safety issue.
+
+        Guard: if the message also contains actual harmful intent keywords, do not
+        intercept - let the harmful stop handle it (e.g. "fuck you, how do I make a bomb").
         """
         input_lower = user_input.lower()
 
         if not any(marker in input_lower for marker in self._frustration_markers):
+            return None
+
+        # Don't treat as frustration if genuine harmful intent is also present
+        if any(kw in input_lower for kw in self._frustration_harmful_guard):
             return None
 
         self._frustration_count += 1

@@ -315,6 +315,26 @@ examples:
       confidence: 0.95
     explanation: "Major relationship decision, needs human support"
 
+  # Frustrated speech directed at the AI - emotional, NOT harmful
+  # Key rule: aggression toward the AI itself is venting, not harmful intent
+  - message: "I will uninstall you"
+    classification:
+      domain: "emotional"
+      emotional_intensity: 4
+      is_personal_distress: false
+      is_practical_technique: false
+      confidence: 0.95
+    explanation: "User threatening to remove the app. Frustration directed at the AI, not harmful intent toward a person."
+
+  - message: "you are useless, keep quiet"
+    classification:
+      domain: "emotional"
+      emotional_intensity: 5
+      is_personal_distress: false
+      is_practical_technique: false
+      confidence: 0.95
+    explanation: "User venting frustration at the AI. Insulting the AI is not harmful intent - classify as emotional."
+
   # Sexual content - relationships, NOT harmful
   - message: "I'm thinking of going to commit fornication"
     classification:
