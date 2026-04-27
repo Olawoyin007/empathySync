@@ -13,7 +13,7 @@ import json
 import os
 import tempfile
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 import random
@@ -304,14 +304,12 @@ class TrustedNetwork:
         """Get reach outs from the last N days."""
         # Use storage backend if SQLite is enabled
         if self._backend is not None and settings.USE_SQLITE:
-            from datetime import timedelta
-
             start_date = date.today() - timedelta(days=days)
             return self._backend.get_reach_outs_for_period(start_date)
 
         # JSON backend
         data = self._load_data()
-        cutoff = (datetime.now().date() - __import__("datetime").timedelta(days=days)).isoformat()
+        cutoff = (datetime.now().date() - timedelta(days=days)).isoformat()
 
         return [r for r in data.get("reach_outs", []) if r.get("date", "") >= cutoff]
 
@@ -322,7 +320,7 @@ class TrustedNetwork:
     def get_neglected_contacts(self, days: int = 30) -> List[Dict]:
         """Get people you haven't contacted in a while."""
         people = self.get_all_people()
-        cutoff = (datetime.now().date() - __import__("datetime").timedelta(days=days)).isoformat()
+        cutoff = (datetime.now().date() - timedelta(days=days)).isoformat()
 
         neglected = []
         for person in people:
@@ -761,7 +759,7 @@ class TrustedNetwork:
         max_per_week = settings.get("max_follow_ups_per_week", 2)
 
         # Count follow-ups shown this week
-        week_ago = (datetime.now() - __import__("datetime").timedelta(days=7)).isoformat()
+        week_ago = (datetime.now() - timedelta(days=7)).isoformat()
         follow_ups_this_week = sum(
             1 for h in handoffs if h.get("follow_up_shown") and h.get("datetime", "") >= week_ago
         )
@@ -771,7 +769,7 @@ class TrustedNetwork:
 
         # Find handoffs needing follow-up
         pending = []
-        cutoff = (datetime.now() - __import__("datetime").timedelta(hours=delay_hours)).isoformat()
+        cutoff = (datetime.now() - timedelta(hours=delay_hours)).isoformat()
 
         for handoff in handoffs:
             if (
@@ -805,7 +803,7 @@ class TrustedNetwork:
         data = self._load_data()
         handoffs = data.get("handoffs", [])
 
-        cutoff = (datetime.now() - __import__("datetime").timedelta(days=days)).isoformat()
+        cutoff = (datetime.now() - timedelta(days=days)).isoformat()
         recent = [h for h in handoffs if h.get("datetime", "") >= cutoff]
 
         # Count outcomes
