@@ -827,6 +827,22 @@ class SQLiteBackend(StorageBackend):
     for concurrent access and partial updates.
     """
 
+    # Table whitelist — prevents SQL injection via dynamic table names
+    _VALID_TABLES: frozenset = frozenset(
+        {
+            "check_ins",
+            "usage_sessions",
+            "policy_events",
+            "session_intents",
+            "independence_records",
+            "handoff_events",
+            "self_reports",
+            "task_patterns",
+            "trusted_people",
+            "reach_outs",
+        }
+    )
+
     # Column whitelists per table — prevents SQL injection via dynamic column names
     _VALID_COLUMNS = {
         "task_patterns": frozenset(
@@ -1450,6 +1466,8 @@ class SQLiteBackend(StorageBackend):
             "self_reports",
         ]
         for table in tables_with_created_at:
+            if table not in self._VALID_TABLES:
+                raise ValueError(f"Unknown table: {table}")
             cursor = self.db.execute(f"DELETE FROM {table} WHERE created_at < ?", (cutoff,))
             pruned += cursor.rowcount
 
@@ -1474,6 +1492,8 @@ class SQLiteBackend(StorageBackend):
             "reach_outs",
         ]
         for table in tables:
+            if table not in self._VALID_TABLES:
+                raise ValueError(f"Unknown table: {table}")
             self.db.execute(f"DELETE FROM {table}")
         self.db.commit()
 

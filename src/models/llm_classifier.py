@@ -405,7 +405,7 @@ class LLMClassifier:
         # Build and send prompt
         prompt = self._build_prompt(message, recent_context)
 
-        logger.debug(f"Calling LLM for classification: {message[:50]}...")
+        logger.debug(f"Calling LLM for classification (len={len(message)})")
         response = self._call_ollama(prompt)
 
         if not response:

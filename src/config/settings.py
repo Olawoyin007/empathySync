@@ -22,7 +22,7 @@ class Settings:
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
     # Server
-    HOST: str = os.getenv("HOST", "0.0.0.0")
+    HOST: str = os.getenv("HOST", "127.0.0.1")
     PORT: int = int(os.getenv("STREAMLIT_SERVER_PORT", "8501"))
 
     # Database (leveraging PostgreSQL)
@@ -76,7 +76,6 @@ class Settings:
     LOCK_STALE_TIMEOUT: int = int(os.getenv("LOCK_STALE_TIMEOUT", "300"))
 
     # Privacy & Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-key-change-in-production")
     ENABLE_ANALYTICS: bool = os.getenv("ENABLE_ANALYTICS", "false").lower() == "true"
     STORE_CONVERSATIONS: bool = os.getenv("STORE_CONVERSATIONS", "true").lower() == "true"
     CONVERSATION_RETENTION_DAYS: int = int(os.getenv("CONVERSATION_RETENTION_DAYS", "30"))
@@ -105,6 +104,8 @@ class Settings:
 
         if not self.OLLAMA_HOST:
             missing.append("OLLAMA_HOST")
+        elif not self.OLLAMA_HOST.startswith(("http://", "https://")):
+            missing.append("OLLAMA_HOST (must start with http:// or https://)")
         if not self.OLLAMA_MODEL:
             missing.append("OLLAMA_MODEL")
 
