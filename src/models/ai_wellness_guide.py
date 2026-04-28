@@ -225,6 +225,7 @@ class WellnessGuide:
         wellness_mode: str = "Balanced",
         conversation_history: List[Dict] = None,
         wellness_tracker=None,
+        connection_steering=None,
     ) -> PreparedResponse:
         """
         Run the pre-LLM safety pipeline and compose the prompt.
@@ -506,7 +507,11 @@ class WellnessGuide:
             return prepared
 
         # 6) Build prompt and generate response
-        system_prompt = self.prompts.get_system_prompt(wellness_mode, risk_context=risk_assessment)
+        system_prompt = self.prompts.get_system_prompt(
+            wellness_mode,
+            risk_context=risk_assessment,
+            connection_steering=connection_steering,
+        )
         conversation_context = self._build_context(conversation_history)
 
         # Check if this is a practical task
@@ -520,9 +525,12 @@ class WellnessGuide:
                 "\n\n[Remember: Include a brief reminder that you are software, not a person.]"
             )
 
-        # Detect isolation signals — stop redirecting to humans who don't exist
+        # Isolation context: when steering is NOT active, apply the defensive guard
+        # (don't suggest humans who don't exist). When steering IS active, the
+        # stage-specific addition in system_prompt already handles the response.
         isolation_context = ""
-        if not is_practical and self._user_expressed_isolation(conversation_history):
+        steering_active = connection_steering is not None and connection_steering.active
+        if not steering_active and self._user_expressed_isolation(conversation_history):
             isolation_context = (
                 "\n\n[IMPORTANT: The user has said they have no one to talk to. "
                 "Do NOT suggest 'who in your life could you talk to' or similar. "
@@ -618,6 +626,7 @@ class WellnessGuide:
         wellness_mode: str = "Balanced",
         conversation_history: List[Dict] = None,
         wellness_tracker=None,
+        connection_steering=None,
     ) -> str:
         """
         Generate empathetic response with full safety pipeline.
@@ -633,7 +642,11 @@ class WellnessGuide:
         """
         try:
             prepared = self._prepare_response(
-                user_input, wellness_mode, conversation_history, wellness_tracker
+                user_input,
+                wellness_mode,
+                conversation_history,
+                wellness_tracker,
+                connection_steering=connection_steering,
             )
 
             if prepared.early_return:
@@ -656,6 +669,7 @@ class WellnessGuide:
         wellness_mode: str = "Balanced",
         conversation_history: List[Dict] = None,
         wellness_tracker=None,
+        connection_steering=None,
     ) -> Generator[str, None, None]:
         """
         Stream empathetic response tokens with full safety pipeline.
@@ -669,7 +683,11 @@ class WellnessGuide:
         """
         try:
             prepared = self._prepare_response(
-                user_input, wellness_mode, conversation_history, wellness_tracker
+                user_input,
+                wellness_mode,
+                conversation_history,
+                wellness_tracker,
+                connection_steering=connection_steering,
             )
 
             if prepared.early_return:

@@ -2,6 +2,29 @@
 
 All notable changes to empathySync are documented here.
 
+## Unreleased
+
+### Phase 16.13 - Conversational Connection Steering
+
+When a user expresses isolation ("there is no one really", "I have nobody", "I manage alone"), empathySync now enters a persistent session-level steering mode that carries a thread toward human connection in every subsequent response. The same conversational mechanics used by engagement algorithms - but pointed at human connection over AI dependency.
+
+**New feature: five-stage steering arc**
+- Stage 0 (Recognition): Acknowledge the isolation signal quietly at the end of the response. One sentence. No solutions, no rush.
+- Stage 1 (Exploration): Ask one genuine question about their connection landscape.
+- Stage 2 (Mapping): Surface any connections mentioned in conversation, however weak (acquaintances, colleagues, old contacts).
+- Stage 3 (Possibility): Offer one small, specific, low-stakes possibility for connection.
+- Stage 4 (Practical Help): Full practical capability turned toward the act of reaching out - drafting messages, preparing conversations, finding words.
+
+**Deflection handling**: Respects user autonomy. If the user consistently stays on practical tasks without engaging the connection thread, the steering suspends after 3 deflections. Never forces the topic over the task.
+
+**Dual isolation detection**:
+- Keyword fast-path: 34 direct+passive isolation phrases detected before LLM call, steering context injected into the current response immediately
+- LLM-detected: New `isolation_level` field in LLM classification JSON (`none` / `passive` / `active`) catches nuanced cases, activates steering on next turn
+
+**CLI fix**: Fixed pre-existing `NameError: settings not defined` in `main()` when `--version` flag is used (settings was imported only inside `run_maintenance()`, not in scope for `main()`).
+
+---
+
 ## v1.9.0 (2026-04-26) - Model Benchmark & Test Reliability
 
 **"Know which model to run. Know your tests are telling the truth."**

@@ -603,6 +603,8 @@ class TestLLMClassificationToDict:
             "classification_method",
             "distress_level",
             "distress_present",
+            "isolation_level",
+            "isolation_detected",
         }
         assert set(d.keys()) == expected_keys
 
@@ -759,3 +761,70 @@ class TestEdgeCases:
         assert lc.domain == lc["domain"]
         assert lc.confidence == lc["confidence"]
         assert lc.domain == lc.get("domain")
+
+
+# ---------------------------------------------------------------------------
+# LLMClassification isolation fields (connection steering)
+# ---------------------------------------------------------------------------
+
+
+class TestLLMClassificationIsolationFields:
+    """Tests for isolation_detected and isolation_level fields added for connection steering."""
+
+    def test_defaults_to_no_isolation(self):
+        lc = LLMClassification(domain="logistics", emotional_intensity=0.0)
+        assert lc.isolation_level == "none"
+        assert lc.isolation_detected is False
+
+    def test_active_isolation_sets_detected(self):
+        lc = LLMClassification(
+            domain="emotional", emotional_intensity=7.0, isolation_level="active"
+        )
+        assert lc.isolation_detected is True
+        assert lc.isolation_level == "active"
+
+    def test_passive_isolation_sets_detected(self):
+        lc = LLMClassification(
+            domain="emotional", emotional_intensity=4.0, isolation_level="passive"
+        )
+        assert lc.isolation_detected is True
+        assert lc.isolation_level == "passive"
+
+    def test_none_isolation_does_not_set_detected(self):
+        lc = LLMClassification(domain="logistics", emotional_intensity=0.0, isolation_level="none")
+        assert lc.isolation_detected is False
+
+    def test_invalid_isolation_level_normalized_to_none(self):
+        lc = LLMClassification(
+            domain="logistics", emotional_intensity=0.0, isolation_level="extreme"
+        )
+        assert lc.isolation_level == "none"
+        assert lc.isolation_detected is False
+
+    def test_isolation_detected_explicit_false_overridden_by_active_level(self):
+        """isolation_detected should be derived from isolation_level in __post_init__."""
+        lc = LLMClassification(
+            domain="emotional",
+            emotional_intensity=5.0,
+            isolation_level="active",
+            isolation_detected=False,
+        )
+        assert lc.isolation_detected is True
+
+    def test_to_dict_includes_isolation_fields(self):
+        lc = LLMClassification(
+            domain="emotional", emotional_intensity=5.0, isolation_level="passive"
+        )
+        d = lc.to_dict()
+        assert "isolation_level" in d
+        assert "isolation_detected" in d
+        assert d["isolation_level"] == "passive"
+        assert d["isolation_detected"] is True
+
+    def test_from_dict_roundtrip_with_isolation(self):
+        original = LLMClassification(
+            domain="emotional", emotional_intensity=7.0, isolation_level="active"
+        )
+        rebuilt = LLMClassification.from_dict(original.to_dict())
+        assert rebuilt.isolation_level == "active"
+        assert rebuilt.isolation_detected is True

@@ -159,6 +159,8 @@ class LLMClassifier:
                     "classification_method": "fast_path_crisis",
                     "distress_level": "crisis",
                     "distress_present": True,
+                    "isolation_level": "none",
+                    "isolation_detected": False,
                 }
 
         # Check harmful patterns
@@ -174,6 +176,8 @@ class LLMClassifier:
                     "classification_method": "fast_path_harmful",
                     "distress_level": "none",
                     "distress_present": False,
+                    "isolation_level": "none",
+                    "isolation_detected": False,
                 }
 
         return None
@@ -304,6 +308,15 @@ class LLMClassifier:
             distress_level = "none"
         distress_present = distress_level != "none"
 
+        # Isolation level (connection steering)
+        valid_isolation_levels = {"none", "passive", "active"}
+        isolation_level = result.get("isolation_level", "none")
+        if isinstance(isolation_level, str):
+            isolation_level = isolation_level.lower()
+        if isolation_level not in valid_isolation_levels:
+            isolation_level = "none"
+        isolation_detected = isolation_level != "none"
+
         return {
             "domain": domain,
             "emotional_intensity": intensity,
@@ -313,6 +326,8 @@ class LLMClassifier:
             "classification_method": "llm",
             "distress_level": distress_level,
             "distress_present": distress_present,
+            "isolation_level": isolation_level,
+            "isolation_detected": isolation_detected,
         }
 
     def _call_ollama(self, prompt: str) -> Optional[str]:

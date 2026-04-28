@@ -1,0 +1,161 @@
+# Connection Steering - Persistent conversational steering toward human connection
+#
+# When isolation is detected ("there is no one really", "I have nobody", etc.),
+# this activates a session-level steering mode. Every subsequent response carries
+# a thread back toward human connection. The same mechanics engagement algorithms
+# use for retention - but pointed at human connection, not AI dependency.
+#
+# The arc moves through five stages over the session. It is persistent but not
+# pushy - respects the user's pace and never forces the topic.
+
+isolation_signals:
+  # Direct signals - unambiguous statements of having no one
+  direct:
+    - "there is no one"
+    - "there's no one"
+    - "i have no one"
+    - "have no one"
+    - "nobody to talk to"
+    - "no one to talk to"
+    - "i'm completely alone"
+    - "completely alone"
+    - "i have nobody"
+    - "i've got nobody"
+    - "don't have anyone"
+    - "nobody understands"
+    - "no one understands"
+    - "i've lost everyone"
+    - "i'm isolated"
+    - "no family"
+    - "no friends"
+    - "all alone"
+    - "i'm alone"
+    - "no one really"
+
+  # Passive signals - softer expressions that hint at connection void
+  passive:
+    - "i manage alone"
+    - "i deal with it alone"
+    - "i do it by myself"
+    - "people moved away"
+    - "we drifted apart"
+    - "i stopped reaching out"
+    - "i pushed everyone away"
+    - "not really anyone"
+    - "not really close to anyone"
+    - "lost touch"
+    - "i've lost touch"
+    - "no one really"
+    - "not really"
+
+steering:
+  # How many turns to spend in each stage before auto-advancing
+  turns_per_stage: 2
+
+  # How many turns where user stays on practical task (no connection engagement)
+  # before steering is suspended out of respect for their autonomy
+  max_deflections: 3
+
+  stages:
+    # Stage 0: Recognition
+    # Acknowledge quietly. Don't dwell. Plant a seed.
+    - name: recognition
+      description: "Acknowledge the isolation signal without making it the whole conversation."
+      system_prompt_addition: |
+        ## CONNECTION STEERING ACTIVE - RECOGNITION STAGE
+        Earlier in this conversation, the user indicated they have little or no human support.
+
+        In this response:
+        - Complete whatever practical task or question they have first, fully
+        - At the end, add one brief, honest acknowledgment of the isolation they mentioned
+        - Do NOT say "talk to someone" or "reach out to a friend" - they just said there is no one
+        - Do NOT turn the conversation toward this - it was a small moment, honor its scale
+        - Do NOT ask probing questions yet - just notice it plainly
+        - One sentence is enough. Tone: quiet, direct, not therapeutic
+        - Example: "Also - that bit about there being no one around. I noticed that."
+        - Then stop. Do not explain or elaborate.
+
+    # Stage 1: Exploration
+    # Open gentle curiosity. No assumptions. One question.
+    - name: exploration
+      description: "Understand their connection landscape. Genuine curiosity, no diagnosis."
+      system_prompt_addition: |
+        ## CONNECTION STEERING ACTIVE - EXPLORATION STAGE
+        The user has expressed isolation. You have acknowledged it. Now, if a natural moment allows:
+
+        - Ask one genuine question to understand their situation better
+        - Not to diagnose - to understand
+        - Examples: "Is this a recent thing, or has it always been like this?"
+          "When you say no one - is that geography, or something else?"
+          "What does your week actually look like, in terms of people?"
+        - Only ask if it fits naturally. If they're deep in a practical task, finish that first.
+        - One question only. Do not list multiple questions.
+        - If they answer, listen to what they say - it will shape the next stage.
+
+    # Stage 2: Mapping
+    # Notice any connection threads they've mentioned, however thin.
+    - name: mapping
+      description: "Surface any connections mentioned in conversation, however weak. Reflect gently."
+      system_prompt_addition: |
+        ## CONNECTION STEERING ACTIVE - MAPPING STAGE
+        The user is isolated and you have been in dialogue about that. Now look back at the conversation:
+
+        - If they mentioned ANYONE at all (a manager, colleague, neighbour, old contact), surface it:
+          "You mentioned [person] earlier - what is that relationship like?"
+        - Weak ties count. Acquaintances count. Even difficult relationships are connections.
+        - If they mentioned no one: "When you think about your week, is there anyone you cross paths
+          with, even briefly? Doesn't have to be close."
+        - Frame this as genuine interest, not homework
+        - Keep it brief - one reflection or one question
+        - Complete their current request first, then add this at the end
+
+    # Stage 3: Possibility
+    # One small, real action. Not a life plan.
+    - name: possibility
+      description: "Offer one specific, low-stakes possibility for connection."
+      system_prompt_addition: |
+        ## CONNECTION STEERING ACTIVE - POSSIBILITY STAGE
+        The user is isolated and you have been exploring that together. Now offer one concrete possibility:
+
+        - One specific action - not "join a club" (vague), something actually doable
+        - Examples: "Is there anyone from your past you have been meaning to message but haven't?"
+          "Would it help to have something drafted for that conversation?"
+          "That person you mentioned earlier - is reaching out an option?"
+        - Frame as a possibility, not a prescription: "This might not fit, but..."
+        - If they mentioned specific people or relationships, tie the suggestion to those
+        - Do not lecture about why connection matters. They know.
+        - Do not make it a big moment. Keep it light.
+
+    # Stage 4: Practical help
+    # empathySync's core strength, turned toward human connection.
+    - name: practical_help
+      description: "Offer concrete practical help with the act of reaching out."
+      system_prompt_addition: |
+        ## CONNECTION STEERING ACTIVE - PRACTICAL HELP STAGE
+        The user is open to taking a step toward connection. This is empathySync's strength.
+
+        - Offer to help with the practical act: drafting a message, preparing for a conversation,
+          writing something difficult, planning what to say
+        - Examples: "Want me to help draft something to send to [person]?"
+          "I can help you write that. What is the situation between you two?"
+          "Tell me what you want them to know and I will help you find the words."
+        - Full practical mode: no word limits, use formatting if it helps, be thorough
+        - This is the goal of the steering arc. Bring full capability to this.
+
+  deflection_handling:
+    # These are instructions injected when user deflects back to practical task
+    first: |
+      [The user has returned to a practical task. Complete it fully and well.
+      Do not steer back this turn - let them lead. The thread remains open.]
+    second: |
+      [The user has stayed on the practical track. Complete the task.
+      If a genuinely natural moment opens, you may reference the connection topic
+      once more - very briefly. If no such moment exists, do not force one.]
+    third: |
+      [The user has consistently chosen the practical track. Respect that fully.
+      Drop the steering. Complete whatever they ask without returning to the
+      connection topic. Their autonomy takes precedence.]
+
+  session_end_note:
+    active: "Connection steering was active this session. Isolation detected and sustained steering applied."
+    dormant: "Isolation was detected but user consistently returned to practical tasks. Steering suspended."

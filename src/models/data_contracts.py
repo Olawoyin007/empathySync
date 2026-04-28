@@ -88,8 +88,11 @@ class LLMClassification:
     classification_method: str = "llm"
     distress_present: bool = False
     distress_level: str = "none"
+    isolation_detected: bool = False
+    isolation_level: str = "none"
 
     _VALID_DISTRESS_LEVELS = frozenset({"none", "low", "moderate", "high", "crisis"})
+    _VALID_ISOLATION_LEVELS = frozenset({"none", "passive", "active"})
 
     def __post_init__(self):
         self.emotional_intensity = max(0.0, min(10.0, float(self.emotional_intensity)))
@@ -98,6 +101,10 @@ class LLMClassification:
             self.distress_level = "none"
         if self.distress_level != "none":
             self.distress_present = True
+        if self.isolation_level not in self._VALID_ISOLATION_LEVELS:
+            self.isolation_level = "none"
+        if self.isolation_level != "none":
+            self.isolation_detected = True
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
