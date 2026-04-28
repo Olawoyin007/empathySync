@@ -1244,6 +1244,49 @@ class ScenarioLoader:
             return random.choice(affirmations)
         return "Finding connection as an adult is genuinely difficult. You're not broken for struggling with it."
 
+    # ==================== CONNECTION STEERING ====================
+
+    def get_connection_steering_config(self) -> Dict:
+        """Get the full connection steering configuration."""
+        connection = self.get_all_connection_building()
+        return connection.get("steering_prompts", {})
+
+    def get_isolation_signals(self) -> List[str]:
+        """Get all isolation signal phrases (direct + passive) for keyword detection."""
+        config = self.get_connection_steering_config()
+        signals = config.get("isolation_signals", {})
+        return signals.get("direct", []) + signals.get("passive", [])
+
+    def get_connection_steering_stages(self) -> List[Dict]:
+        """Get the ordered list of steering stage configurations."""
+        config = self.get_connection_steering_config()
+        return config.get("steering", {}).get("stages", [])
+
+    def get_connection_steering_stage(self, stage_index: int) -> Dict:
+        """Get configuration for a specific steering stage."""
+        stages = self.get_connection_steering_stages()
+        if 0 <= stage_index < len(stages):
+            return stages[stage_index]
+        return {}
+
+    def get_steering_deflection_instruction(self, deflection_count: int) -> str:
+        """Get the system prompt instruction for nth deflection (1-indexed)."""
+        config = self.get_connection_steering_config()
+        deflection_config = config.get("steering", {}).get("deflection_handling", {})
+        keys = ["first", "second", "third"]
+        idx = min(deflection_count - 1, len(keys) - 1)
+        return deflection_config.get(keys[idx], "") if 0 <= idx < len(keys) else ""
+
+    def get_steering_turns_per_stage(self) -> int:
+        """Get the configured turns per stage before auto-advancing."""
+        config = self.get_connection_steering_config()
+        return config.get("steering", {}).get("turns_per_stage", 2)
+
+    def get_steering_max_deflections(self) -> int:
+        """Get the configured max deflections before steering is suspended."""
+        config = self.get_connection_steering_config()
+        return config.get("steering", {}).get("max_deflections", 3)
+
     # ==================== UTILITY METHODS ====================
 
     def clear_cache(self) -> None:

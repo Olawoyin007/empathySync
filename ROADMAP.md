@@ -1742,6 +1742,49 @@ src/ui/
 
 ---
 
+## Phase 16.13: Conversational Connection Steering ✅ COMPLETE
+
+**Goal**: When any isolation signal is detected ("there is no one really", "I have nobody", "I manage alone"), activate a persistent session-level steering mode that carries a thread toward human connection in every subsequent response. Same machinery as engagement algorithms, opposite goal: human connection over AI dependency.
+
+**Why now**: NHS scenario revealed a hard gap - a user expressing profound isolation ("there is no one really") while asking for practical help received a transactional response with no acknowledgment. The system had a defensive patch (don't suggest humans who don't exist) but no active steering. This feature replaces the patch with a principled five-stage arc.
+
+**Core design insight**: Treat human connection the same way engagement algorithms treat retention. Every isolation signal activates a cross-turn steering mode. Persistent but not pushy - respects user pace, suspends on repeated deflection, never forces the topic over the task.
+
+### Five-Stage Steering Arc
+
+| Stage | Name | Behavior |
+|-------|------|----------|
+| 0 | Recognition | Acknowledge isolation quietly at the end of the response. One sentence. No solutions. |
+| 1 | Exploration | Ask one genuine question about their connection landscape. |
+| 2 | Mapping | Surface any connections mentioned (even weak ties, acquaintances). |
+| 3 | Possibility | Offer one small, specific, low-stakes possibility for connection. |
+| 4 | Practical Help | Full practical capability turned toward the act of reaching out. |
+
+**Deflection handling**: If user consistently returns to practical tasks without engaging the connection thread, deflection count increments. After `max_deflections` (default 3), steering suspends out of respect for autonomy.
+
+**Dual detection**:
+- Keyword fast-path: 34 direct+passive isolation phrases caught before LLM call, so steering context is injected into the current response immediately
+- LLM-detected: `isolation_level` field added to LLM classification output for nuanced cases (passive signals), activates on next turn
+
+### Files Changed
+
+**Created**:
+- `scenarios/connection_building/steering_prompts.yaml` - Stage definitions, isolation signals, deflection instructions, voice for each stage
+
+**Modified**:
+- `src/models/data_contracts.py` - Added `isolation_detected: bool` and `isolation_level: str` to `LLMClassification` with `_VALID_ISOLATION_LEVELS` validation
+- `scenarios/classification/llm_classifier.yaml` - Added `isolation_level` to prompt and return JSON; 3 new few-shot isolation examples
+- `src/models/llm_classifier.py` - Parse and validate `isolation_level`/`isolation_detected` in `_validate_classification()`; fast-path returns include new fields
+- `src/utils/scenario_loader.py` - Added 6 new methods: `get_connection_steering_config()`, `get_isolation_signals()`, `get_connection_steering_stages()`, `get_connection_steering_stage()`, `get_steering_deflection_instruction()`, `get_steering_turns_per_stage()`, `get_steering_max_deflections()`
+- `src/models/conversation_session.py` - Added `ConnectionSteering` dataclass (state machine with `activate()` and `record_turn()`); integrated into `process_message()`, `process_message_stream()`, `finalize_stream()`, `reset()`; added `_check_isolation_signals()` keyword fast-path
+- `src/prompts/wellness_prompts.py` - Added `connection_steering` parameter to `get_system_prompt()`; added `_get_connection_steering_addition()` method
+- `src/models/ai_wellness_guide.py` - Added `connection_steering` parameter to `_prepare_response()`, `generate_response()`, `generate_response_stream()`; replaced crude isolation_context guard with steering-aware injection
+- `src/cli.py` - Fixed `NameError: settings not defined` in `main()` (pre-existing bug uncovered by PR #91)
+- `tests/test_data_contracts.py` - Added 8 isolation field tests; updated `test_to_dict_has_all_fields`
+- `tests/test_conversation_session.py` - Added `ConnectionSteering` dataclass tests (8 tests); added steering integration tests (6 tests); updated `test_guide_called_with_correct_args` and `test_guide_stream_called_with_correct_args`
+
+---
+
 ## Phase 17: Classification Robustness & Safety Evaluation 🔧 IN PROGRESS
 
 **Goal**: Move from single-label classification to multi-signal safety routing, add calibrated confidence handling, and build a regression test suite of real distress phrasing. Ensure false negatives on distress detection are systematically caught before they reach users.

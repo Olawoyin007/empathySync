@@ -29,7 +29,9 @@ class WellnessPrompts:
         """
         self.loader = scenario_loader or get_scenario_loader()
 
-    def get_system_prompt(self, wellness_mode: str, risk_context: Dict = None) -> str:
+    def get_system_prompt(
+        self, wellness_mode: str, risk_context: Dict = None, connection_steering=None
+    ) -> str:
         """
         Build a complete system prompt with:
         1. Base behavioral rules (always applied)
@@ -67,6 +69,12 @@ class WellnessPrompts:
         elif risk_context:
             risk_instructions = self._get_risk_instructions(risk_context)
             prompt_parts.append(risk_instructions)
+
+        # Add connection steering context (cross-cutting - applies in any mode)
+        if connection_steering and connection_steering.active:
+            steering_addition = self._get_connection_steering_addition(connection_steering)
+            if steering_addition:
+                prompt_parts.append(steering_addition)
 
         return "\n\n".join(prompt_parts)
 
@@ -212,6 +220,25 @@ If the user asks for advice on: {forbidden_text}—respond ONLY with:
                     instructions.append(f"DEPENDENCY INTERVENTION: {instruction}")
 
         return "\n".join(instructions)
+
+    def _get_connection_steering_addition(self, connection_steering) -> str:
+        """
+        Get stage-specific steering context for active connection steering.
+
+        When isolation is detected, each response gets a stage-appropriate
+        instruction block that guides the LLM to carry a thread toward
+        human connection - without overriding the primary response.
+        """
+        if connection_steering.deflection_count > 0:
+            # Inject deflection-specific instruction instead of stage prompt
+            deflection_instruction = self.loader.get_steering_deflection_instruction(
+                connection_steering.deflection_count
+            )
+            if deflection_instruction:
+                return deflection_instruction.strip()
+
+        stage_config = self.loader.get_connection_steering_stage(connection_steering.stage)
+        return stage_config.get("system_prompt_addition", "").strip()
 
     def get_check_in_prompts(self) -> List[str]:
         """Get various check-in prompts for user reflection."""

@@ -10,6 +10,7 @@ can import to get safety-aware, restraint-first conversation handling.
 
 import random
 import logging
+from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from models.ai_wellness_guide import WellnessGuide
@@ -26,6 +27,46 @@ from utils.trusted_network import TrustedNetwork
 from utils.scenario_loader import get_scenario_loader
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ConnectionSteering:
+    """
+    Session-level state for connection steering.
+
+    When isolation is detected ("there is no one really"), this activates and
+    persists across turns, injecting stage-appropriate steering context into
+    each subsequent response. Advances through five stages automatically.
+    Suspends if the user consistently deflects back to practical tasks.
+    """
+
+    active: bool = False
+    stage: int = 0  # 0=recognition, 1=exploration, 2=mapping, 3=possibility, 4=practical_help
+    turns_in_stage: int = 0
+    deflection_count: int = 0
+    consecutive_deflections: int = 0
+    first_detected_turn: int = 0
+
+    def record_turn(self, is_deflection: bool, turns_per_stage: int, max_deflections: int) -> None:
+        """Update state after each active-steering turn."""
+        if is_deflection:
+            self.deflection_count += 1
+            self.consecutive_deflections += 1
+            if self.deflection_count >= max_deflections:
+                self.active = False
+                return
+        else:
+            self.consecutive_deflections = 0
+
+        self.turns_in_stage += 1
+        if self.turns_in_stage >= turns_per_stage and self.stage < 4:
+            self.stage += 1
+            self.turns_in_stage = 0
+
+    def activate(self, turn_count: int) -> None:
+        """Activate steering, recording when it was first triggered."""
+        self.active = True
+        self.first_detected_turn = turn_count
 
 
 def _load_confidence_threshold() -> float:
@@ -77,6 +118,9 @@ class ConversationSession:
         # Handoff state
         self.pending_handoff_for_outcome: Optional[str] = None
         self.pending_handoff_info: Optional[Dict] = None
+
+        # Connection steering state
+        self.connection_steering = ConnectionSteering()
 
     @property
     def turn_count(self) -> int:
@@ -156,15 +200,39 @@ class ConversationSession:
             if shift and shift.get("is_concerning"):
                 self.pending_shift = shift
 
+        # Step 3.5: Isolation detection - keyword fast-path before LLM call
+        # so steering context can be injected into this response immediately.
+        if not self.connection_steering.active:
+            if self._check_isolation_signals(user_input):
+                self.connection_steering.activate(self.turn_count)
+
         # Step 4: Generate response via WellnessGuide safety pipeline
         response = self.guide.generate_response(
             user_input,
             self.wellness_mode,
             self.messages,
             wellness_tracker=self.tracker,
+            connection_steering=self.connection_steering,
         )
 
         self.messages.append({"role": "assistant", "content": response})
+
+        # Step 4.5: Post-response isolation checks
+        # Check LLM-detected isolation (for cases keyword fast-path missed)
+        if not self.connection_steering.active and self.guide.last_risk_assessment:
+            isolation_level = self.guide.last_risk_assessment.get("isolation_level", "none")
+            if isolation_level in ("active", "passive"):
+                self.connection_steering.activate(self.turn_count)
+
+        # Update steering state for next turn
+        if self.connection_steering.active:
+            domain = ""
+            if self.guide.last_risk_assessment:
+                domain = self.guide.last_risk_assessment.get("domain", "")
+            turns_per_stage = self.loader.get_steering_turns_per_stage()
+            max_deflections = self.loader.get_steering_max_deflections()
+            is_deflection = domain == "logistics" and self.connection_steering.stage < 4
+            self.connection_steering.record_turn(is_deflection, turns_per_stage, max_deflections)
 
         # Step 5: Track task category for practical tasks
         should_check_graduation = False
@@ -293,12 +361,18 @@ class ConversationSession:
             if shift and shift.get("is_concerning"):
                 self.pending_shift = shift
 
+        # Step 3.5: Isolation detection - keyword fast-path before LLM call
+        if not self.connection_steering.active:
+            if self._check_isolation_signals(user_input):
+                self.connection_steering.activate(self.turn_count)
+
         # Step 4: Get streaming generator from WellnessGuide
         stream = self.guide.generate_response_stream(
             user_input,
             self.wellness_mode,
             self.messages,
             wellness_tracker=self.tracker,
+            connection_steering=self.connection_steering,
         )
 
         # Store user_input for finalize_stream
@@ -326,6 +400,22 @@ class ConversationSession:
 
         # Add to message history
         self.messages.append({"role": "assistant", "content": response})
+
+        # Post-response isolation checks (LLM-detected, for next turn)
+        if not self.connection_steering.active and self.guide.last_risk_assessment:
+            isolation_level = self.guide.last_risk_assessment.get("isolation_level", "none")
+            if isolation_level in ("active", "passive"):
+                self.connection_steering.activate(self.turn_count)
+
+        # Update steering state
+        if self.connection_steering.active:
+            domain = ""
+            if self.guide.last_risk_assessment:
+                domain = self.guide.last_risk_assessment.get("domain", "")
+            turns_per_stage = self.loader.get_steering_turns_per_stage()
+            max_deflections = self.loader.get_steering_max_deflections()
+            is_deflection = domain == "logistics" and self.connection_steering.stage < 4
+            self.connection_steering.record_turn(is_deflection, turns_per_stage, max_deflections)
 
         # Step 5: Track task category for practical tasks
         should_check_graduation = False
@@ -386,6 +476,12 @@ class ConversationSession:
             should_rerun=should_rerun,
         )
 
+    def _check_isolation_signals(self, text: str) -> bool:
+        """Check text for isolation signals using keyword fast-path list from YAML."""
+        signals = self.loader.get_isolation_signals()
+        text_lower = text.lower()
+        return any(signal in text_lower for signal in signals)
+
     def acknowledge_intent_shift(self, accept_shift: bool) -> None:
         """User responded to intent shift prompt."""
         if accept_shift and self.pending_shift:
@@ -421,4 +517,5 @@ class ConversationSession:
         self.last_task_category = None
         self.pending_handoff_for_outcome = None
         self.pending_handoff_info = None
+        self.connection_steering = ConnectionSteering()
         self.guide.reset_session()

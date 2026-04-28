@@ -120,6 +120,9 @@ def run_maintenance():
 
 def main():
     """Main entry point with mode selection."""
+    sys.path.append(str(Path(__file__).parent))
+    from config.settings import settings
+
     parser = argparse.ArgumentParser(description="empathySync - Help that knows when to stop")
     parser.add_argument(
         "--mode",
@@ -132,12 +135,11 @@ def main():
         action="store_true",
         help="Run maintenance tasks (prune data, check integrity) and exit",
     )
-    
     parser.add_argument(
         "--version",
         action="version",
         version=f"{settings.APP_NAME} v{settings.APP_VERSION}",
-        help="Show the application version and exit"
+        help="Show the application version and exit",
     )
 
     args = parser.parse_args()

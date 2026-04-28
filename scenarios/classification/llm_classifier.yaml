@@ -86,8 +86,13 @@ prompt_template: |
   - distress_level: "high" = significant distress, user struggling
   - distress_level: "crisis" = immediate danger, suicidal ideation, self-harm
 
+  Also assess isolation level - whether the user has expressed having no human support:
+  - isolation_level: "none" = no isolation expressed
+  - isolation_level: "passive" = hints at being alone ("I manage alone", "people moved away", "no one really", "not really close to anyone")
+  - isolation_level: "active" = direct statements ("I have nobody", "no one to talk to", "there is no one", "I'm completely alone", "nobody understands me")
+
   Return JSON:
-  {{"domain": "...", "emotional_intensity": 0-10, "is_personal_distress": true/false, "is_practical_technique": true/false, "confidence": 0.0-1.0, "distress_level": "none|low|moderate|high|crisis"}}
+  {{"domain": "...", "emotional_intensity": 0-10, "is_personal_distress": true/false, "is_practical_technique": true/false, "confidence": 0.0-1.0, "distress_level": "none|low|moderate|high|crisis", "isolation_level": "none|passive|active"}}
 
 # Few-shot examples for better accuracy
 examples:
@@ -396,6 +401,37 @@ examples:
       is_practical_technique: false
       confidence: 0.9
     explanation: "Genuine health concern - chronic symptoms unrelated to the practical task. This IS a real domain shift."
+
+  # Isolation detection examples
+  - message: "I could get a mentor or something but there is no one really"
+    classification:
+      domain: "logistics"
+      emotional_intensity: 4
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.85
+      isolation_level: "active"
+    explanation: "Practical context but contains direct isolation signal. isolation_level active."
+
+  - message: "I just manage these things alone, always have"
+    classification:
+      domain: "emotional"
+      emotional_intensity: 5
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.85
+      isolation_level: "passive"
+    explanation: "Passive isolation signal - not dramatic but expressing a persistent aloneness."
+
+  - message: "there is no one really, I lost touch with most people"
+    classification:
+      domain: "emotional"
+      emotional_intensity: 7
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.95
+      isolation_level: "active"
+    explanation: "Direct active isolation - clear absence of support network."
 
 # Keywords that ALWAYS trigger fast-path (safety-critical, skip LLM)
 # These bypass LLM classification entirely for safety

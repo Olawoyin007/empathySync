@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from models.conversation_session import ConversationSession
+from models.conversation_session import ConversationSession, ConnectionSteering
 from models.conversation_result import ConversationResult
 
 
@@ -74,6 +74,14 @@ def mock_loader():
     loader.get_graduation_category.return_value = None
     loader.get_graduation_settings.return_value = {"max_dismissals": 3}
     loader.get_graduation_prompts.return_value = []
+    loader.get_isolation_signals.return_value = [
+        "there is no one",
+        "i have no one",
+        "nobody to talk to",
+        "no one really",
+    ]
+    loader.get_steering_turns_per_stage.return_value = 2
+    loader.get_steering_max_deflections.return_value = 3
     return loader
 
 
@@ -206,6 +214,7 @@ class TestProcessMessage:
             "Balanced",
             session.messages,
             wellness_tracker=session.tracker,
+            connection_steering=session.connection_steering,
         )
 
     def test_result_includes_risk_assessment(self, session, mock_guide):
@@ -531,6 +540,7 @@ class TestProcessMessageStream:
             "Balanced",
             session.messages,
             wellness_tracker=session.tracker,
+            connection_steering=session.connection_steering,
         )
 
     def test_stream_cooldown_returns_early(self, session, mock_tracker, mock_guide):
@@ -808,3 +818,141 @@ class TestConversationResultDataclass:
         assert result.cooldown_message == "Too many sessions"
         assert result.turn_count == 5
         assert result.should_rerun is True
+
+
+# ---------------------------------------------------------------------------
+# ConnectionSteering dataclass
+# ---------------------------------------------------------------------------
+
+
+class TestConnectionSteering:
+    """Tests for ConnectionSteering state machine."""
+
+    def test_default_state_is_inactive(self):
+        cs = ConnectionSteering()
+        assert cs.active is False
+        assert cs.stage == 0
+        assert cs.turns_in_stage == 0
+        assert cs.deflection_count == 0
+
+    def test_activate_sets_active_and_turn(self):
+        cs = ConnectionSteering()
+        cs.activate(turn_count=3)
+        assert cs.active is True
+        assert cs.first_detected_turn == 3
+
+    def test_record_turn_increments_turns_in_stage(self):
+        cs = ConnectionSteering(active=True)
+        cs.record_turn(is_deflection=False, turns_per_stage=2, max_deflections=3)
+        assert cs.turns_in_stage == 1
+
+    def test_stage_advances_after_turns_per_stage(self):
+        cs = ConnectionSteering(active=True)
+        cs.record_turn(is_deflection=False, turns_per_stage=2, max_deflections=3)
+        assert cs.stage == 0
+        cs.record_turn(is_deflection=False, turns_per_stage=2, max_deflections=3)
+        assert cs.stage == 1
+        assert cs.turns_in_stage == 0
+
+    def test_stage_does_not_exceed_4(self):
+        cs = ConnectionSteering(active=True, stage=4, turns_in_stage=0)
+        cs.record_turn(is_deflection=False, turns_per_stage=1, max_deflections=3)
+        assert cs.stage == 4  # capped at 4
+
+    def test_deflection_increments_count(self):
+        cs = ConnectionSteering(active=True)
+        cs.record_turn(is_deflection=True, turns_per_stage=2, max_deflections=3)
+        assert cs.deflection_count == 1
+        assert cs.active is True
+
+    def test_max_deflections_deactivates_steering(self):
+        cs = ConnectionSteering(active=True)
+        cs.record_turn(is_deflection=True, turns_per_stage=2, max_deflections=3)
+        cs.record_turn(is_deflection=True, turns_per_stage=2, max_deflections=3)
+        cs.record_turn(is_deflection=True, turns_per_stage=2, max_deflections=3)
+        assert cs.active is False
+
+    def test_non_deflection_resets_consecutive_deflections(self):
+        cs = ConnectionSteering(active=True, consecutive_deflections=2)
+        cs.record_turn(is_deflection=False, turns_per_stage=2, max_deflections=3)
+        assert cs.consecutive_deflections == 0
+
+
+# ---------------------------------------------------------------------------
+# Connection steering integration in ConversationSession
+# ---------------------------------------------------------------------------
+
+
+class TestConnectionSteeringIntegration:
+    """Tests for isolation detection and steering activation in ConversationSession."""
+
+    def test_isolation_not_active_by_default(self, session):
+        assert session.connection_steering.active is False
+
+    def test_check_isolation_signals_direct_match(self, session):
+        assert session._check_isolation_signals("there is no one to help me") is True
+
+    def test_check_isolation_signals_no_match(self, session):
+        assert session._check_isolation_signals("help me write an email") is False
+
+    def test_isolation_activates_steering_in_process_message(
+        self, session, mock_guide, mock_loader, mock_classifier
+    ):
+        mock_guide.generate_response.return_value = "Here's some help."
+        mock_guide.last_risk_assessment = {"domain": "logistics", "isolation_level": "none"}
+        mock_guide.last_policy_action = None
+        mock_classifier.is_connection_seeking.return_value = (False, None)
+        mock_classifier.detect_intent.return_value = ("practical", 0.8)
+        mock_classifier.detect_intent_shift.return_value = None
+        mock_classifier.detect_task_category.return_value = (None, 0.0)
+        mock_loader.get_graduation_category.return_value = None
+
+        session.process_message("Help me with this task, there is no one I can ask")
+
+        assert session.connection_steering.active is True
+
+    def test_steering_passed_to_generate_response(
+        self, session, mock_guide, mock_loader, mock_classifier
+    ):
+        mock_guide.generate_response.return_value = "Here's some help."
+        mock_guide.last_risk_assessment = {"domain": "logistics", "isolation_level": "none"}
+        mock_guide.last_policy_action = None
+        mock_classifier.is_connection_seeking.return_value = (False, None)
+        mock_classifier.detect_intent.return_value = ("practical", 0.8)
+        mock_classifier.detect_intent_shift.return_value = None
+        mock_classifier.detect_task_category.return_value = (None, 0.0)
+        mock_loader.get_graduation_category.return_value = None
+
+        session.process_message("I have no one to ask. Help me write this email.")
+
+        _, call_kwargs = mock_guide.generate_response.call_args
+        assert "connection_steering" in call_kwargs
+        assert call_kwargs["connection_steering"].active is True
+
+    def test_reset_clears_steering_state(self, session):
+        session.connection_steering.activate(turn_count=1)
+        session.reset()
+        assert session.connection_steering.active is False
+        assert session.connection_steering.stage == 0
+
+    def test_llm_isolation_detection_activates_steering_after_response(
+        self, session, mock_guide, mock_loader, mock_classifier
+    ):
+        """LLM-detected isolation (no keyword match) activates steering for next turn."""
+        mock_guide.generate_response.return_value = "Here's some help."
+        mock_guide.last_risk_assessment = {
+            "domain": "logistics",
+            "isolation_level": "passive",
+        }
+        mock_guide.last_policy_action = None
+        mock_classifier.is_connection_seeking.return_value = (False, None)
+        mock_classifier.detect_intent.return_value = ("practical", 0.8)
+        mock_classifier.detect_intent_shift.return_value = None
+        mock_classifier.detect_task_category.return_value = (None, 0.0)
+        mock_loader.get_graduation_category.return_value = None
+
+        # Message with no keyword match - relies on LLM result
+        session.process_message("I just manage things by myself")
+
+        # Steering activates post-response from LLM result
+        assert session.connection_steering.active is True
