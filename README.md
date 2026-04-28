@@ -33,9 +33,23 @@ If you're a **developer** who wants a privacy-respecting AI assistant with no AP
 
 If you're building **ethical AI tooling** and want a reference implementation that optimises for user autonomy rather than engagement, the architecture is fully documented and embeddable.
 
-If you're a **therapist, counsellor, or domain expert** who wants to shape how an AI responds to emotional content - see [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md).
+If you're a **therapist, counsellor, or domain expert** who wants to shape how an AI responds to emotional content - see Contributing below.
 
 empathySync is **not** for people who want a companion AI or always-on assistant. It's for people who want useful help that doesn't try to become a habit.
+
+<details>
+<summary><strong>The philosophy</strong></summary>
+<br>
+
+We optimise for exit, not engagement.
+
+| Practical Tasks | Sensitive Topics |
+|-----------------|------------------|
+| Writing emails, coding, explanations | Emotional, health, financial, relationships |
+| Full assistance, no limits | Brief responses, redirects to humans |
+| Complete the task thoroughly | Steer toward human connection |
+
+</details>
 
 ## What Makes It Different
 
@@ -43,20 +57,17 @@ empathySync is **not** for people who want a companion AI or always-on assistant
 
 - **Crisis detection**: immediate redirect to professional resources, no exceptions
 - **Post-crisis protection**: never apologises for safety interventions
-- **Multi-label distress detection**: simultaneously tracks conversation topic AND distress level - catches mixed-intent messages ("help me write a goodbye letter") that single-label classifiers miss
-- **Confidence calibration**: when LLM confidence is low on sensitive domains, keyword detection takes over - false positive is always safer than false negative on crisis content
+- **Layered distress detection**: tracks conversation topic and distress level independently - catches mixed-intent messages ("help me write a goodbye letter") that single classifiers miss
 
 ### Awareness & honesty
 
-- **Tracks dependency patterns** and warns you if you're relying on it too much
+- **Tracks dependency patterns** and tells you when you're relying on it too much
 - **Transparency panel** showing exactly why it responded the way it did
-- **Anti-engagement metrics**: fewer sensitive sessions = success
 
 ### Human connection
 
-- **Connection steering**: when a user signals isolation ("there is no one really", "I have nobody"), empathySync enters a persistent session mode that carries a thread toward human connection across every subsequent response. Five stages: quiet acknowledgment, genuine curiosity, mapping any connections mentioned (weak ties count), offering one small possibility, then full practical help with the act of reaching out. The same conversational mechanics as engagement algorithms - opposite goal.
-- **Respects autonomy**: if the user consistently stays on the practical task, the steering suspends after 3 deflections. Never forces the topic over the task.
-- **Trusted network**: helps you identify and reach specific humans, with pre-written message templates to make the first move easier
+- **Connection steering**: when someone signals isolation, empathySync gently carries a thread toward human connection across the conversation - not just in one response. It steps back if the person prefers to stay on task.
+- **Trusted network**: helps identify and reach specific people in your life, with message templates to make the first move easier
 - **Signposting**: for users who genuinely have no one, guides toward places where connection can be found
 
 ## Quick Start
@@ -116,18 +127,24 @@ empathysync --mode cli  # Direct terminal mode
 
 **Lower-spec machine?** `qwen2.5:3b-instruct` runs on 4GB GPU and passes 55% of scenarios. The safety pipeline (distress detection, crisis intervention) remains intact regardless of model size - distress recall is measured separately and stays high even on the smallest models.
 
-## Technical Foundation
+## How It's Built
 
-- **Local LLM**: Runs entirely on your hardware via Ollama
-- **Privacy-First**: Zero external API calls, complete data sovereignty
-- **Dual Interface**: Streamlit web UI or direct CLI mode (`empathysync --mode cli`)
-- **Streaming Responses**: Real-time token streaming for faster perceived response times
-- **YAML-Driven**: All prompts, rules, and thresholds configurable
-- **LLM Classification**: Optional intelligent classification for nuanced context detection
-- **Framework-Agnostic Core**: `ConversationSession` class can be embedded in any Python project
-- **Transcript Export**: Download any conversation as a Markdown file from the Session & Data panel
-- **Multi-Label Safety**: distress level tracked independently of topic domain - catches mixed-intent messages single-label classifiers miss
-- **Connection Steering**: session-level state machine that carries a thread toward human connection whenever isolation is detected
+- Runs entirely on your hardware via Ollama - no cloud, no external API calls
+- Web UI (Streamlit) and CLI mode - your choice
+- All conversation data stays local - JSON files or SQLite
+- Download any conversation as a transcript from the Session & Data panel
+
+<details>
+<summary>For developers and contributors</summary>
+<br>
+
+- Streaming responses with real-time token output
+- YAML-driven prompts, rules, and thresholds - tune without touching Python
+- `ConversationSession` class can be embedded in any Python project
+- Intelligent LLM classifier with keyword fallback and confidence calibration
+- Connection steering implemented as a session-level state machine (5-stage arc, YAML-configurable)
+
+</details>
 
 ## How the Safety Pipeline Works
 
