@@ -6,6 +6,7 @@ Usage:
     empathysync --mode web   # Same as above
     empathysync --mode cli   # Direct terminal interface (no browser needed)
     empathysync --maintenance  # Run maintenance tasks and exit
+    empathysync --version    # Print version and exit
 """
 
 import sys
@@ -130,6 +131,13 @@ def main():
         "--maintenance",
         action="store_true",
         help="Run maintenance tasks (prune data, check integrity) and exit",
+    )
+    
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"{settings.APP_NAME} v{settings.APP_VERSION}",
+        help="Show the application version and exit"
     )
 
     args = parser.parse_args()
