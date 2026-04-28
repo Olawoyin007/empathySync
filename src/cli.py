@@ -133,9 +133,6 @@ def main():
         help="Run maintenance tasks (prune data, check integrity) and exit",
     )
     
-    # Add src to path to allow importing settings
-    sys.path.append(str(Path(__file__).parent))
-    from config.settings import settings
     parser.add_argument(
         "--version",
         action="version",
