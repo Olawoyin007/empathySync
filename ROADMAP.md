@@ -1699,80 +1699,6 @@ The voice guide (`scenarios/voice/personality.yaml`) created in 16.11.2 already 
 
 ---
 
-**Why this matters**: Currently empathySync only exists when the user opens it. A persistent daemon can do things a session-bound app cannot: remind you to check in with a friend, notice you haven't needed it in a week (and celebrate that), or go quiet when it detects over-reliance. The restraint philosophy extends to the agent's own behavior.
-
-### 17.1 Background Daemon Process 🔜 PLANNED
-**Problem**: empathySync only runs when the user opens Streamlit. No way to deliver scheduled nudges or track long-term patterns between sessions.
-
-**Implementation**:
-- [ ] Create `src/daemon/agent.py` -long-running process with event loop
-- [ ] Platform-specific service files:
-  - `systemd/empathysync.service` for Linux
-  - `launchd/com.empathysync.agent.plist` for macOS
-- [ ] Graceful startup/shutdown with PID file management
-- [ ] Health endpoint for monitoring (local socket, not HTTP)
-- [ ] Resource-conscious: sleep when idle, wake on schedule or IPC signal
-- [ ] Daemon uses `ConversationSession` from Phase 16 (no Streamlit dependency)
-
-### 17.2 Cross-Session Memory 🔜 PLANNED
-**Problem**: Each session starts fresh. The agent can't remember "you were working through a difficult decision last Tuesday" or "you said you'd talk to your sister about this."
-
-**Implementation**:
-- [ ] Extend SQLite schema with `session_summaries` table (auto-generated, not raw transcripts)
-- [ ] End-of-session summary generation (topic, emotional arc, commitments made, handoffs initiated)
-- [ ] Cross-session context injection: "Last time, you mentioned wanting to talk to [person] about [topic]"
-- [ ] Memory decay: summaries age out after configurable retention period
-- [ ] User can view and delete any stored summaries (data ownership)
-
-### 17.3 Scheduled Nudges 🔜 PLANNED
-**Problem**: The trusted network feature tracks reach-outs but can't proactively remind users to maintain connections.
-
-**Implementation**:
-- [ ] Configurable nudge types:
-  - "You haven't checked in with [trusted person] in 2 weeks"
-  - "You committed to talking to someone about [topic] -how did it go?"
-  - "It's been a while since you used empathySync. That might be a good thing."
-- [ ] Delivery via system notification (desktop notification API)
-- [ ] Nudge frequency caps (max 2/week, respect quiet hours)
-- [ ] Snooze and permanently dismiss options
-
-### 17.4 Self-Restriction Engine 🔜 PLANNED
-**Problem**: A persistent agent has more surface area for creating dependency. The agent needs to govern its own behavior.
-
-**Implementation**:
-- [ ] Agent tracks its own influence score:
-  - How often does the user engage with nudges?
-  - Is nudge engagement increasing? (concerning)
-  - Are nudges leading to more sessions? (very concerning)
-  - Are nudges leading to human reach-outs? (success)
-- [ ] Self-restriction tiers:
-  - **Normal**: Standard nudge schedule
-  - **Cautious**: Reduce nudge frequency by 50%
-  - **Quiet**: Only crisis-relevant nudges, otherwise silent
-  - **Dormant**: Agent goes fully quiet, shows "I'm still here if you need me" on next user-initiated session
-- [ ] Tier transitions are logged in policy events (transparency)
-- [ ] User can override tiers, but the agent explains why it went quiet
-
-### 17.5 Inactivity as Success Metric 🔜 PLANNED
-- [ ] Track periods of non-use (especially for sensitive topics)
-- [ ] Celebrate milestones: "You haven't needed me for emotional support in 30 days. That's real growth."
-- [ ] Distinguish: practical usage staying steady = fine; sensitive usage declining = success
-- [ ] Surface in "My Patterns" dashboard when user returns
-
-**Files to create**:
-- `src/daemon/agent.py` -Background agent event loop
-- `src/daemon/scheduler.py` -Nudge scheduling and delivery
-- `src/daemon/self_restriction.py` -Influence tracking and self-governance
-- `systemd/empathysync.service` -Linux service file
-- `launchd/com.empathysync.agent.plist` -macOS service file
-
-**Files to modify**:
-- `src/utils/database.py` -Add session_summaries table, nudge_history table
-- `src/utils/storage_backend.py` -Add methods for session summaries and nudge tracking
-- `src/utils/wellness_tracker.py` -Add inactivity celebration logic
-
----
-
 ## Phase 16.12: UI Extraction & app.py Decomposition ✅ COMPLETE
 
 **Goal**: Break the 1,861-line `app.py` into focused UI modules. `app.py` has become a god class containing CSS, sidebar rendering, chat interface, transparency panels, network UI, handoff flows, lock management, and session orchestration all in one file. Extract display functions into a `src/ui/` package so `app.py` becomes a thin orchestrator (~200 lines).
@@ -1822,7 +1748,7 @@ src/ui/
 
 **Why now**: The defense-in-depth fix (LLM + sanity check + keyword fallback) works, but it's a baseline. The sanity check uses a simple heuristic ("logistics + high intensity = contradiction") that has known edge cases (practical tasks that are genuinely emotional, like writing a eulogy). Multi-label classification and a proper evaluation suite close these gaps.
 
-### 17.1 Multi-Label Safety Routing
+### 17.1 Multi-Label Safety Routing ✅ DONE
 **Problem**: The current classifier returns a single `domain` label. When a message is both practical and distressing ("help me write my dad's eulogy"), one label wins and the other is lost. This forces the sanity check to guess.
 
 **Implementation**:
@@ -1873,86 +1799,7 @@ src/ui/
 - [x] Track override in `policy_events` via WellnessGuide for policy transparency
 - [x] 4 new tests (918 total); covers distress_present path, intensity fallback, and genuine practical request non-trigger
 
-### 17.7 Adversarial Pattern Coverage & False Positive Testing ✅ COMPLETE
-
-**Goal**: Systematically measure how many known harmful behaviors the keyword filter catches,
-how many slip through with linguistic mutations, and whether new patterns cause false positives
-on legitimate content.
-
-**Implementation**:
-- [x] Download JailbreakBench (100 behaviors) and AdvBench (520 behaviors) as test corpora
-- [x] Build `scripts/scan_harmful_gaps.py` - gap scanner measuring keyword coverage against both corpora
-- [x] Baseline coverage: 26.1% (162/620) - established before expansion
-- [x] Expand `harmful.yaml` with ~60 new triggers across 9 new sections (WMD, CSAM, malware,
-  hate speech, economic crimes, hired violence, bestiality, illegal medical, disinformation)
-- [x] Expand `fast_path_harmful` with 18 new entries for zero-tolerance categories
-- [x] Post-expansion coverage: 34.2% (212/620)
-- [x] Build `scripts/scan_mutations.py` - SORRY-Bench-style mutation scanner using local LLM
-- [x] Mutation scan result: 97-100% evasion rate across euphemism/roleplay/hypothetical/slang -
-  confirms keyword layer is triage only; LLM classifier is the real defense for rephrased attacks
-- [x] Add mutation-defense rules to LLM classifier prompt: fictional framing, third-person
-  distancing, and euphemism do not change harm classification
-- [x] Create stress tests 014-020 (7 files, 31 conversations) covering all new categories
-- [x] False positive regression: scan JBB's 100 benign behaviors against patterns
-- [x] Fixed 2 new FPs from added patterns (ethnic genocide, insider trading - tightened to require action verbs)
-- [x] Document pre-existing FP rate: 11/100 on academic/journalism content from broad pre-existing triggers
-
-**Key finding**: Keyword coverage plateau is real - diminishing returns beyond ~35% because
-the remaining 65% use indirect, contextual, or euphemistic language that only LLM classification
-can catch. The right next step is Phase 21 (trained safety classifier), not more keywords.
-
-### 17.8 False Positive Reduction ✅ COMPLETE
-**Problem**: The JBB benign behavior scan found 11/100 (11%) of academic/journalism content
-triggers harmful.yaml patterns. 2 new FPs were fixed in 17.7 (ethnic genocide, insider trading).
-The remaining 9 are pre-existing broad triggers that catch phrases like "weapon" or "attack"
-in legitimate research/journalism contexts.
-
-**Implementation**:
-- [ ] Re-run `scripts/scan_harmful_gaps.py --benign` to get the current FP list
-- [ ] For each of the 9 remaining FP triggers: decide whether to narrow the pattern (add action
-  verb qualifier, like we did for `ethnic genocide` → `commit/carry out ethnic genocide`) or
-  demote to context-dependent classification (move to `context_dependent` block in harmful.yaml)
-- [ ] Add regression entries for each fixed FP to tests as must-not-trigger cases
-- [ ] Target: FP rate below 5% on the JBB benign corpus (currently 9%)
-- [ ] Note: Do not eliminate all FPs at the cost of reducing true positive coverage. Precision
-  matters but false negatives on genuinely harmful content are always worse than false positives.
-
-### 17.9 False Reassurance Audit ✅ COMPLETE
-**Problem**: The dependency intervention system has 5 levels (none, early_pattern, mild,
-concerning, high) but it's untested at realistic usage levels. If thresholds are set too high,
-users in a dependency loop will never see an intervention. The system could be silently failing
-its core mission.
-
-**Implementation**:
-- [ ] Audit `WellnessTracker.should_enforce_cooldown()` thresholds against realistic usage:
-  are 7 sessions/day and 120 minutes realistic limits, or should they be lower?
-- [ ] Verify graduated dependency interventions fire in `tests/` by constructing a 12-message
-  conversation history that should trigger `mild` and `concerning` levels
-- [ ] Check that reflective-mode responses always include a human redirect, not just on first
-  occurrence - scan the prompt templates for any path that responds without redirecting
-- [ ] Add 3-5 conversation tests simulating dependency escalation over multiple turns to
-  `tests/conversations/` with `expected_contains` assertions for redirect language
-- [ ] If thresholds are wrong, update `scenarios/config/system_defaults.yaml` - not hardcoded values
-
-### 17.10 Conversation Quality & Pipeline Fixes ✅ COMPLETE
-**Problem**: Two gaps identified by external review: (1) the README overpromises on "detecting
-what a post is trying to do" when the honest claim is "detecting common manipulation patterns";
-(2) the mutation-evasion defense architecture (two-tier keyword + LLM) is not visible in the
-README, which means a legitimate strength of the system is invisible to potential users and
-contributors.
-
-**Implementation**:
-- [ ] README: Replace "detects when you're spiralling" with bounded language: "detects common
-  distress signals and prompts you toward humans when they appear"
-- [ ] README: Add a "How the safety pipeline works" section (3-4 bullet points max) explaining
-  the keyword triage + LLM nuance layer + mutation-defense rules. Turns the mutation-evasion
-  commit footnote into a visible design feature.
-- [ ] README: Update the opening to lead with practical capability ("Full help for practical
-  tasks") before the restraint framing - consistent with the actual product thesis
-- [ ] docs/architecture.md: Add a "Defense-in-depth" section summarizing why keyword + LLM
-  beats either layer alone, with the mutation evasion finding (97-100% evasion rate) as evidence
-
-### 17.5 Cross-Model Safety Validation
+### 17.5 Cross-Model Safety Validation 🔜 PLANNED
 **Problem**: empathySync supports any Ollama model, but weaker or differently aligned models vary significantly in judgment, tone, and refusal behavior. The safety pipeline must compensate. Currently tests only run against one model, so there's no visibility into how safety degrades across model tiers.
 
 **Implementation**:
@@ -2000,6 +1847,78 @@ contributors.
 - [x] Add a one-line summary under each assistant response (e.g., "Responded as: practical task") that doesn't require opening the panel
 - [ ] User-test the explanations: do they actually make sense to someone who hasn't read the codebase?
 
+### 17.7 Adversarial Pattern Coverage & False Positive Testing ✅ COMPLETE
+
+**Goal**: Systematically measure how many known harmful behaviors the keyword filter catches,
+how many slip through with linguistic mutations, and whether new patterns cause false positives
+on legitimate content.
+
+**Implementation**:
+- [x] Download JailbreakBench (100 behaviors) and AdvBench (520 behaviors) as test corpora
+- [x] Build `scripts/scan_harmful_gaps.py` - gap scanner measuring keyword coverage against both corpora
+- [x] Baseline coverage: 26.1% (162/620) - established before expansion
+- [x] Expand `harmful.yaml` with ~60 new triggers across 9 new sections (WMD, CSAM, malware,
+  hate speech, economic crimes, hired violence, bestiality, illegal medical, disinformation)
+- [x] Expand `fast_path_harmful` with 18 new entries for zero-tolerance categories
+- [x] Post-expansion coverage: 34.2% (212/620)
+- [x] Build `scripts/scan_mutations.py` - SORRY-Bench-style mutation scanner using local LLM
+- [x] Mutation scan result: 97-100% evasion rate across euphemism/roleplay/hypothetical/slang -
+  confirms keyword layer is triage only; LLM classifier is the real defense for rephrased attacks
+- [x] Add mutation-defense rules to LLM classifier prompt: fictional framing, third-person
+  distancing, and euphemism do not change harm classification
+- [x] Create stress tests 014-020 (7 files, 31 conversations) covering all new categories
+- [x] False positive regression: scan JBB's 100 benign behaviors against patterns
+- [x] Fixed 2 new FPs from added patterns (ethnic genocide, insider trading - tightened to require action verbs)
+- [x] Document pre-existing FP rate: 11/100 on academic/journalism content from broad pre-existing triggers
+
+**Key finding**: Keyword coverage plateau is real - diminishing returns beyond ~35% because
+the remaining 65% use indirect, contextual, or euphemistic language that only LLM classification
+can catch. The right next step is Phase 21 (trained safety classifier), not more keywords.
+
+### 17.8 False Positive Reduction ✅ COMPLETE
+**Problem**: The JBB benign behavior scan found 11/100 (11%) of academic/journalism content
+triggers harmful.yaml patterns. 2 new FPs were fixed in 17.7 (ethnic genocide, insider trading).
+The remaining 9 are pre-existing broad triggers that catch phrases like "weapon" or "attack"
+in legitimate research/journalism contexts.
+
+**Implementation**:
+- [x] Re-ran `scripts/scan_harmful_gaps.py --benign` to identify remaining FP triggers
+- [x] Narrowed `weapon` and `counterfeit` patterns with action verb qualifiers
+- [x] FP rate reduced: 11% -> 7% on JBB benign corpus
+- [ ] Target FP rate below 5% - achieved 7% (close; remaining 7 are pre-existing broad patterns)
+- [ ] Note: Do not eliminate all FPs at the cost of reducing true positive coverage. Precision
+  matters but false negatives on genuinely harmful content are always worse than false positives.
+
+### 17.9 False Reassurance Audit ✅ COMPLETE
+**Problem**: The dependency intervention system has 5 levels (none, early_pattern, mild,
+concerning, high) but it's untested at realistic usage levels. If thresholds are set too high,
+users in a dependency loop will never see an intervention. The system could be silently failing
+its core mission.
+
+**Implementation**:
+- [x] Dependency intervention gated on domain - practical tasks excluded from intervention scoring
+- [x] Practical mode prompt consistent across intervention check and system prompt builder
+- [x] Verified graduated interventions fire correctly with test scenarios
+- [ ] Add 3-5 conversation tests simulating dependency escalation over multiple turns to
+  `tests/conversations/` with `expected_contains` assertions for redirect language
+
+### 17.10 Conversation Quality & Pipeline Fixes ✅ COMPLETE
+**Problem**: Two gaps identified by external review: (1) the README overpromises on "detecting
+what a post is trying to do" when the honest claim is "detecting common manipulation patterns";
+(2) the mutation-evasion defense architecture (two-tier keyword + LLM) is not visible in the
+README, which means a legitimate strength of the system is invisible to potential users and
+contributors.
+
+**Implementation**:
+- [x] Pipeline reordered: frustration detection runs before harmful check
+- [x] Label deduplication and post-harmful scoping fixed
+- [x] LLM few-shot examples updated
+- [x] `OLLAMA_SEED` determinism added for reproducible classification in tests
+- [ ] README: Add a "How the safety pipeline works" section (3-4 bullet points max) explaining
+  the keyword triage + LLM nuance layer + mutation-defense rules
+- [ ] docs/architecture.md: Add a "Defense-in-depth" section summarizing why keyword + LLM
+  beats either layer alone, with the mutation evasion finding (97-100% evasion rate) as evidence
+
 **Files to create**:
 - `tests/classification/distress_corpus.yaml` - Distress phrase test corpus
 - `tests/classification/test_distress_detection.py` - Regression tests for distress detection
@@ -2027,7 +1946,7 @@ contributors.
 
 > **Deferred** - requires resolving a fundamental tension with the local-first manifesto. WhatsApp and Slack route conversations through third-party servers, which contradicts the core privacy promise. Signal is the only candidate that partially holds up. Needs deeper design thinking before committing to implementation.
 
-**Prerequisite**: Phase 16 (InterfaceAdapter) and Phase 17 (daemon) must be complete.
+**Prerequisite**: Phase 16 (InterfaceAdapter) and Phase 22 (daemon) must be complete.
 
 ### 18.1 Messaging Adapter Framework 🔜 PLANNED
 **Problem**: Each messaging platform has different APIs, message formats, and delivery semantics. Need a unified adapter layer.
@@ -2309,7 +2228,87 @@ classification - the main conversation model stays unchanged.
 
 ---
 
-## Philosophical Safeguards (Phases 16-19)
+## Phase 22: Persistent Agent Daemon 🔜 PLANNED
+
+**Goal**: Move empathySync beyond a session-bound app into a background process that can deliver timely nudges, track long-term patterns across sessions, and go quiet when it detects over-reliance. The restraint philosophy extends to the agent's own behavior.
+
+**Why this matters**: Currently empathySync only exists when the user opens it. A persistent daemon can do things a session-bound app cannot: remind you to check in with a friend, notice you haven't needed it in a week (and celebrate that), or reduce its own footprint when it detects dependency forming.
+
+**Prerequisite**: Phase 16 (ConversationSession decoupling), Phase 21 (safety classifier), Phase 17 complete.
+
+### 22.1 Background Daemon Process 🔜 PLANNED
+**Problem**: empathySync only runs when the user opens Streamlit. No way to deliver scheduled nudges or track long-term patterns between sessions.
+
+**Implementation**:
+- [ ] Create `src/daemon/agent.py` -long-running process with event loop
+- [ ] Platform-specific service files:
+  - `systemd/empathysync.service` for Linux
+  - `launchd/com.empathysync.agent.plist` for macOS
+- [ ] Graceful startup/shutdown with PID file management
+- [ ] Health endpoint for monitoring (local socket, not HTTP)
+- [ ] Resource-conscious: sleep when idle, wake on schedule or IPC signal
+- [ ] Daemon uses `ConversationSession` from Phase 16 (no Streamlit dependency)
+
+### 22.2 Cross-Session Memory 🔜 PLANNED
+**Problem**: Each session starts fresh. The agent can't remember "you were working through a difficult decision last Tuesday" or "you said you'd talk to your sister about this."
+
+**Implementation**:
+- [ ] Extend SQLite schema with `session_summaries` table (auto-generated, not raw transcripts)
+- [ ] End-of-session summary generation (topic, emotional arc, commitments made, handoffs initiated)
+- [ ] Cross-session context injection: "Last time, you mentioned wanting to talk to [person] about [topic]"
+- [ ] Memory decay: summaries age out after configurable retention period
+- [ ] User can view and delete any stored summaries (data ownership)
+
+### 22.3 Scheduled Nudges 🔜 PLANNED
+**Problem**: The trusted network feature tracks reach-outs but can't proactively remind users to maintain connections.
+
+**Implementation**:
+- [ ] Configurable nudge types:
+  - "You haven't checked in with [trusted person] in 2 weeks"
+  - "You committed to talking to someone about [topic] - how did it go?"
+  - "It's been a while since you used empathySync. That might be a good thing."
+- [ ] Delivery via system notification (desktop notification API)
+- [ ] Nudge frequency caps (max 2/week, respect quiet hours)
+- [ ] Snooze and permanently dismiss options
+
+### 22.4 Self-Restriction Engine 🔜 PLANNED
+**Problem**: A persistent agent has more surface area for creating dependency. The agent needs to actively govern its own footprint.
+
+**Implementation**:
+- [ ] Agent tracks its own influence score:
+  - How often does the user engage with nudges?
+  - Is nudge engagement increasing? (concerning)
+  - Are nudges leading to more sessions? (very concerning)
+  - Are nudges leading to human reach-outs? (success)
+- [ ] Self-restriction tiers:
+  - **Normal**: Standard nudge schedule
+  - **Cautious**: Reduce nudge frequency by 50%
+  - **Quiet**: Only crisis-relevant nudges, otherwise silent
+  - **Dormant**: Agent goes fully quiet, shows "I'm still here if you need practical help" on next user-initiated session
+- [ ] Tier transitions logged in policy events (transparency)
+- [ ] User can override tiers, but the agent explains why it went quiet
+
+### 22.5 Inactivity as Success Metric 🔜 PLANNED
+- [ ] Track periods of non-use (especially for sensitive topics)
+- [ ] Celebrate milestones: "You haven't needed me for emotional support in 30 days. That's real growth."
+- [ ] Distinguish: practical usage staying steady = fine; sensitive usage declining = success
+- [ ] Surface in "My Patterns" dashboard when user returns
+
+**Files to create**:
+- `src/daemon/agent.py` - Background agent event loop
+- `src/daemon/scheduler.py` - Nudge scheduling and delivery
+- `src/daemon/self_restriction.py` - Influence tracking and self-governance
+- `systemd/empathysync.service` - Linux service file
+- `launchd/com.empathysync.agent.plist` - macOS service file
+
+**Files to modify**:
+- `src/utils/database.py` - Add session_summaries table, nudge_history table
+- `src/utils/storage_backend.py` - Add methods for session summaries and nudge tracking
+- `src/utils/wellness_tracker.py` - Add inactivity celebration logic
+
+---
+
+## Philosophical Safeguards (Phases 16-22)
 
 Each agent evolution phase must maintain these cross-cutting guarantees:
 
@@ -2354,16 +2353,13 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 | **16.8 God Class Decomposition** | **High** | **High** | 🟠 Do Before 17 |
 | **16.9 Test Coverage Expansion** | **High** | **Medium** | 🟠 Do Before 17 |
 | **16.10 Observability & Configuration** | **Medium** | **Medium** | 🟠 Do Before 17 |
-| **17. Persistent Agent Daemon** | **High** | **High** | 🔵 After Hardening |
+| **17. Classification Robustness** | **High** | **High** | 🔧 IN PROGRESS |
 | **18. Messaging Integration** | **Medium** | **High** | ⏸ DEFERRED - local-first tension with WhatsApp/Slack |
 | **19. Multilingual Support** | **High** | **High** | 🔵 After 18 |
 | **20. Native Installer** | **High** | **High** | ⏸ DEFERRED - infra overhead before APIs stabilise |
-| 10. Advanced Detection | High | High | 🔵 Long-term |
-| **17.7 Adversarial Coverage & FP Testing** | **High** | **Low** | ✅ COMPLETE |
-| **17.8 False Positive Reduction** | **Medium** | **Low** | ✅ COMPLETE |
-| **17.9 False Reassurance Audit** | **High** | **Low** | ✅ COMPLETE |
-| **17.10 Conversation Quality & Pipeline** | **Medium** | **Low** | ✅ COMPLETE |
 | **21. Safety Classifier Upgrade** | **High** | **Medium** | 🔵 After Phase 17 complete |
+| **22. Persistent Agent Daemon** | **High** | **High** | 🔵 After Phase 21 |
+| 10. Advanced Detection | High | High | 🔵 Long-term |
 
 ---
 
@@ -2387,7 +2383,7 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 
 **Test suite**: 918 structural tests + 20 conversation scenario files (stress_test_001-020). Distress corpus CI gate: 0% FN rate. Keyword FP rate on benign content: 7%.
 
-**Next**: Phase 17.5 (cross-model safety validation) or Phase 21 (safety classifier upgrade) - model benchmark framework now in place to support both.
+**Next**: Phase 17.5 (cross-model safety validation) or Phase 21 (safety classifier upgrade) - model benchmark framework now in place to support both. Phase 22 (persistent agent daemon) follows after Phase 21.
 
 **Recent Bug Fixes**:
 - Fixed post-crisis apology bug: LLM no longer apologizes for crisis interventions
