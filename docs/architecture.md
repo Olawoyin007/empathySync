@@ -104,10 +104,22 @@ User Input
     │
     ▼
 ┌─────────────────────────────────────────────┐
+│  3b. ISOLATION DETECTION (Phase 16.13)      │
+│     Keyword fast-path (34 phrases):         │
+│     "there is no one", "I have nobody"...   │
+│     → activates ConnectionSteering state    │
+│     LLM also returns isolation_level field: │
+│     none / passive / active                 │
+│     passive/active → activates next turn    │
+└─────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────┐
 │  4. MODE SELECTION                          │
 │     domain == "logistics" → Practical Mode  │
 │     OR is_practical_technique → Practical   │
 │     else → Reflective Mode                  │
+│     (ConnectionSteering applies in either)  │
 └─────────────────────────────────────────────┘
     │
     ▼
@@ -205,6 +217,7 @@ Response to User (streamed in real-time)
 │               (Framework-Agnostic Orchestrator)                 │
 │                                                                 │
 │   - Owns all session state (turns, domains, risk history)       │
+│   - Owns ConnectionSteering state (Phase 16.13)                 │
 │   - Single entry: process_message() → ConversationResult        │
 │   - Streaming: process_message_stream() + finalize_stream()     │
 └───────────────────────────┬────────────────────────────────────┘
@@ -255,6 +268,7 @@ Response to User (streamed in real-time)
 │   - Domain rules, triggers, responses                           │
 │   - Emotional markers, intervention configurations              │
 │   - Connection building signposts (Phase 12)                    │
+│   - Connection steering config (Phase 16.13)                    │
 └─────────────────────────────┬─────────────────────────────────┘
                               │ reads
                               ▼
@@ -265,7 +279,9 @@ Response to User (streamed in real-time)
 │   config/              - system_defaults.yaml (100+ tunables)  │
 │   domains/             - Risk domains and triggers              │
 │   emotional_markers/   - Intensity detection                    │
-│   connection_building/ - Signposts, first-contact (Phase 12)   │
+│   voice/               - Tone and personality guide (Phase 16.11)│
+│   connection_building/ - Signposts, first-contact, steering     │
+│                          (Phase 12, 16.13)                      │
 │   interventions/       - Dependency, boundaries, graduation     │
 │   prompts/             - Check-ins, mindfulness, styles         │
 │   responses/           - Fallbacks, base prompt                 │
@@ -378,6 +394,20 @@ Response to User (streamed in real-time)
 │  │ - Emotional intensity adjustments                         │  │
 │  │ - Intervention messages (if triggered)                    │  │
 │  └───────────────────────────────────────────────────────────┘  │
+│                          +                                      │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ LAYER 4: Connection Steering (Phase 16.13)                │  │
+│  │ - Injected only when ConnectionSteering.active == True    │  │
+│  │ - Stage-specific instruction:                             │  │
+│  │     0: recognition   - acknowledge quietly, one sentence  │  │
+│  │     1: exploration   - one genuine curiosity question     │  │
+│  │     2: mapping       - surface connections mentioned      │  │
+│  │     3: possibility   - one small, concrete option         │  │
+│  │     4: practical_help- full capability for reaching out   │  │
+│  │ - Or deflection instruction if user stays on task         │  │
+│  │ - Cross-cutting: applies in practical OR reflective mode  │  │
+│  │ - Source: connection_building/steering_prompts.yaml       │  │
+│  └───────────────────────────────────────────────────────────┘  │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -471,7 +501,9 @@ data/
 │   5. HUMAN-CENTRIC                                              │
 │      Trusted Network is core feature, not afterthought          │
 │      Handoff templates reduce friction to real connection       │
-│      Connection building helps users find people (Phase 12)    │
+│      Connection building helps users find people (Phase 12)     │
+│      Connection steering actively moves conversation toward     │
+│        human connection when isolation is detected (Phase 16.13)│
 │      AI usage tracked alongside human connection                │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -517,7 +549,8 @@ empathySync/
 │   ├── emotional_markers/       # 4 intensity levels
 │   ├── config/                  # system_defaults.yaml -100+ tunables (Phase 16.10)
 │   ├── classification/          # LLM classifier config (Phase 9)
-│   ├── connection_building/     # Signposts, first-contact (Phase 12)
+│   ├── voice/                   # Tone and personality guide (Phase 16.11)
+│   ├── connection_building/     # Signposts, first-contact, steering (Phase 12, 16.13)
 │   ├── interventions/           # Dependency, boundaries
 │   ├── prompts/                 # Check-ins, styles
 │   ├── responses/               # Fallbacks, base prompt

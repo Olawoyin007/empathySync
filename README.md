@@ -82,7 +82,10 @@ We optimise for exit, not engagement.
 
 ### Human connection
 
-- **Suggests real humans** to talk to, and helps you find them if you don't have anyone yet
+- **Connection steering**: when a user signals isolation ("there is no one really", "I have nobody"), empathySync enters a persistent session mode that carries a thread toward human connection across every subsequent response. Five stages: quiet acknowledgment, genuine curiosity, mapping any connections mentioned (weak ties count), offering one small possibility, then full practical help with the act of reaching out. The same conversational mechanics as engagement algorithms - opposite goal.
+- **Respects autonomy**: if the user consistently stays on the practical task, the steering suspends after 3 deflections. Never forces the topic over the task.
+- **Trusted network**: helps you identify and reach specific humans, with pre-written message templates to make the first move easier
+- **Signposting**: for users who genuinely have no one, guides toward places where connection can be found
 
 ## Quick Start
 
@@ -151,8 +154,8 @@ empathysync --mode cli  # Direct terminal mode
 - **LLM Classification**: Optional intelligent classification for nuanced context detection
 - **Framework-Agnostic Core**: `ConversationSession` class can be embedded in any Python project
 - **Transcript Export**: Download any conversation as a Markdown file from the Session & Data panel
-- **Multi-Label Safety Pipeline**: distress level and distress_present signals tracked alongside topic domain - catches mixed-intent messages single-label classifiers miss
-- **Distress Corpus CI Gate**: 60-entry labeled corpus gates every build - false negative rate on distress must stay below 5%
+- **Multi-Label Safety**: distress level tracked independently of topic domain - catches mixed-intent messages single-label classifiers miss
+- **Connection Steering**: session-level state machine that carries a thread toward human connection whenever isolation is detected
 
 ## How the Safety Pipeline Works
 
