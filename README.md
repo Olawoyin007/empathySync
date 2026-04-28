@@ -25,21 +25,7 @@ Every AI assistant is built to keep you talking. empathySync is the only one bui
 
 Full help for practical tasks. Deliberate restraint on personal ones. When it detects common distress signals, it redirects you toward real humans - not more AI conversation. Everything runs on your hardware via Ollama. No cloud. No data harvesting. No engagement optimization.
 
-The things that matter most to you deserve a tool that knows the difference.
-
-<details>
-<summary><strong>Why it's built this way</strong></summary>
-<br>
-
-Every person should have the right to an AI system that is entirely their own. Not rented. Not monitored. Not optimised for someone else's engagement metrics. Yours - running on your hardware, answering only to you, storing nothing it doesn't need to.
-
-For sensitive, personal things - how you're feeling, your relationships, your health, your money - you deserve something local, private, and restrained. For complex tasks that need serious compute, use the cloud AIs. That's a reasonable division.
-
-But the part of AI that handles your personal life should belong to you.
-
-This isn't a feature. It's the point.
-
-</details>
+The part of AI that handles your personal life should belong to you. That's not a feature - it's the point.
 
 ## Who Is This For?
 
@@ -50,20 +36,6 @@ If you're building **ethical AI tooling** and want a reference implementation th
 If you're a **therapist, counsellor, or domain expert** who wants to shape how an AI responds to emotional content - see [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md).
 
 empathySync is **not** for people who want a companion AI or always-on assistant. It's for people who want useful help that doesn't try to become a habit.
-
-<details>
-<summary><strong>The philosophy</strong></summary>
-<br>
-
-We optimise for exit, not engagement.
-
-| Practical Tasks | Sensitive Topics |
-|-----------------|------------------|
-| Writing emails, coding, explanations | Emotional, health, financial, relationships |
-| Full assistance, no limits | Brief responses, redirects to humans |
-| Complete the task thoroughly | Encourage human connection |
-
-</details>
 
 ## What Makes It Different
 
