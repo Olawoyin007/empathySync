@@ -1746,7 +1746,7 @@ src/ui/
 
 **Goal**: When any isolation signal is detected ("there is no one really", "I have nobody", "I manage alone"), activate a persistent session-level steering mode that carries a thread toward human connection in every subsequent response. Same machinery as engagement algorithms, opposite goal: human connection over AI dependency.
 
-**Why now**: NHS scenario revealed a hard gap - a user expressing profound isolation ("there is no one really") while asking for practical help received a transactional response with no acknowledgment. The system had a defensive patch (don't suggest humans who don't exist) but no active steering. This feature replaces the patch with a principled five-stage arc.
+**Why now**: A real conversation revealed a hard gap - a user expressing profound isolation ("there is no one really") while asking for practical help received a transactional response with no acknowledgment. The system had a defensive patch (don't suggest humans who don't exist) but no active steering. This feature replaces the patch with a background warmth modifier that notices without making it a topic.
 
 **Core design insight**: Treat human connection the same way engagement algorithms treat retention. Every isolation signal activates a cross-turn steering mode. Persistent but not pushy - respects user pace, suspends on repeated deflection, never forces the topic over the task.
 
