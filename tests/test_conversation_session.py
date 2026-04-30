@@ -80,8 +80,6 @@ def mock_loader():
         "nobody to talk to",
         "no one really",
     ]
-    loader.get_steering_turns_per_stage.return_value = 2
-    loader.get_steering_max_deflections.return_value = 3
     return loader
 
 
@@ -826,56 +824,18 @@ class TestConversationResultDataclass:
 
 
 class TestConnectionSteering:
-    """Tests for ConnectionSteering state machine."""
+    """Tests for ConnectionSteering."""
 
     def test_default_state_is_inactive(self):
         cs = ConnectionSteering()
         assert cs.active is False
-        assert cs.stage == 0
-        assert cs.turns_in_stage == 0
-        assert cs.deflection_count == 0
+        assert cs.first_detected_turn == 0
 
     def test_activate_sets_active_and_turn(self):
         cs = ConnectionSteering()
         cs.activate(turn_count=3)
         assert cs.active is True
         assert cs.first_detected_turn == 3
-
-    def test_record_turn_increments_turns_in_stage(self):
-        cs = ConnectionSteering(active=True)
-        cs.record_turn(is_deflection=False, turns_per_stage=2, max_deflections=3)
-        assert cs.turns_in_stage == 1
-
-    def test_stage_advances_after_turns_per_stage(self):
-        cs = ConnectionSteering(active=True)
-        cs.record_turn(is_deflection=False, turns_per_stage=2, max_deflections=3)
-        assert cs.stage == 0
-        cs.record_turn(is_deflection=False, turns_per_stage=2, max_deflections=3)
-        assert cs.stage == 1
-        assert cs.turns_in_stage == 0
-
-    def test_stage_does_not_exceed_4(self):
-        cs = ConnectionSteering(active=True, stage=4, turns_in_stage=0)
-        cs.record_turn(is_deflection=False, turns_per_stage=1, max_deflections=3)
-        assert cs.stage == 4  # capped at 4
-
-    def test_deflection_increments_count(self):
-        cs = ConnectionSteering(active=True)
-        cs.record_turn(is_deflection=True, turns_per_stage=2, max_deflections=3)
-        assert cs.deflection_count == 1
-        assert cs.active is True
-
-    def test_max_deflections_deactivates_steering(self):
-        cs = ConnectionSteering(active=True)
-        cs.record_turn(is_deflection=True, turns_per_stage=2, max_deflections=3)
-        cs.record_turn(is_deflection=True, turns_per_stage=2, max_deflections=3)
-        cs.record_turn(is_deflection=True, turns_per_stage=2, max_deflections=3)
-        assert cs.active is False
-
-    def test_non_deflection_resets_consecutive_deflections(self):
-        cs = ConnectionSteering(active=True, consecutive_deflections=2)
-        cs.record_turn(is_deflection=False, turns_per_stage=2, max_deflections=3)
-        assert cs.consecutive_deflections == 0
 
 
 # ---------------------------------------------------------------------------
@@ -933,7 +893,6 @@ class TestConnectionSteeringIntegration:
         session.connection_steering.activate(turn_count=1)
         session.reset()
         assert session.connection_steering.active is False
-        assert session.connection_steering.stage == 0
 
     def test_llm_isolation_detection_activates_steering_after_response(
         self, session, mock_guide, mock_loader, mock_classifier

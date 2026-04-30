@@ -32,36 +32,16 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ConnectionSteering:
     """
-    Session-level state for connection steering.
+    Session-level flag for connection steering.
 
     When isolation is detected ("there is no one really"), this activates and
-    persists across turns, injecting stage-appropriate steering context into
-    each subsequent response. Advances through five stages automatically.
-    Suspends if the user consistently deflects back to practical tasks.
+    persists for the session, injecting a background warmth modifier into every
+    subsequent response. The modifier changes tone and texture - not topic.
+    The user should not feel steered; they should just feel slightly more noticed.
     """
 
     active: bool = False
-    stage: int = 0  # 0=recognition, 1=exploration, 2=mapping, 3=possibility, 4=practical_help
-    turns_in_stage: int = 0
-    deflection_count: int = 0
-    consecutive_deflections: int = 0
     first_detected_turn: int = 0
-
-    def record_turn(self, is_deflection: bool, turns_per_stage: int, max_deflections: int) -> None:
-        """Update state after each active-steering turn."""
-        if is_deflection:
-            self.deflection_count += 1
-            self.consecutive_deflections += 1
-            if self.deflection_count >= max_deflections:
-                self.active = False
-                return
-        else:
-            self.consecutive_deflections = 0
-
-        self.turns_in_stage += 1
-        if self.turns_in_stage >= turns_per_stage and self.stage < 4:
-            self.stage += 1
-            self.turns_in_stage = 0
 
     def activate(self, turn_count: int) -> None:
         """Activate steering, recording when it was first triggered."""
@@ -223,16 +203,6 @@ class ConversationSession:
             isolation_level = self.guide.last_risk_assessment.get("isolation_level", "none")
             if isolation_level in ("active", "passive"):
                 self.connection_steering.activate(self.turn_count)
-
-        # Update steering state for next turn
-        if self.connection_steering.active:
-            domain = ""
-            if self.guide.last_risk_assessment:
-                domain = self.guide.last_risk_assessment.get("domain", "")
-            turns_per_stage = self.loader.get_steering_turns_per_stage()
-            max_deflections = self.loader.get_steering_max_deflections()
-            is_deflection = domain == "logistics" and self.connection_steering.stage < 4
-            self.connection_steering.record_turn(is_deflection, turns_per_stage, max_deflections)
 
         # Step 5: Track task category for practical tasks
         should_check_graduation = False
@@ -406,16 +376,6 @@ class ConversationSession:
             isolation_level = self.guide.last_risk_assessment.get("isolation_level", "none")
             if isolation_level in ("active", "passive"):
                 self.connection_steering.activate(self.turn_count)
-
-        # Update steering state
-        if self.connection_steering.active:
-            domain = ""
-            if self.guide.last_risk_assessment:
-                domain = self.guide.last_risk_assessment.get("domain", "")
-            turns_per_stage = self.loader.get_steering_turns_per_stage()
-            max_deflections = self.loader.get_steering_max_deflections()
-            is_deflection = domain == "logistics" and self.connection_steering.stage < 4
-            self.connection_steering.record_turn(is_deflection, turns_per_stage, max_deflections)
 
         # Step 5: Track task category for practical tasks
         should_check_graduation = False

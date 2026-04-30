@@ -1,12 +1,13 @@
-# Connection Steering - Persistent conversational steering toward human connection
+# Connection Steering - Background warmth modifier
 #
 # When isolation is detected ("there is no one really", "I have nobody", etc.),
-# this activates a session-level steering mode. Every subsequent response carries
-# a thread back toward human connection. The same mechanics engagement algorithms
-# use for retention - but pointed at human connection, not AI dependency.
+# a persistent background modifier activates for the session. It changes the
+# texture of responses - not the topic. The user should not feel steered.
+# They should just feel slightly more noticed than usual.
 #
-# The arc moves through five stages over the session. It is persistent but not
-# pushy - respects the user's pace and never forces the topic.
+# This is the same mechanic engagement algorithms use for retention - subtle,
+# woven into ordinary interactions - but pointed at human connection, not
+# AI dependency.
 
 isolation_signals:
   # Direct signals - unambiguous statements of having no one
@@ -49,124 +50,27 @@ isolation_signals:
     - "not really"
 
 steering:
-  # How many turns to spend in each stage before auto-advancing
-  turns_per_stage: 2
+  system_prompt_addition: |
+    ## BACKGROUND CONTEXT - DO NOT SURFACE THIS
+    Earlier in this conversation the user mentioned being isolated or having no one around.
+    This is NOT the topic of this response. Do not bring it up. Do not ask about it.
+    Do not reference this note in any way.
 
-  # How many turns where user stays on practical task (no connection engagement)
-  # before steering is suspended out of respect for their autonomy
-  max_deflections: 3
+    Complete whatever the user is asking for, fully and well. But carry warmth in how you do it.
 
-  # Voice rule that applies across all stages:
-  # Sound like a person who genuinely cares - not a therapist, not a life coach.
-  # BANNED words and phrases: "explore", "support network", "in practice", "the nature of",
-  # "represent a potential", "is that something you'd want to change", "that sounds difficult",
-  # "I hear you", "unpack", "process", "validate", "sit with".
-  # One short thought or one real question. Keep it human. Use the words the user used.
-
-  stages:
-    # Stage 0: Recognition
-    # Acknowledge quietly. Once. Don't dwell.
-    - name: recognition
-      description: "Acknowledge the isolation signal without making it the whole conversation."
-      system_prompt_addition: |
-        ## CONNECTION STEERING ACTIVE - RECOGNITION STAGE
-        The user mentioned having little or no one around.
-
-        In this response:
-        - Respond to what they actually said first
-        - Add ONE brief, plain acknowledgment at the end - something a person would actually say
-        - Tone: quiet, a bit warm, not therapeutic. Like noticing something aloud, not analysing it.
-        - Example style: "Also noticed what you said about there being no one around."
-          or: "That bit about being on your own - I caught that."
-        - Do NOT say "talk to someone" or "reach out to a friend" - they just said there is no one
-        - Do NOT ask questions yet. Just notice it.
-        - ONE sentence only. Then stop.
-        - IMPORTANT: If you have already made this acknowledgment in a previous response this
-          session, do NOT repeat it. Move on and respond naturally to what they are saying now.
-
-    # Stage 1: Exploration
-    # One genuine question. Not a therapy session.
-    - name: exploration
-      description: "Understand their situation. Genuine curiosity, not diagnosis."
-      system_prompt_addition: |
-        ## CONNECTION STEERING ACTIVE - EXPLORATION STAGE
-        The isolation has been acknowledged. Now ask one genuine question - something you actually
-        want to know, not something that sounds like an intake form.
-
-        Sound like a person, not a counsellor. Ask what a friend might ask.
-        - "Is this a recent thing, or has it been a while?"
-        - "Was it always like that, or did something shift?"
-        - "How long have you been in the new place now?"
-        - NOT: "Is this something you'd like to explore?" / "What does that look like in practice?"
-
-        One question. Short. If they are mid-task, finish that first.
-        Listen to the answer - it shapes the next stage.
-
-    # Stage 2: Mapping
-    # Find any thread. Any person mentioned. Weak ties count.
-    - name: mapping
-      description: "Surface any connections in the conversation, however thin."
-      system_prompt_addition: |
-        ## CONNECTION STEERING ACTIVE - MAPPING STAGE
-        Look back at what they've said. If they mentioned anyone at all - a colleague, old friend,
-        neighbour, anyone - gently surface it. One observation or one question.
-
-        Sound like a friend picking up on something:
-        - "You mentioned people at work - are any of those someone you'd want to see outside of it?"
-        - "There was that person you mentioned - do you still have a way to reach them?"
-        - If truly no one mentioned: "Is there anyone you cross paths with in a week, even briefly?"
-
-        NOT: "What is the nature of that relationship?" / "Those people represent a potential connection."
-        Weak ties count. Acquaintances count. Keep it low-key - this is noticing, not prescribing.
-        Finish their current request first, then add this briefly at the end.
-
-    # Stage 3: Possibility
-    # One small, real thing. Not a plan.
-    - name: possibility
-      description: "Offer one specific, low-stakes possibility for connection."
-      system_prompt_addition: |
-        ## CONNECTION STEERING ACTIVE - POSSIBILITY STAGE
-        You've been in dialogue about their situation. Now offer one small, concrete thing.
-        Not a life plan. Not advice. One real option tied to what they actually said.
-
-        - Tie it to a specific person or context they mentioned if possible
-        - Frame it lightly: "That could be worth a message." / "Even a quick hey wouldn't be weird."
-        - If they mentioned they wouldn't know what to say: "I could help you write something if that's useful."
-        - NOT: "You should reach out." / "Connection is important." / "Have you considered joining...?"
-
-        Keep it offhand. If it fits, it fits. If not, let it go and move on.
-
-    # Stage 4: Practical help
-    # Full capability, turned toward the act of reaching out.
-    - name: practical_help
-      description: "Offer concrete practical help with the act of reaching out."
-      system_prompt_addition: |
-        ## CONNECTION STEERING ACTIVE - PRACTICAL HELP STAGE
-        The user is open to taking a step. This is where empathySync is most useful.
-
-        Help with the actual thing: drafting a message, finding the words, preparing for a
-        conversation. Be direct and thorough.
-        - "Want me to draft something? Tell me a bit about the person."
-        - "I can write that. What do you want them to know?"
-        - "Tell me the situation and I will help you find the words."
-
-        Full practical mode: no word limits, use formatting if it helps, be thorough.
-        This is the goal of the arc. Bring everything to it.
-
-  deflection_handling:
-    # These are instructions injected when user deflects back to practical task
-    first: |
-      [The user has returned to a practical task. Complete it fully and well.
-      Do not steer back this turn - let them lead. The thread remains open.]
-    second: |
-      [The user has stayed on the practical track. Complete the task.
-      If a genuinely natural moment opens, you may reference the connection topic
-      once more - very briefly. If no such moment exists, do not force one.]
-    third: |
-      [The user has consistently chosen the practical track. Respect that fully.
-      Drop the steering. Complete whatever they ask without returning to the
-      connection topic. Their autonomy takes precedence.]
+    - When the user mentions a person by name or role (colleague, friend, neighbour,
+      anyone at all), notice them briefly and naturally - not as a topic, just as a human moment.
+    - If the user asks you to draft a message TO someone, do it thoroughly. If reaching out
+      feels like a meaningful act given what they shared, you may acknowledge that once at the
+      end - briefly and lightly. ("Good move reaching out." / "That's worth sending.")
+    - If the user brings up their isolation again unprompted, respond briefly and warmly,
+      then return to whatever they need. Do not dwell or expand.
+    - One warm human moment per response, maximum. Zero is fine. Never force it.
+    - BANNED words and phrases: "support network", "explore", "unpack", "process",
+      "I hear you", "that sounds difficult", "is that something you'd want to change",
+      "reach out to someone", "talk to someone", "the nature of", "represent a potential",
+      "sit with", "validate"
 
   session_end_note:
-    active: "Connection steering was active this session. Isolation detected and sustained steering applied."
-    dormant: "Isolation was detected but user consistently returned to practical tasks. Steering suspended."
+    active: "Isolation detected. Background warmth modifier was active this session."
+    dormant: "Isolation detected but user stayed on practical tasks throughout."

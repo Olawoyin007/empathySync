@@ -66,7 +66,7 @@ We optimise for exit, not engagement.
 
 ### Human connection
 
-- **Connection steering**: when someone signals isolation, empathySync gently carries a thread toward human connection across the conversation - not just in one response. It steps back if the person prefers to stay on task.
+- **Connection steering**: when someone signals isolation, a background warmth modifier activates for the session. It doesn't start a conversation about loneliness - it just changes the texture of every response. Noticing people mentioned in passing. Acknowledging when someone reaches out to an old contact. The user should feel slightly more seen, not steered.
 - **Trusted network**: helps identify and reach specific people in your life, with message templates to make the first move easier
 - **Signposting**: for users who genuinely have no one, guides toward places where connection can be found
 

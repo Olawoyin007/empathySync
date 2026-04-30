@@ -223,22 +223,13 @@ If the user asks for advice on: {forbidden_text}—respond ONLY with:
 
     def _get_connection_steering_addition(self, connection_steering) -> str:
         """
-        Get stage-specific steering context for active connection steering.
+        Get the background warmth modifier for active connection steering.
 
-        When isolation is detected, each response gets a stage-appropriate
-        instruction block that guides the LLM to carry a thread toward
-        human connection - without overriding the primary response.
+        Returns the same single instruction block every turn - no stage logic,
+        no deflection tracking. The modifier changes tone and texture, not topic.
         """
-        if connection_steering.deflection_count > 0:
-            # Inject deflection-specific instruction instead of stage prompt
-            deflection_instruction = self.loader.get_steering_deflection_instruction(
-                connection_steering.deflection_count
-            )
-            if deflection_instruction:
-                return deflection_instruction.strip()
-
-        stage_config = self.loader.get_connection_steering_stage(connection_steering.stage)
-        return stage_config.get("system_prompt_addition", "").strip()
+        config = self.loader.get_connection_steering_config()
+        return config.get("steering", {}).get("system_prompt_addition", "").strip()
 
     def get_check_in_prompts(self) -> List[str]:
         """Get various check-in prompts for user reflection."""

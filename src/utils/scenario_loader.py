@@ -1257,35 +1257,10 @@ class ScenarioLoader:
         signals = config.get("isolation_signals", {})
         return signals.get("direct", []) + signals.get("passive", [])
 
-    def get_connection_steering_stages(self) -> List[Dict]:
-        """Get the ordered list of steering stage configurations."""
+    def get_steering_prompt_addition(self) -> str:
+        """Get the background warmth modifier injected when steering is active."""
         config = self.get_connection_steering_config()
-        return config.get("steering", {}).get("stages", [])
-
-    def get_connection_steering_stage(self, stage_index: int) -> Dict:
-        """Get configuration for a specific steering stage."""
-        stages = self.get_connection_steering_stages()
-        if 0 <= stage_index < len(stages):
-            return stages[stage_index]
-        return {}
-
-    def get_steering_deflection_instruction(self, deflection_count: int) -> str:
-        """Get the system prompt instruction for nth deflection (1-indexed)."""
-        config = self.get_connection_steering_config()
-        deflection_config = config.get("steering", {}).get("deflection_handling", {})
-        keys = ["first", "second", "third"]
-        idx = min(deflection_count - 1, len(keys) - 1)
-        return deflection_config.get(keys[idx], "") if 0 <= idx < len(keys) else ""
-
-    def get_steering_turns_per_stage(self) -> int:
-        """Get the configured turns per stage before auto-advancing."""
-        config = self.get_connection_steering_config()
-        return config.get("steering", {}).get("turns_per_stage", 2)
-
-    def get_steering_max_deflections(self) -> int:
-        """Get the configured max deflections before steering is suspended."""
-        config = self.get_connection_steering_config()
-        return config.get("steering", {}).get("max_deflections", 3)
+        return config.get("steering", {}).get("system_prompt_addition", "")
 
     # ==================== UTILITY METHODS ====================
 
