@@ -330,6 +330,51 @@ class TestErrorInjection:
         assert result is None
 
 
+class TestTimingInstrumentation:
+    """Tests for response time logging on LLMClassifier."""
+
+    def test_last_call_duration_default_is_zero(self):
+        classifier = LLMClassifier()
+        assert classifier.last_call_duration == 0.0
+
+    def test_last_call_duration_set_after_successful_call(self):
+        classifier = LLMClassifier()
+        mock_response = Mock()
+        mock_response.raise_for_status = Mock()
+        mock_response.json.return_value = {"response": '{"domain": "logistics"}'}
+        mock_client = Mock()
+        mock_client.post.return_value = mock_response
+        with patch("utils.http_client.get_http_client", return_value=mock_client):
+            classifier._call_ollama("test prompt")
+        assert classifier.last_call_duration > 0.0
+
+    def test_last_call_duration_not_set_on_timeout(self):
+        """Timeout before response should leave last_call_duration at 0."""
+        import httpx
+
+        classifier = LLMClassifier()
+        mock_client = Mock()
+        mock_client.post.side_effect = httpx.TimeoutException("timed out")
+        with patch("utils.http_client.get_http_client", return_value=mock_client):
+            classifier._call_ollama("test prompt")
+        assert classifier.last_call_duration == 0.0
+
+    def test_call_duration_logged_at_info(self):
+        classifier = LLMClassifier()
+        mock_response = Mock()
+        mock_response.raise_for_status = Mock()
+        mock_response.json.return_value = {"response": '{"domain": "logistics"}'}
+        mock_client = Mock()
+        mock_client.post.return_value = mock_response
+        import logging
+
+        with patch("utils.http_client.get_http_client", return_value=mock_client):
+            with patch.object(logging.getLogger("models.llm_classifier"), "info") as mock_log:
+                classifier._call_ollama("test prompt")
+        logged_messages = [str(call) for call in mock_log.call_args_list]
+        assert any("llm_classifier.call" in msg for msg in logged_messages)
+
+
 # Run tests if executed directly
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
