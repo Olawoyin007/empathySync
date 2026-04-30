@@ -58,9 +58,10 @@ steering:
 
   # Voice rule that applies across all stages:
   # Sound like a person who genuinely cares - not a therapist, not a life coach.
-  # Never use: "explore ways of", "in practice", "the nature of", "represent a potential",
-  # "is that something you'd want to change", "that sounds difficult", "I hear you".
-  # One short thought or one real question. Keep it human.
+  # BANNED words and phrases: "explore", "support network", "in practice", "the nature of",
+  # "represent a potential", "is that something you'd want to change", "that sounds difficult",
+  # "I hear you", "unpack", "process", "validate", "sit with".
+  # One short thought or one real question. Keep it human. Use the words the user used.
 
   stages:
     # Stage 0: Recognition
