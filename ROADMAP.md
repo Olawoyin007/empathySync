@@ -1,4 +1,4 @@
-# EmpathySync Roadmap
+# empathySync Roadmap
 
 > "Help that knows when to stop"
 
