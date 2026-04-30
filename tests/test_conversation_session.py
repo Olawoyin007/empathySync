@@ -915,3 +915,65 @@ class TestConnectionSteeringIntegration:
 
         # Steering activates post-response from LLM result
         assert session.connection_steering.active is True
+
+
+# ---------------------------------------------------------------------------
+# Performance logging
+# ---------------------------------------------------------------------------
+
+
+class TestPerfLogging:
+    """Tests for [PERF] structured log line emitted per message."""
+
+    def test_perf_logged_after_process_message(
+        self, session, mock_guide, mock_loader, mock_classifier
+    ):
+        mock_guide.generate_response.return_value = "Done."
+        mock_guide.last_risk_assessment = {"domain": "logistics", "classification_method": "llm"}
+        mock_guide.last_policy_action = None
+        mock_guide.risk_classifier = MagicMock()
+        mock_guide.risk_classifier._llm_classifier = None
+        mock_guide.ollama_client = MagicMock()
+        mock_guide.ollama_client.last_generate_duration = 1.5
+        mock_classifier.is_connection_seeking.return_value = (False, None)
+        mock_classifier.detect_intent.return_value = ("practical", 0.8)
+        mock_classifier.detect_intent_shift.return_value = None
+        mock_classifier.detect_task_category.return_value = (None, 0.0)
+        mock_loader.get_graduation_category.return_value = None
+
+        import logging
+
+        with patch.object(logging.getLogger("models.conversation_session"), "info") as mock_log:
+            session.process_message("help me write an email")
+
+        logged = [str(c) for c in mock_log.call_args_list]
+        assert any("[PERF]" in msg for msg in logged)
+
+    def test_perf_log_contains_domain_and_method(
+        self, session, mock_guide, mock_loader, mock_classifier
+    ):
+        mock_guide.generate_response.return_value = "Done."
+        mock_guide.last_risk_assessment = {
+            "domain": "emotional",
+            "classification_method": "keyword",
+        }
+        mock_guide.last_policy_action = None
+        mock_guide.risk_classifier = MagicMock()
+        mock_guide.risk_classifier._llm_classifier = None
+        mock_guide.ollama_client = MagicMock()
+        mock_guide.ollama_client.last_generate_duration = 0.5
+        mock_classifier.is_connection_seeking.return_value = (False, None)
+        mock_classifier.detect_intent.return_value = ("emotional", 0.8)
+        mock_classifier.detect_intent_shift.return_value = None
+        mock_classifier.detect_task_category.return_value = (None, 0.0)
+        mock_loader.get_graduation_category.return_value = None
+
+        import logging
+
+        with patch.object(logging.getLogger("models.conversation_session"), "info") as mock_log:
+            session.process_message("I feel sad")
+
+        perf_lines = [str(c) for c in mock_log.call_args_list if "[PERF]" in str(c)]
+        assert len(perf_lines) == 1
+        assert "emotional" in perf_lines[0]
+        assert "keyword" in perf_lines[0]

@@ -9,6 +9,7 @@ can import to get safety-aware, restraint-first conversation handling.
 """
 
 import random
+import time
 import logging
 from dataclasses import dataclass
 from typing import Dict, List, Optional
@@ -121,6 +122,8 @@ class ConversationSession:
         Returns:
             ConversationResult with the response and all metadata.
         """
+        t_msg_start = time.perf_counter()
+
         # Add user message to history
         self.messages.append({"role": "user", "content": user_input})
 
@@ -251,6 +254,8 @@ class ConversationSession:
         # Step 8: Build result
         should_rerun = self.guide.last_policy_action is not None or self.pending_shift is not None
 
+        self._log_perf(t_msg_start)
+
         return ConversationResult(
             response=response,
             risk_assessment=self.guide.last_risk_assessment,
@@ -345,8 +350,9 @@ class ConversationSession:
             connection_steering=self.connection_steering,
         )
 
-        # Store user_input for finalize_stream
+        # Store user_input and start time for finalize_stream
         self._pending_stream_input = user_input
+        self._stream_start_time = time.perf_counter()
 
         return ConversationResult(
             response="",
@@ -424,6 +430,8 @@ class ConversationSession:
 
         should_rerun = self.guide.last_policy_action is not None or self.pending_shift is not None
 
+        self._log_perf(getattr(self, "_stream_start_time", time.perf_counter()))
+
         return ConversationResult(
             response=response,
             risk_assessment=self.guide.last_risk_assessment,
@@ -434,6 +442,25 @@ class ConversationSession:
             suggested_handoff_domain=suggested_domain,
             turn_count=self.turn_count,
             should_rerun=should_rerun,
+        )
+
+    def _log_perf(self, t_start: float) -> None:
+        """Emit a structured per-message performance summary at INFO level."""
+        total_s = time.perf_counter() - t_start
+        risk = self.guide.last_risk_assessment or {}
+        domain = risk.get("domain", "unknown")
+        method = risk.get("classification_method", "unknown")
+        llm_clf = getattr(self.guide.risk_classifier, "_llm_classifier", None)
+        classify_s = getattr(llm_clf, "last_call_duration", 0.0) if llm_clf else 0.0
+        generate_s = getattr(self.guide.ollama_client, "last_generate_duration", 0.0)
+        logger.info(
+            "[PERF] turn=%d | classify_s=%.2f | generate_s=%.2f | total_s=%.2f | domain=%s | method=%s",
+            self.turn_count,
+            classify_s,
+            generate_s,
+            total_s,
+            domain,
+            method,
         )
 
     def _check_isolation_signals(self, text: str) -> bool:

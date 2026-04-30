@@ -10,6 +10,7 @@ Part of Phase 9: LLM-Based Intelligent Classification
 import json
 import re
 import hashlib
+import time
 import httpx
 from datetime import datetime
 from pathlib import Path
@@ -94,6 +95,9 @@ class LLMClassifier:
         # Pre-compile fast-path patterns for efficiency
         self._fast_path_crisis = [p.lower() for p in self.config.get("fast_path_crisis", [])]
         self._fast_path_harmful = [p.lower() for p in self.config.get("fast_path_harmful", [])]
+
+        # Timing instrumentation - duration of last _call_ollama() invocation
+        self.last_call_duration: float = 0.0
 
         model_note = ""
         if settings.OLLAMA_CLASSIFIER_MODEL:
@@ -345,8 +349,15 @@ class LLMClassifier:
 
         try:
             timeout_secs = timeout_ms / 1000
+            t_start = time.perf_counter()
             response = self.http_client.post(self.ollama_url, json=payload, timeout=timeout_secs)
             response.raise_for_status()
+            self.last_call_duration = time.perf_counter() - t_start
+            logger.info(
+                "llm_classifier.call | model=%s | duration_s=%.2f",
+                self.model,
+                self.last_call_duration,
+            )
 
             result = response.json()
             return result.get("response", "").strip()

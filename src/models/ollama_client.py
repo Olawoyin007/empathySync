@@ -44,6 +44,9 @@ class OllamaClient:
         self.model = model or settings.OLLAMA_MODEL
         self.temperature = temperature if temperature is not None else settings.OLLAMA_TEMPERATURE
 
+        # Timing instrumentation - duration of last generate/generate_stream call
+        self.last_generate_duration: float = 0.0
+
         # Load tunables from system_defaults.yaml (falls back to hardcoded defaults)
         loader = get_scenario_loader()
         self.practical_max_tokens = loader.get_default(
@@ -105,6 +108,7 @@ class OllamaClient:
 
             result = response.json()
             text = result.get("response", "").strip()
+            self.last_generate_duration = elapsed
             logger.info(
                 "ollama.generate | model=%s | practical=%s | tokens=%d | duration_s=%.2f",
                 self.model,
@@ -170,6 +174,7 @@ class OllamaClient:
                         yield token
                     if chunk.get("done"):
                         elapsed = time.perf_counter() - t_start
+                        self.last_generate_duration = elapsed
                         logger.info(
                             "ollama.stream | model=%s | practical=%s | tokens=%d | ttft_s=%.2f | duration_s=%.2f",
                             self.model,
