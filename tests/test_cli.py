@@ -3,6 +3,13 @@ from unittest.mock import patch, MagicMock
 
 
 class TestCLIArguments:
+    def test_list_domains_flag_calls_list_domains(self):
+        with patch("src.cli.list_domains") as mock_list_domains:
+            with patch("sys.argv", ["empathysync", "--list-domains"]):
+                from src.cli import main
+                main()
+            assert mock_list_domains.called
+
     def test_mode_cli_calls_run_cli(self):
         with patch("src.cli.run_cli") as mock_run_cli:
             with patch("sys.argv", ["empathysync", "--mode", "cli"]):
@@ -23,6 +30,55 @@ class TestCLIArguments:
                 from src.cli import main
                 main()
             assert mock_run_streamlit.called
+
+
+class TestListDomains:
+    def test_list_domains_prints_all_domains(self, capsys):
+        """Test that list_domains prints all 8 domains with their risk weights."""
+        from src.cli import list_domains
+
+        list_domains()
+
+        output = capsys.readouterr().out
+
+        # Check that all 8 domains are present
+        assert "crisis" in output
+        assert "harmful" in output
+        assert "health" in output
+        assert "money" in output
+        assert "emotional" in output
+        assert "relationships" in output
+        assert "spirituality" in output
+        assert "logistics" in output
+
+        # Check that risk weights are present
+        assert "risk weight:" in output
+
+        # Check that descriptions are present
+        assert "Suicidal ideation" in output or "Illegal activities" in output
+
+    def test_list_domains_sorted_by_risk_weight(self, capsys):
+        """Test that domains are sorted by risk weight in descending order."""
+        from src.cli import list_domains
+
+        list_domains()
+
+        output = capsys.readouterr().out
+        lines = output.strip().split('\n')
+
+        # Find the domain lines (skip the header)
+        domain_lines = [line for line in lines if "risk weight:" in line]
+
+        # Extract risk weights from each line
+        import re
+        weights = []
+        for line in domain_lines:
+            match = re.search(r'risk weight:\s*([\d.]+)', line)
+            if match:
+                weights.append(float(match.group(1)))
+
+        # Verify that weights are in descending order
+        assert weights == sorted(weights, reverse=True)
 
 
 class TestRunCLI:
