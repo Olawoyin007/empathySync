@@ -44,6 +44,23 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v --tb=short
 
+  validate-scenarios:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Validate scenario YAML files
+        run: python scripts/validate_scenarios.py
+
   manifesto-guard:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
