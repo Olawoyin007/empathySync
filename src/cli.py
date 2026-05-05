@@ -64,11 +64,7 @@ def list_domains():
 
     print("Supported domains:")
     # Sort by risk weight (descending) for better readability
-    sorted_domains = sorted(
-        domains.items(),
-        key=lambda x: x[1].get("risk_weight", 0),
-        reverse=True
-    )
+    sorted_domains = sorted(domains.items(), key=lambda x: x[1].get("risk_weight", 0), reverse=True)
 
     for domain_name, config in sorted_domains:
         risk_weight = config.get("risk_weight", 0)
