@@ -53,6 +53,26 @@ def run_cli():
     adapter.run()
 
 
+def list_domains():
+    """Print supported domains and their risk weights, then exit."""
+    sys.path.append(str(Path(__file__).parent))
+
+    from utils.scenario_loader import ScenarioLoader
+
+    loader = ScenarioLoader()
+    domains = loader.get_all_domains()
+
+    print("Supported domains:")
+    # Sort by risk weight (descending) for better readability
+    sorted_domains = sorted(domains.items(), key=lambda x: x[1].get("risk_weight", 0), reverse=True)
+
+    for domain_name, config in sorted_domains:
+        risk_weight = config.get("risk_weight", 0)
+        description = config.get("description", "")
+        # Format: domain (padded to 14 chars) risk weight (padded to 14 chars) - description
+        print(f"  {domain_name:<14} risk weight: {risk_weight:<5} - {description}")
+
+
 def run_maintenance():
     """Run maintenance tasks: prune old data, validate integrity, print summary."""
     sys.path.append(str(Path(__file__).parent))
@@ -131,6 +151,11 @@ def main():
         help="Interface mode: web (Streamlit) or cli (terminal)",
     )
     parser.add_argument(
+        "--list-domains",
+        action="store_true",
+        help="Print supported domains and their risk weights, then exit",
+    )
+    parser.add_argument(
         "--maintenance",
         action="store_true",
         help="Run maintenance tasks (prune data, check integrity) and exit",
@@ -144,7 +169,9 @@ def main():
 
     args = parser.parse_args()
 
-    if args.maintenance:
+    if args.list_domains:
+        list_domains()
+    elif args.maintenance:
         run_maintenance()
     elif args.mode == "cli":
         run_cli()
