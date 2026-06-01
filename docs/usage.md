@@ -174,7 +174,7 @@ This transparency is intentional -you should always know when the system is limi
 
 The system may block new sessions if:
 - You've had 7+ sessions today
-- You've spent 120+ minutes today
+- You've spent 180+ minutes today
 - Your dependency score is high
 
 This isn't punishment -it's the system doing its job of not becoming a crutch.

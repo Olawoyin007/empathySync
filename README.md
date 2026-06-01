@@ -9,7 +9,7 @@
 *Most chatbots want you to keep talking.*
 *This one wants you to leave and go live your life.*
 
-[![v1.10.0](https://img.shields.io/badge/release-v1.10.0-orange.svg)](https://github.com/Olawoyin007/empathySync/releases/tag/v1.10.0)
+[![v1.10.1](https://img.shields.io/badge/release-v1.10.1-orange.svg)](https://github.com/Olawoyin007/empathySync/releases/tag/v1.10.1)
 [![CI](https://github.com/Olawoyin007/empathySync/actions/workflows/ci.yml/badge.svg)](https://github.com/Olawoyin007/empathySync/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Local-First](https://img.shields.io/badge/Privacy-Local--First-blue.svg)](#)

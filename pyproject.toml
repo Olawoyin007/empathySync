@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "empathysync"
-version = "1.10.0"
+version = "1.10.1"
 description = "A local-first AI assistant that provides full help for practical tasks while applying restraint on sensitive topics"
 readme = "README.md"
 license = {text = "MIT"}
