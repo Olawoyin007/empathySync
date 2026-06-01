@@ -2,6 +2,17 @@
 
 All notable changes to empathySync are documented here.
 
+## v1.10.1 (2026-06-01) - Documentation Accuracy
+
+**"The docs should say what the code does."**
+
+Documentation-only patch. No code changes.
+
+### Fixed
+- Corrected stale tunables in documentation to match the configured defaults in `scenarios/config/system_defaults.yaml`: daily-usage cooldown is **180 minutes** (docs said 120), identity reminders fire **every 9 turns** (docs said 6), and practical mode allows up to **5000 tokens** (docs said 2000). Affected `docs/architecture.md`, `docs/usage.md`, and `CLAUDE.md`
+
+---
+
 ## v1.10.0 (2026-06-01) - Connection Steering & CLI
 
 **"Noticing people. Not making it a topic."**
