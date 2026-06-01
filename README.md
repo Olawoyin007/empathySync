@@ -9,7 +9,7 @@
 *Most chatbots want you to keep talking.*
 *This one wants you to leave and go live your life.*
 
-[![v1.9](https://img.shields.io/badge/release-v1.9-orange.svg)](https://github.com/Olawoyin007/empathySync/releases/tag/v1.9)
+[![v1.10.0](https://img.shields.io/badge/release-v1.10.0-orange.svg)](https://github.com/Olawoyin007/empathySync/releases/tag/v1.10.0)
 [![CI](https://github.com/Olawoyin007/empathySync/actions/workflows/ci.yml/badge.svg)](https://github.com/Olawoyin007/empathySync/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Local-First](https://img.shields.io/badge/Privacy-Local--First-blue.svg)](#)
@@ -114,8 +114,10 @@ git clone https://github.com/Olawoyin007/empathySync.git
 cd empathySync
 pip install -e ".[dev]"
 cp .env.example .env
-empathysync          # Launches Streamlit web UI
-empathysync --mode cli  # Direct terminal mode
+empathysync                # Launches Streamlit web UI
+empathysync --mode cli     # Direct terminal mode
+empathysync --version      # Show version and exit
+empathysync --list-domains # List all supported classification domains
 ```
 
 ### Requirements

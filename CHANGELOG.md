@@ -2,26 +2,25 @@
 
 All notable changes to empathySync are documented here.
 
-## Unreleased
+## v1.10.0 (2026-06-01) - Connection Steering & CLI
 
-### Phase 16.13 - Conversational Connection Steering
+**"Noticing people. Not making it a topic."**
 
-When a user expresses isolation ("there is no one really", "I have nobody", "I manage alone"), empathySync now enters a persistent session-level steering mode that carries a thread toward human connection in every subsequent response. The same conversational mechanics used by engagement algorithms - but pointed at human connection over AI dependency.
+### New
+- Connection steering (Phase 16.13): when isolation is detected ("there is no one really", "I have nobody"), a background warmth modifier activates for the session. It changes the texture of every response - noticing people mentioned in passing, acknowledging when someone reaches out - without making loneliness a topic. Respects autonomy: suspends after 3 deflections if the user stays on practical tasks
+- Dual isolation detection: keyword fast-path (34 phrases) catches signals before the LLM call; new `isolation_level` field (`none`/`passive`/`active`) in LLM classification catches nuanced cases
+- `empathysync --version` flag to print version and exit (@adityamoolya, #91)
+- `empathysync --list-domains` CLI command - lists all supported classification domains (#103)
+- Per-message response time logging in `OllamaClient`: `duration_s`, `ttft_s`, `tokens` logged after each blocking and streaming call (#98)
+- YAML schema validation in CI pipeline - catches malformed scenario files before merge (#101)
 
-**New feature: five-stage steering arc**
-- Stage 0 (Recognition): Acknowledge the isolation signal quietly at the end of the response. One sentence. No solutions, no rush.
-- Stage 1 (Exploration): Ask one genuine question about their connection landscape.
-- Stage 2 (Mapping): Surface any connections mentioned in conversation, however weak (acquaintances, colleagues, old contacts).
-- Stage 3 (Possibility): Offer one small, specific, low-stakes possibility for connection.
-- Stage 4 (Practical Help): Full practical capability turned toward the act of reaching out - drafting messages, preparing conversations, finding words.
+### Fixed
+- CLI `NameError`: `settings` not in scope in `main()` when `--version` flag used; was only imported inside `run_maintenance()`
+- Security audit: sensitive data removed from debug logs, server binding restricted from `0.0.0.0`, SQL injection guards hardened (#92)
 
-**Deflection handling**: Respects user autonomy. If the user consistently stays on practical tasks without engaging the connection thread, the steering suspends after 3 deflections. Never forces the topic over the task.
-
-**Dual isolation detection**:
-- Keyword fast-path: 34 direct+passive isolation phrases detected before LLM call, steering context injected into the current response immediately
-- LLM-detected: New `isolation_level` field in LLM classification JSON (`none` / `passive` / `active`) catches nuanced cases, activates steering on next turn
-
-**CLI fix**: Fixed pre-existing `NameError: settings not defined` in `main()` when `--version` flag is used (settings was imported only inside `run_maintenance()`, not in scope for `main()`).
+### Changed
+- Connection steering voice refined: removed therapy-speak vocabulary, banned `explore` framing, prevented stage 0 repetition on subsequent turns
+- NHS crisis line references removed; regional crisis resources remain intact
 
 ---
 
