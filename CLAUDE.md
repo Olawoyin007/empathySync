@@ -182,7 +182,7 @@ empathySync/
   - `logistics` domain: writing requests, coding, explanations, general questions
   - `is_practical_technique: true` in any domain (Phase 9.1): "How do I meditate?", "What are budgeting methods?"
 - Behavior: Full assistant capability
-  - No word limits (up to 2000 tokens)
+  - No word limits (up to 5000 tokens)
   - Markdown formatting, code blocks, lists allowed
   - Complete the task thoroughly
   - No identity reminders or therapeutic framing
@@ -195,7 +195,7 @@ empathySync/
   - Word limits enforced (50-150 words)
   - Plain prose, no formatting
   - Redirects to human support
-  - Identity reminders every 6 turns
+  - Identity reminders every 9 turns
 
 **Phase 9.1: Practical Technique Detection**
 The LLM classifier distinguishes between:
@@ -226,7 +226,7 @@ The LLM classifier distinguishes between:
    - `spirituality`: 10 turns
    - `crisis/harmful`: 1 turn
 8. **Dependency Intervention**: Graduated responses if dependency score exceeds thresholds
-9. **Identity Reminder**: Injected every 6 turns (only in Reflective Mode)
+9. **Identity Reminder**: Injected every 9 turns (only in Reflective Mode)
 10. System prompt composed (base + style + mode-specific rules + post-crisis context if applicable), Ollama called locally
 11. **Response streams** in real-time via `generate_response_stream()` (tokens yielded as generated)
 12. Response safety-checked via `_contains_harmful_content()` before/during display
@@ -359,7 +359,7 @@ When another device holds the lock (`ENABLE_DEVICE_LOCK=true`), all write operat
 
 `WellnessTracker.should_enforce_cooldown()` returns true when:
 - 7+ sessions today
-- 120+ minutes today
+- 180+ minutes today
 - Dependency score >= 8
 
 ### Key Design Constraints (from MANIFESTO.md)

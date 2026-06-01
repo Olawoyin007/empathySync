@@ -69,7 +69,7 @@ User Input
 │  2. COOLDOWN CHECK                          │
 │     WellnessTracker.should_enforce_cooldown │
 │     - 7+ sessions today? → Block            │
-│     - 120+ minutes today? → Block           │
+│     - 180+ minutes today? → Block           │
 │     - Dependency score ≥8? → Block          │
 └─────────────────────────────────────────────┘
     │ Pass
@@ -154,7 +154,7 @@ User Input
     ▼
 ┌─────────────────────────────────────────────┐
 │  8. IDENTITY REMINDER (Reflective only)     │
-│     Every 6 turns: "I'm software,           │
+│     Every 9 turns: "I'm software,           │
 │     not a person..."                        │
 └─────────────────────────────────────────────┘
     │
@@ -303,7 +303,7 @@ Response to User (streamed in real-time)
 │                                                                 │
 │   Behavior:                                                     │
 │   ┌─────────────────────────────────────────────────────────┐   │
-│   │ ✓ Full response length (up to 2000 tokens)              │   │
+│   │ ✓ Full response length (up to 5000 tokens)              │   │
 │   │ ✓ Markdown formatting allowed                           │   │
 │   │ ✓ Code blocks, lists, headers                           │   │
 │   │ ✓ No identity reminders                                 │   │
@@ -332,7 +332,7 @@ Response to User (streamed in real-time)
 │   │ ✗ Word limits enforced (50-150 words)                   │   │
 │   │ ✗ Plain prose only, no formatting                       │   │
 │   │ ✓ Redirects to human support                            │   │
-│   │ ✓ Identity reminders every 6 turns                      │   │
+│   │ ✓ Identity reminders every 9 turns                      │   │
 │   │ ✓ Brief, restrained responses                           │   │
 │   └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
