@@ -1,5 +1,6 @@
 """Tests for CLI mode."""
 
+import logging
 from unittest.mock import patch, MagicMock
 
 
@@ -35,6 +36,59 @@ class TestCLIArguments:
 
                 main()
             assert mock_run_streamlit.called
+
+    def test_log_level_debug_sets_root_logger(self):
+        """--log-level DEBUG overrides the root logger level."""
+        root = logging.getLogger()
+        original = root.level
+        try:
+            with patch("src.cli.run_streamlit"):
+                with patch("sys.argv", ["empathysync", "--log-level", "DEBUG"]):
+                    from src.cli import main
+
+                    main()
+            assert root.level == logging.DEBUG
+        finally:
+            root.setLevel(original)
+
+    def test_log_level_warning_sets_root_logger(self):
+        """--log-level WARNING overrides the root logger level."""
+        root = logging.getLogger()
+        original = root.level
+        try:
+            with patch("src.cli.run_streamlit"):
+                with patch("sys.argv", ["empathysync", "--log-level", "WARNING"]):
+                    from src.cli import main
+
+                    main()
+            assert root.level == logging.WARNING
+        finally:
+            root.setLevel(original)
+
+    def test_log_level_absent_does_not_modify_root_logger(self):
+        """When --log-level is omitted, root logger level is left untouched."""
+        root = logging.getLogger()
+        root.setLevel(logging.ERROR)
+        try:
+            with patch("src.cli.run_streamlit"):
+                with patch("sys.argv", ["empathysync"]):
+                    from src.cli import main
+
+                    main()
+            assert root.level == logging.ERROR
+        finally:
+            root.setLevel(logging.WARNING)
+
+    def test_log_level_invalid_choice_exits_nonzero(self):
+        """An unrecognised --log-level value causes argparse to exit non-zero."""
+        import pytest
+
+        with patch("sys.argv", ["empathysync", "--log-level", "VERBOSE"]):
+            from src.cli import main
+
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+        assert exc_info.value.code != 0
 
 
 class TestListDomains:
