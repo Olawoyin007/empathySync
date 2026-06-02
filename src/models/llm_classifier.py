@@ -203,8 +203,13 @@ class LLMClassifier:
             for ex in examples[:3]:  # Limit to 3 examples to save tokens
                 example_text += f'- "{ex["message"]}" → {json.dumps(ex["classification"])}\n'
 
+        # Wrap user content in an explicit boundary to resist prompt injection.
+        # Separating untrusted input from the instruction context makes it
+        # harder for a crafted message to override the classification task.
+        bounded_message = f"<user_message>\n{message}\n</user_message>"
+
         prompt = template.format(
-            message=message,
+            message=bounded_message,
             recent_context=recent_context[:500] if recent_context else "No prior context",
         )
 
