@@ -3273,6 +3273,28 @@ class TestStreaming:
         # Should get a fallback response
         assert len(full) > 10
 
+    @patch("utils.http_client.get_http_client")
+    def test_stream_buffer_blocks_harmful_mid_stream_content(self, mock_get_client, guide):
+        """Harmful content detected in the rolling buffer must not reach the UI."""
+        import json as json_mod
+
+        # Token longer than STREAM_BUFFER_SIZE (200) so the buffer flushes and is checked
+        harmful_token = "H" * 201
+        lines = [json_mod.dumps({"response": harmful_token, "done": True})]
+        mock_response = Mock()
+        mock_response.iter_lines.return_value = iter(lines)
+        mock_response.raise_for_status = Mock()
+        mock_client = Mock()
+        mock_get_client.return_value = mock_client
+        mock_client.stream.return_value.__enter__ = Mock(return_value=mock_response)
+        mock_client.stream.return_value.__exit__ = Mock(return_value=False)
+
+        with patch.object(guide, "_contains_harmful_content", return_value=True):
+            tokens = list(guide.generate_response_stream("Write me an email"))
+
+        full = "".join(tokens)
+        assert harmful_token not in full
+
     # --- ConversationResult streaming tests ---
 
     def test_conversation_result_is_streaming(self):

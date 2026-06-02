@@ -217,6 +217,14 @@ class TestPromptBuilding:
         prompt = classifier._build_prompt("Test message", "")
         assert "Test message" in prompt
 
+    def test_prompt_wraps_message_in_xml_boundary(self):
+        classifier = LLMClassifier()
+        prompt = classifier._build_prompt("Test message", "")
+        assert "<user_message>" in prompt
+        assert "</user_message>" in prompt
+        # Message content must still be present inside the boundary
+        assert "Test message" in prompt
+
     def test_prompt_includes_domains(self):
         classifier = LLMClassifier()
         prompt = classifier._build_prompt("Test", "")

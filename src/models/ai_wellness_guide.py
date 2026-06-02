@@ -705,11 +705,31 @@ class WellnessGuide:
                     prefix = acknowledgment + "\n\n"
                     yield prefix
 
-            # Stream Ollama tokens
+            # Stream Ollama tokens with rolling buffer so the safety check
+            # runs before chunks reach the UI, not after the full response.
             accumulated = ""
+            _buf = ""
+            _STREAM_BUFFER_SIZE = 200
             for token in self._call_ollama_stream(prepared.full_prompt, prepared.is_practical):
                 accumulated += token
-                yield token
+                _buf += token
+                if len(_buf) >= _STREAM_BUFFER_SIZE:
+                    if self._contains_harmful_content(_buf):
+                        logger.warning("Harmful content detected in stream buffer (mid-stream)")
+                        safe_alt = self._get_safe_alternative_response()
+                        self._last_streamed_response = safe_alt
+                        yield "\n\n" + safe_alt
+                        return
+                    yield _buf
+                    _buf = ""
+            if _buf:
+                if self._contains_harmful_content(_buf):
+                    logger.warning("Harmful content detected in stream buffer (flush)")
+                    safe_alt = self._get_safe_alternative_response()
+                    self._last_streamed_response = safe_alt
+                    yield "\n\n" + safe_alt
+                    return
+                yield _buf
 
             # Post-stream safety check on accumulated response
             if not accumulated or len(accumulated.strip()) < 10:
