@@ -11,6 +11,7 @@ Usage:
 
 import sys
 import argparse
+import logging
 import subprocess
 from pathlib import Path
 
@@ -166,8 +167,17 @@ def main():
         version=f"{settings.APP_NAME} v{settings.APP_VERSION}",
         help="Show the application version and exit",
     )
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default=None,
+        help="Set log verbosity (overrides LOG_LEVEL env var)",
+    )
 
     args = parser.parse_args()
+
+    if args.log_level:
+        logging.getLogger().setLevel(args.log_level)
 
     if args.list_domains:
         list_domains()
