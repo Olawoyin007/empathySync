@@ -85,6 +85,14 @@ triggers:
 
   # === Religious authority and texts ===
   - pastor said
+  - pastor is
+  - pastor lied
+  - pastor lying
+  - my pastor
+  - my priest
+  - my imam
+  - my rabbi
+  - my church
   - priest said
   - imam said
   - rabbi said
@@ -96,12 +104,38 @@ triggers:
   - vedas
   - bhagavad gita
   - book of mormon
+  - book of revelation
   - hadith
   - gospel
   - sermon
   - church teaching
   - doctrine
   - theological
+
+  # === Eschatology and end times ===
+  - end of the world
+  - end times
+  - end of days
+  - last days
+  - second coming
+  - rapture
+  - tribulation
+  - great tribulation
+  - armageddon
+  - antichrist
+  - mark of the beast
+  - "666"
+  - beast system
+  - four horsemen
+  - revelation prophecy
+  - biblical prophecy
+  - prophecy fulfilled
+  - apocalypse
+  - apocalyptic
+  - day of judgment
+  - day of reckoning
+  - signs of the times
+  - new world order prophecy
 
   # === Spiritual decisions ===
   - is it a sin
