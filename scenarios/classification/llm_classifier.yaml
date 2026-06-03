@@ -433,6 +433,46 @@ examples:
       isolation_level: "active"
     explanation: "Direct active isolation - clear absence of support network."
 
+  # Eschatology and scripture interpretation - spirituality, NOT logistics
+  # Even when framed as intellectual questions, end-times topics are spirituality domain
+  - message: "do you think AI will mark the end of the world according to the book of revelation"
+    classification:
+      domain: "spirituality"
+      emotional_intensity: 3
+      is_personal_distress: false
+      is_practical_technique: false
+      confidence: 0.9
+    explanation: "Scripture interpretation question about end times. References the Book of Revelation directly - spirituality domain even when framed intellectually. Not a logistics/factual question."
+
+  - message: "is AI the antichrist or the mark of the beast?"
+    classification:
+      domain: "spirituality"
+      emotional_intensity: 4
+      is_personal_distress: false
+      is_practical_technique: false
+      confidence: 0.9
+    explanation: "Eschatological question referencing biblical prophecy. Spirituality domain regardless of the technology angle."
+
+  # Trust in religious authority - spirituality, NOT relationships
+  # Doubting a pastor/priest/imam is a spiritual trust issue, not a generic relationship issue
+  - message: "I think my pastor is lying to us"
+    classification:
+      domain: "spirituality"
+      emotional_intensity: 6
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.9
+    explanation: "Distrust of a religious authority figure. This is a spirituality domain issue - faith and institutional trust - not a generic relationships question."
+
+  - message: "my pastor said something that doesn't feel right, I don't know if I can trust him anymore"
+    classification:
+      domain: "spirituality"
+      emotional_intensity: 7
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.9
+    explanation: "Crisis of trust in religious leadership. Spirituality domain - touches on church hurt and spiritual authority, not just interpersonal conflict."
+
 # Keywords that ALWAYS trigger fast-path (safety-critical, skip LLM)
 # These bypass LLM classification entirely for safety
 fast_path_crisis:
