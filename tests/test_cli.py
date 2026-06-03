@@ -1,5 +1,6 @@
 """Tests for CLI mode."""
 
+import json
 import logging
 from unittest.mock import patch, MagicMock
 
@@ -84,9 +85,9 @@ class TestCLIArguments:
         import pytest
 
         with patch("sys.argv", ["empathysync", "--log-level", "VERBOSE"]):
-            from src.cli import main
-
             with pytest.raises(SystemExit) as exc_info:
+                from src.cli import main
+
                 main()
         assert exc_info.value.code != 0
 
@@ -139,6 +140,61 @@ class TestListDomains:
 
         # Verify that weights are in descending order
         assert weights == sorted(weights, reverse=True)
+
+    def test_list_domains_json_output_is_valid_json(self, capsys):
+        """--list-domains --json produces valid JSON output."""
+        from src.cli import list_domains
+
+        list_domains(json_output=True)
+
+        output = capsys.readouterr().out
+
+        # Must parse without error
+        data = json.loads(output)
+
+        # Must be a list
+        assert isinstance(data, list)
+        assert len(data) > 0
+
+        # Each item must have the required keys
+        for item in data:
+            assert "domain" in item
+            assert "risk_weight" in item
+            assert "description" in item
+
+    def test_list_domains_json_contains_all_domains(self, capsys):
+        """--list-domains --json output contains all expected domains."""
+        from src.cli import list_domains
+
+        list_domains(json_output=True)
+
+        output = capsys.readouterr().out
+        data = json.loads(output)
+
+        domain_names = [item["domain"] for item in data]
+        for expected in ["crisis", "harmful", "health", "money", "emotional",
+                         "relationships", "spirituality", "logistics"]:
+            assert expected in domain_names
+
+    def test_list_domains_plain_text_unchanged_when_no_json_flag(self, capsys):
+        """Without --json, output is the original plain-text format."""
+        from src.cli import list_domains
+
+        list_domains(json_output=False)
+
+        output = capsys.readouterr().out
+
+        assert output.startswith("Supported domains:")
+        assert "risk weight:" in output
+
+    def test_json_flag_without_list_domains_is_ignored(self):
+        """--json without --list-domains causes no error and runs normally."""
+        with patch("src.cli.run_streamlit") as mock_run_streamlit:
+            with patch("sys.argv", ["empathysync", "--json"]):
+                from src.cli import main
+
+                main()
+        assert mock_run_streamlit.called
 
 
 class TestRunCLI:
