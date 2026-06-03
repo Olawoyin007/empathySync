@@ -10,7 +10,9 @@ from utils.scenario_loader import get_scenario_loader
 from models.risk_classifier import INTENT_PRACTICAL, INTENT_CONNECTION
 
 
-def display_response_mode_label(risk_assessment: dict, policy_action: dict = None) -> None:
+def display_response_mode_label(
+    risk_assessment: dict, policy_action: dict = None, steering_active: bool = False
+) -> None:
     """
     Inline one-line summary shown directly under each assistant response (Phase 17.6).
 
@@ -56,6 +58,9 @@ def display_response_mode_label(risk_assessment: dict, policy_action: dict = Non
         parts.append(policy_labels[policy_type])
     elif not is_practical:
         parts.append("keeping it brief")
+
+    if steering_active:
+        parts.append("connection awareness active")
 
     st.caption("  ·  ".join(parts))
 

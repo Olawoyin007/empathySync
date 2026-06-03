@@ -229,7 +229,22 @@ If the user asks for advice on: {forbidden_text}—respond ONLY with:
         no deflection tracking. The modifier changes tone and texture, not topic.
         """
         config = self.loader.get_connection_steering_config()
-        return config.get("steering", {}).get("system_prompt_addition", "").strip()
+        base = config.get("steering", {}).get("system_prompt_addition", "").strip()
+
+        if getattr(connection_steering, "network_empty", False):
+            base += (
+                "\n\nADDITIONAL CONTEXT - USER HAS NO EXISTING CONTACTS:\n"
+                "The user has no configured support contacts. Do not hint that they should "
+                "reach out to a specific person - there may be no one to reach out to yet.\n"
+                "If connection or loneliness comes up naturally in conversation, you may "
+                "briefly acknowledge that building connection takes time - it does not happen "
+                "overnight and that is normal. You can mention in passing that connection tends "
+                "to happen through shared activities (community groups, volunteering, classes) "
+                "rather than forced socialising. One light mention at most, only when it fits "
+                "naturally. Never push it."
+            )
+
+        return base
 
     def get_check_in_prompts(self) -> List[str]:
         """Get various check-in prompts for user reflection."""

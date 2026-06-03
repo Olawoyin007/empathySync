@@ -62,6 +62,7 @@ def display_chat_interface(wellness_mode):
                 display_response_mode_label(
                     message["risk_assessment"],
                     message.get("policy_action"),
+                    steering_active=message.get("steering_active", False),
                 )
 
     # Welcome screen when no messages yet
@@ -130,6 +131,7 @@ def display_chat_interface(wellness_mode):
             display_response_mode_label(
                 result.risk_assessment,
                 guide.last_policy_action,
+                steering_active=result.steering_active,
             )
 
         # Attach risk data to the last assistant message so the label
@@ -137,6 +139,7 @@ def display_chat_interface(wellness_mode):
         if session.messages and session.messages[-1]["role"] == "assistant":
             session.messages[-1]["risk_assessment"] = result.risk_assessment
             session.messages[-1]["policy_action"] = guide.last_policy_action
+            session.messages[-1]["steering_active"] = result.steering_active
 
         # Sync messages reference for backward compatibility
         st.session_state.messages = session.messages
