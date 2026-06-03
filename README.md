@@ -66,7 +66,7 @@ We optimise for exit, not engagement.
 
 ### Human connection
 
-- **Connection steering**: when someone signals isolation, a background warmth modifier activates for the session. It doesn't start a conversation about loneliness - it just changes the texture of every response. Noticing people mentioned in passing. Acknowledging when someone reaches out to an old contact. The user should feel slightly more seen, not steered.
+- **Connection steering**: when someone signals isolation, a background warmth modifier activates for the session. It doesn't start a conversation about loneliness - it just changes the texture of every response. Noticing people mentioned in passing. Acknowledging when someone reaches out to an old contact. When active, it's visible in the response mode label ("connection awareness active") so it's never hidden. If no trusted contacts exist, it shifts from redirecting to people toward acknowledging that building connection takes time.
 - **Trusted network**: helps identify and reach specific people in your life, with message templates to make the first move easier
 - **Signposting**: for users who genuinely have no one, guides toward places where connection can be found
 
