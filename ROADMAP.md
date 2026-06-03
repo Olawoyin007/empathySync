@@ -2565,6 +2565,7 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 **v1.3** (Phase 16.9-16.10): Test coverage expansion, observability, configuration extraction ✅ COMPLETE
 **v1.4** (Phase 16.11): Conversation testing, voice tuning, golden response test suite
 **v1.5** (Phase 17.1-17.4): Multi-label distress routing, confidence calibration, distress corpus CI gate, sanity check refinement ✅ IN PROGRESS
+**vNext** (pending): Prompt injection hardening, streaming safety buffer, `--log-level` and `--json` CLI flags, first external code contributions - 🔜 RELEASE PENDING
 **v2.0** (Phase 18): Messaging integration, safety parity across all interfaces - DEFERRED
 **v2.1** (Phase 19): Multilingual support -crisis detection, restraint behaviour, and YAML knowledge base in priority languages
 **v2.2** (Phase 20): Native installer (Windows/Mac/Linux), first-run wizard, release CI builds - DEFERRED

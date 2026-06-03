@@ -77,6 +77,11 @@ User Input
 ┌─────────────────────────────────────────────┐
 │  3. RISK ASSESSMENT                         │
 │     RiskClassifier.classify()               │
+│     User input wrapped in <user_message>    │
+│     XML tags before LLM classification      │
+│     prompt is formatted - prevents crafted  │
+│     inputs from escaping the message field  │
+│     (prompt injection hardening)            │
 │     LLM returns multi-label output:         │
 │       domain, emotional_intensity,          │
 │       dependency_risk, risk_weight,         │
@@ -174,14 +179,21 @@ User Input
 ┌─────────────────────────────────────────────┐
 │  OLLAMA API CALL (Streaming)                │
 │     Local LLM generates response            │
-│     Tokens stream as generated              │
+│     Tokens accumulated in 200-char rolling  │
+│     buffer before yielding to UI            │
+│     _contains_harmful_content() runs on     │
+│     each buffer flush (mid-stream check)    │
+│     Harmful content intercepted before it   │
+│     reaches the UI - safe alternative       │
+│     response substituted immediately        │
 └─────────────────────────────────────────────┘
     │
     ▼
 ┌─────────────────────────────────────────────┐
-│  SAFETY CHECK                               │
+│  SAFETY CHECK (post-stream backstop)        │
 │     _contains_harmful_content()             │
-│     Verify response is safe before display  │
+│     Second pass on full accumulated         │
+│     response as defense-in-depth            │
 └─────────────────────────────────────────────┘
     │
     ▼
@@ -515,7 +527,7 @@ data/
 empathySync/
 ├── src/                          # Application source code
 │   ├── app.py                   # Streamlit entry point
-│   ├── cli.py                   # CLI entry point (--mode web|cli)
+│   ├── cli.py                   # CLI entry point (--mode web|cli, --log-level, --list-domains --json)
 │   ├── config/
 │   │   └── settings.py          # Environment configuration
 │   ├── models/

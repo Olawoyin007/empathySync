@@ -25,6 +25,12 @@ pip install -r requirements.txt  # Alternative: just core deps
 # Run the application
 streamlit run src/app.py    # Direct
 empathysync                 # Via CLI entry point (after pip install -e .)
+empathysync --mode cli      # Terminal mode (no browser)
+empathysync --log-level DEBUG  # Override log verbosity (DEBUG, INFO, WARNING, ERROR)
+empathysync --list-domains     # List all supported classification domains
+empathysync --list-domains --json  # Same, as machine-readable JSON
+empathysync --maintenance   # Prune old data, check integrity, print summary
+empathysync --version       # Print version and exit
 
 # Docker (app + Ollama together)
 docker compose up           # Starts both services
@@ -409,6 +415,8 @@ When another device holds the lock (`ENABLE_DEVICE_LOCK=true`), all write operat
 - **Type-Safe Enums**: `str, Enum` pattern for backward-compatible domain/intent constants (Phase 16.5)
 - **Storage Backend Abstraction**: Unified interface for JSON/SQLite with automatic migration (Phase 11)
 - **Streaming Response**: `generate_response_stream()` yields tokens progressively for real-time display (Phase 16)
+- **XML Prompt Boundary**: User input wrapped in `<user_message>` tags before LLM classification prompt is formatted - prevents prompt injection via crafted inputs escaping the message field (`src/models/llm_classifier.py`)
+- **Mid-Stream Safety Buffer**: 200-character rolling buffer in `generate_response_stream()` - `_contains_harmful_content()` runs on each flush so harmful tokens are intercepted before reaching the UI, not only after the full response (`src/models/ai_wellness_guide.py`)
 
 ## Documentation Maintenance
 
