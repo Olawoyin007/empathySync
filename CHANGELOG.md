@@ -2,6 +2,29 @@
 
 All notable changes to empathySync are documented here.
 
+## [Unreleased] - Security Hardening & CLI Completeness
+
+**"Safer by default. More scriptable at the edge."**
+
+### Security
+- Prompt injection hardening: user input in the LLM classification prompt is now wrapped in `<user_message>` XML boundary tags before template formatting, preventing crafted inputs from escaping the message field and influencing classifier instructions (#93)
+- Streaming safety buffer: the response stream now accumulates tokens in a 200-character rolling buffer before yielding to the UI. `_contains_harmful_content()` runs on each buffer flush rather than only after the full response - harmful content is intercepted mid-stream rather than after it has partially rendered (#94)
+
+### New
+- `--log-level` CLI flag: overrides the root logger level at startup (`DEBUG`, `INFO`, `WARNING`, `ERROR`). Takes precedence over the `LOG_LEVEL` env var. Useful for debugging without touching `.env` (#99)
+- `--list-domains --json` flag: `--list-domains` now accepts `--json` to emit a machine-readable JSON array instead of plain text. Each object contains `domain`, `risk_weight`, and `description`. Useful for scripting and tooling built on top of empathySync (#110, @FTFaruque)
+
+### Docs
+- `--maintenance` and `--log-level` added to the README CLI usage block (#109, @ded-furby)
+
+### Tests
+- 4 new tests for `--json` flag covering valid JSON output, all 8 domains present, plain-text regression, and `--json` alone being silently ignored
+- 4 new tests for `--log-level` covering DEBUG, WARNING, absent flag leaving level untouched, and invalid value exiting non-zero
+- 1 new test for XML boundary wrapping in `_build_prompt()`
+- 1 new test for mid-stream harmful content interception via the rolling buffer
+
+---
+
 ## v1.10.1 (2026-06-01) - Documentation Accuracy
 
 **"The docs should say what the code does."**
