@@ -38,6 +38,7 @@ class ConversationResult:
     # Session metadata
     turn_count: int = 0
     should_rerun: bool = False
+    steering_active: bool = False
 
     # Streaming support: when set, response_stream yields tokens progressively
     response_stream: Optional[Iterator[str]] = None

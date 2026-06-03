@@ -43,11 +43,13 @@ class ConnectionSteering:
 
     active: bool = False
     first_detected_turn: int = 0
+    network_empty: bool = False
 
-    def activate(self, turn_count: int) -> None:
+    def activate(self, turn_count: int, network_empty: bool = False) -> None:
         """Activate steering, recording when it was first triggered."""
         self.active = True
         self.first_detected_turn = turn_count
+        self.network_empty = network_empty
 
 
 def _load_confidence_threshold() -> float:
@@ -187,7 +189,10 @@ class ConversationSession:
         # so steering context can be injected into this response immediately.
         if not self.connection_steering.active:
             if self._check_isolation_signals(user_input):
-                self.connection_steering.activate(self.turn_count)
+                self.connection_steering.activate(
+                    self.turn_count,
+                    network_empty=len(self.network.get_all_people()) == 0,
+                )
 
         # Step 4: Generate response via WellnessGuide safety pipeline
         response = self.guide.generate_response(
@@ -205,7 +210,10 @@ class ConversationSession:
         if not self.connection_steering.active and self.guide.last_risk_assessment:
             isolation_level = self.guide.last_risk_assessment.get("isolation_level", "none")
             if isolation_level in ("active", "passive"):
-                self.connection_steering.activate(self.turn_count)
+                self.connection_steering.activate(
+                    self.turn_count,
+                    network_empty=len(self.network.get_all_people()) == 0,
+                )
 
         # Step 5: Track task category for practical tasks
         should_check_graduation = False
@@ -266,6 +274,7 @@ class ConversationSession:
             suggested_handoff_domain=suggested_domain,
             turn_count=self.turn_count,
             should_rerun=should_rerun,
+            steering_active=self.connection_steering.active,
         )
 
     def process_message_stream(self, user_input: str) -> ConversationResult:
@@ -339,7 +348,10 @@ class ConversationSession:
         # Step 3.5: Isolation detection - keyword fast-path before LLM call
         if not self.connection_steering.active:
             if self._check_isolation_signals(user_input):
-                self.connection_steering.activate(self.turn_count)
+                self.connection_steering.activate(
+                    self.turn_count,
+                    network_empty=len(self.network.get_all_people()) == 0,
+                )
 
         # Step 4: Get streaming generator from WellnessGuide
         stream = self.guide.generate_response_stream(
@@ -359,6 +371,7 @@ class ConversationSession:
             response_stream=stream,
             pending_shift=self.pending_shift,
             turn_count=self.turn_count,
+            steering_active=self.connection_steering.active,
         )
 
     def finalize_stream(self) -> ConversationResult:
@@ -381,7 +394,10 @@ class ConversationSession:
         if not self.connection_steering.active and self.guide.last_risk_assessment:
             isolation_level = self.guide.last_risk_assessment.get("isolation_level", "none")
             if isolation_level in ("active", "passive"):
-                self.connection_steering.activate(self.turn_count)
+                self.connection_steering.activate(
+                    self.turn_count,
+                    network_empty=len(self.network.get_all_people()) == 0,
+                )
 
         # Step 5: Track task category for practical tasks
         should_check_graduation = False
@@ -442,6 +458,7 @@ class ConversationSession:
             suggested_handoff_domain=suggested_domain,
             turn_count=self.turn_count,
             should_rerun=should_rerun,
+            steering_active=self.connection_steering.active,
         )
 
     def _log_perf(self, t_start: float) -> None:
