@@ -80,6 +80,11 @@ cd empathySync
 cp .env.example .env
 docker compose up
 ```
+empathysync --version      # Show version and exit
+empathysync --list-domains # List all supported classification domains
+empathysync --maintenance  # Prune old data, check integrity, and exit
+empathysync --log-level DEBUG  # Set log verbosity (DEBUG, INFO, WARNING, ERROR)
+```
 
 This starts both empathySync and Ollama together. The model pulls automatically on first run. Open `http://localhost:8501`.
 
