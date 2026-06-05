@@ -83,6 +83,9 @@ docker compose up
 
 This starts both empathySync and Ollama together. The model pulls automatically on first run. Open `http://localhost:8501`.
 
+> **Docker must be installed and its daemon running** before `docker compose up` (Docker Desktop on Windows/macOS, or the `docker` service on Linux).
+> On a GPU machine, Docker still runs Ollama **CPU-only** unless you add a GPU reservation to `docker-compose.yml`. For direct GPU use, the [install.sh](#option-2-installsh) or [pip](#option-3-pip-install) paths talk to your local Ollama, which uses the GPU automatically.
+
 **Any Ollama model works.** Set `OLLAMA_MODEL` in `.env` before running. Benchmarked recommendations (see [`docs/model-benchmark.md`](docs/model-benchmark.md)):
 
 | Min VRAM | Engine Model | Scenario Pass |
@@ -91,7 +94,7 @@ This starts both empathySync and Ollama together. The model pulls automatically 
 | 8 GB GPU | `qwen2.5:7b-instruct` | 65% |
 | 12 GB GPU | `gemma3:12b` | 75% ✓ best |
 
-The classifier runs on every message and is separate from the engine. Set `OLLAMA_CLASSIFIER_MODEL=smollm2:360m` to run it on CPU while the engine uses your GPU.
+The classifier runs on every message and is separate from the engine. Set `OLLAMA_CLASSIFIER_MODEL` to a smaller model to run classification on CPU while the engine uses your GPU - but the classifier must be capable enough to detect crisis language reliably, so pick a model you have verified on the safety scenarios, not the smallest one available.
 
 ### Option 2: install.sh
 
@@ -100,6 +103,8 @@ git clone https://github.com/Olawoyin007/empathySync.git
 cd empathySync
 bash install.sh
 ```
+
+> `install.sh` is a bash script for Linux/macOS (or Windows via WSL / Git Bash), not native PowerShell. On native Windows, use [Docker](#option-1-docker-recommended) or [pip](#option-3-pip-install).
 
 The install script checks Python, creates a virtual environment, installs dependencies, configures `.env`, and pulls the configured model automatically if Ollama is running. Then launch:
 

@@ -87,11 +87,16 @@ def render_sidebar(logo_b64: str):
             st.session_state.show_session_summary = False
             st.rerun()
 
-        # Subtle usage stats + model badge on same line
+        # Subtle usage stats + model badges (engine + classifier) on same line
         display_usage_health()
         if settings.OLLAMA_MODEL:
+            if settings.OLLAMA_CLASSIFIER_MODEL:
+                classifier = f"{settings.OLLAMA_CLASSIFIER_MODEL} (dedicated)"
+            else:
+                classifier = f"{settings.OLLAMA_MODEL} (shared)"
             st.markdown(
-                f'<span class="es-model-badge">{settings.OLLAMA_MODEL}</span>',
+                f'<span class="es-model-badge">engine: {settings.OLLAMA_MODEL}</span> '
+                f'<span class="es-model-badge">classifier: {classifier}</span>',
                 unsafe_allow_html=True,
             )
 
