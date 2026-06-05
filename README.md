@@ -21,21 +21,26 @@ https://github.com/user-attachments/assets/cce0d214-4cd3-4816-b162-28af19941efb
 
 ## What It Is
 
-Every AI assistant is built to keep you talking. empathySync is the only one built to make itself less needed.
+empathySync is a local AI assistant built on one design principle:
 
-Full help for practical tasks. Deliberate restraint on personal ones. When it detects common distress signals, it redirects you toward real humans - not more AI conversation. Everything runs on your hardware via Ollama. No cloud. No data harvesting. No engagement optimization.
+> *The part of AI that handles your personal life should belong to you.*
+> *That's not a feature - it's the point.*
 
-The part of AI that handles your personal life should belong to you. That's not a feature - it's the point.
+It gives full help on practical tasks - writing, coding, explanations. On sensitive topics (emotional distress, health, relationships, finances), it applies deliberate restraint: brief responses, human redirects, no follow-up questions designed to keep you talking. When it detects crisis signals, it routes to professional resources immediately, without exception.
 
-## Who Is This For?
+Everything runs on your hardware via Ollama. No cloud. No external API calls. No telemetry. No engagement optimization.
 
-If you're a **developer** who wants a privacy-respecting AI assistant with no API keys, no subscriptions, and no data leaving your hardware - this is for you.
+The restraint is implemented at the pipeline level - in the code, not in prompts or guidelines that can be rephrased away. That distinction matters. A prompt can be jailbroken. A pipeline step cannot.
 
-If you're building **ethical AI tooling** and want a reference implementation that optimises for user autonomy rather than engagement, the architecture is fully documented and embeddable.
+## Who Uses This
 
-If you're a **therapist, counsellor, or domain expert** who wants to shape how an AI responds to emotional content - see Contributing below.
+**Developers** who want a privacy-respecting AI assistant with no API keys, no subscriptions, and no data leaving their hardware.
 
-empathySync is **not** for people who want a companion AI or always-on assistant. It's for people who want useful help that doesn't try to become a habit.
+**Researchers and builders** working on ethical AI tooling who want a reference implementation that optimises for user autonomy. The architecture is documented and the pipeline is embeddable.
+
+**Therapists, counsellors, and domain experts** who want to shape how an AI responds to emotional content - the scenarios, responses, and intervention language are plain YAML files. No programming required. See [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md).
+
+This is not a companion AI or always-on assistant. It is useful help that does not try to become a habit.
 
 <details>
 <summary><strong>The philosophy</strong></summary>
@@ -83,6 +88,9 @@ docker compose up
 
 This starts both empathySync and Ollama together. The model pulls automatically on first run. Open `http://localhost:8501`.
 
+> **Docker must be installed and its daemon running** before `docker compose up` (Docker Desktop on Windows/macOS, or the `docker` service on Linux).
+> On a GPU machine, Docker still runs Ollama **CPU-only** unless you add a GPU reservation to `docker-compose.yml`. For direct GPU use, the [install.sh](#option-2-installsh) or [pip](#option-3-pip-install) paths talk to your local Ollama, which uses the GPU automatically.
+
 **Any Ollama model works.** Set `OLLAMA_MODEL` in `.env` before running. Benchmarked recommendations (see [`docs/model-benchmark.md`](docs/model-benchmark.md)):
 
 | Min VRAM | Engine Model | Scenario Pass |
@@ -91,7 +99,7 @@ This starts both empathySync and Ollama together. The model pulls automatically 
 | 8 GB GPU | `qwen2.5:7b-instruct` | 65% |
 | 12 GB GPU | `gemma3:12b` | 75% ✓ best |
 
-The classifier runs on every message and is separate from the engine. Set `OLLAMA_CLASSIFIER_MODEL=smollm2:360m` to run it on CPU while the engine uses your GPU.
+The classifier runs on every message and is separate from the engine. Set `OLLAMA_CLASSIFIER_MODEL` to a smaller model to run classification on CPU while the engine uses your GPU - but the classifier must be capable enough to detect crisis language reliably, so pick a model you have verified on the safety scenarios, not the smallest one available. See [`docs/model-benchmark.md`](docs/model-benchmark.md) for recommended classifier/engine pairings by VRAM tier.
 
 ### Option 2: install.sh
 
@@ -100,6 +108,8 @@ git clone https://github.com/Olawoyin007/empathySync.git
 cd empathySync
 bash install.sh
 ```
+
+> `install.sh` is a bash script for Linux/macOS (or Windows via WSL / Git Bash), not native PowerShell. On native Windows, use [Docker](#option-1-docker-recommended) or [pip](#option-3-pip-install).
 
 The install script checks Python, creates a virtual environment, installs dependencies, configures `.env`, and pulls the configured model automatically if Ollama is running. Then launch:
 
@@ -146,7 +156,7 @@ empathysync --log-level DEBUG  # Set log verbosity (DEBUG, INFO, WARNING, ERROR)
 - YAML-driven prompts, rules, and thresholds - tune without touching Python
 - `ConversationSession` class can be embedded in any Python project
 - Intelligent LLM classifier with keyword fallback and confidence calibration
-- Connection steering implemented as a session-level state machine (5-stage arc, YAML-configurable)
+- Connection steering implemented as a session-level background warmth modifier (YAML-configurable)
 
 </details>
 
@@ -168,23 +178,25 @@ See `.env.example` for all configuration options:
 ```bash
 # Required
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=qwen2.5:7b-instruct
+OLLAMA_MODEL=gemma3:12b
 OLLAMA_TEMPERATURE=0.7
 
 # Optional
-LLM_CLASSIFICATION_ENABLED=true  # Intelligent context-aware classification
-STORE_CONVERSATIONS=true         # Local storage only
-USE_SQLITE=false                 # SQLite backend (better concurrency)
-ENABLE_DEVICE_LOCK=false         # Multi-device sync safety
+LLM_CLASSIFICATION_ENABLED=true        # Intelligent context-aware classification
+OLLAMA_CLASSIFIER_MODEL=mistral:7b-instruct  # Separate classifier model (faster; falls back to OLLAMA_MODEL)
+STORE_CONVERSATIONS=true               # Local storage only
+USE_SQLITE=false                       # SQLite backend (better concurrency)
+ENABLE_DEVICE_LOCK=false               # Multi-device sync safety
 ```
 
 ## Documentation
 
-- [CLAUDE.md](CLAUDE.md) - Architecture and development guide
-- [ROADMAP.md](ROADMAP.md) - Detailed feature implementation plan
+- [docs/architecture.md](docs/architecture.md) - Architecture overview: pipeline structure, component relationships, operating modes
+- [CLAUDE.md](CLAUDE.md) - Contributor process guide: pre-merge gates, key patterns, what to read before touching the pipeline
+- [ROADMAP.md](ROADMAP.md) - Feature implementation history and planned phases
 - [MANIFESTO.md](MANIFESTO.md) - Design principles and philosophy
 - [scenarios/README.md](scenarios/README.md) - Knowledge base editing guide
-- [docs/](docs/) - Additional documentation
+- [docs/](docs/) - Model benchmarks, persistence, additional reference
 
 ## Contributing
 

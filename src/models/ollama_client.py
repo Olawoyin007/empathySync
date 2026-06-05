@@ -118,6 +118,12 @@ class OllamaClient:
             )
             return text
 
+        except httpx.TimeoutException as e:
+            logger.error(f"Ollama timed out: {str(e)}")
+            raise Exception(
+                f"Ollama timed out at {settings.OLLAMA_HOST} (the model is too slow for this hardware). "
+                f"Try a smaller model or a GPU."
+            )
         except httpx.HTTPError as e:
             logger.error(f"Ollama API error: {str(e)}")
             raise Exception(
@@ -185,6 +191,12 @@ class OllamaClient:
                         )
                         break
 
+        except httpx.TimeoutException as e:
+            logger.error(f"Ollama streaming timed out: {str(e)}")
+            raise Exception(
+                f"Ollama timed out at {settings.OLLAMA_HOST} (the model is too slow for this hardware). "
+                f"Try a smaller model or a GPU."
+            )
         except httpx.HTTPError as e:
             logger.error(f"Ollama streaming API error: {str(e)}")
             raise Exception(

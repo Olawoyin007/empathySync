@@ -11,6 +11,7 @@ Usage:
 import sys
 from typing import Dict, List
 
+from config.settings import settings
 from models.conversation_result import ConversationResult
 from models.conversation_session import ConversationSession
 
@@ -134,6 +135,12 @@ class CLIAdapter:
     def run(self) -> None:
         """Main conversation loop."""
         print("empathySync — Help that knows when to stop")
+        engine = settings.OLLAMA_MODEL or "(not set)"
+        if settings.OLLAMA_CLASSIFIER_MODEL:
+            classifier = f"{settings.OLLAMA_CLASSIFIER_MODEL} (dedicated)"
+        else:
+            classifier = f"{engine} (shared)"
+        print(f"Engine: {engine}  |  Classifier: {classifier}")
         print("Type 'exit' to quit, 'summary' for session summary\n")
 
         while True:

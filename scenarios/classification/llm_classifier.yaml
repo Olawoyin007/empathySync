@@ -546,6 +546,8 @@ examples:
 # These bypass LLM classification entirely for safety
 fast_path_crisis:
   - "kill myself"
+  - "of killing myself"
+  - "about killing myself"
   - "end my life"
   - "suicide"
   - "want to die"
@@ -630,6 +632,7 @@ fast_path_harmful:
   - "develop malware"
   - "keylogger script"
   - "write a keylogger"
+  - "me a keylogger"
   # Holocaust denial / hate speech
   - "holocaust denial"
   - "holocaust never happened"
