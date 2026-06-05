@@ -39,7 +39,6 @@ Find your change type below. Check every item in that row.
 ### New YAML domain file (`scenarios/domains/`)
 
 - [ ] `scenarios/README.md` — domain listed in the editing guide
-- [ ] `CLAUDE.md` — Scenarios Knowledge Base domain table
 - [ ] `docs/architecture.md` — domain table in Two Operating Modes section
 - [ ] `tests/classification/domain_corpus.yaml` — test examples added
       (minimum 6 clear cases + 4 boundary cases)
@@ -47,18 +46,17 @@ Find your change type below. Check every item in that row.
 ### New YAML scenario file (other `scenarios/` subdirectories)
 
 - [ ] `scenarios/README.md` — file listed under its subdirectory
-- [ ] `CLAUDE.md` — relevant section updated if the file affects architecture
+- [ ] `docs/architecture.md` — if the file introduces a new architectural concept
 
 ### New Python class or module
 
-- [ ] `CLAUDE.md` — Models / Utils / Interfaces section (file path +
+- [ ] `docs/architecture.md` — Component Relationships section (file path +
       one-line responsibility)
-- [ ] `docs/architecture.md` — Component Relationships section
 
 ### New safety pipeline step (new stage, changed order)
 
-- [ ] `CLAUDE.md` — Data Flow section (step numbers must stay accurate)
-- [ ] `docs/architecture.md` — Request Flow pipeline diagram
+- [ ] `docs/architecture.md` — Request Flow pipeline diagram (step numbers
+      must stay accurate)
 - [ ] CHANGELOG.md — document the change and the reason
 
 ### New classification sanity check (`src/models/risk_classifier.py`)
@@ -84,7 +82,6 @@ Find your change type below. Check every item in that row.
 - [ ] Schema version incremented in the migration function
 - [ ] Migration function added for the new version (v_n → v_n+1)
 - [ ] `docs/persistence.md` — document the schema change
-- [ ] `CLAUDE.md` — Data Persistence section updated
 
 ---
 
@@ -149,6 +146,6 @@ what you just did, add a row before you close the PR.
 | Version string | `pyproject.toml`, `src/config/settings.py`, `README.md` badge, `CHANGELOG.md` header |
 | CLI flags | `src/cli.py`, `README.md` quick-start, `CLAUDE.md` dev commands |
 | Environment variables | `.env.example`, `README.md` config section, `CLAUDE.md` env vars, `src/config/settings.py` |
-| Domain list | `scenarios/domains/*.yaml`, `CLAUDE.md` domain table, `docs/architecture.md`, `domain_corpus.yaml` |
-| Pipeline steps | `src/models/risk_classifier.py`, `CLAUDE.md` Data Flow, `docs/architecture.md` pipeline |
+| Domain list | `scenarios/domains/*.yaml`, `docs/architecture.md` domain table, `domain_corpus.yaml` |
+| Pipeline steps | `src/models/risk_classifier.py`, `docs/architecture.md` Request Flow diagram |
 | Test suite | `tests/`, `TESTING_CHECKLIST.md`, `CLAUDE.md` test count |

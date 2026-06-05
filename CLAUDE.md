@@ -119,6 +119,11 @@ Full details are in the docs — do not duplicate them here.
 | Roadmap and phase history | `ROADMAP.md` |
 | Pre-merge checklist | `MERGE_CHECKLIST.md` |
 
+**Before modifying anything in `src/models/`, `src/utils/`, or the safety
+pipeline: read `docs/architecture.md` first.** It is the authoritative
+reference for component relationships and pipeline step ordering. Changes
+that contradict it without updating it introduce silent inconsistency.
+
 ## Key Patterns
 
 Patterns that affect coding decisions — not obvious from reading the code.
