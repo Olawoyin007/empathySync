@@ -14,6 +14,16 @@ All notable changes to empathySync are documented here.
 - New emotional→specific override: when LLM says emotional but keyword detector finds a more specific sensitive domain, the specific domain wins
 - `stress_test_001_relationship_suspicion`: `must_not_contain` tightened — forbidding the standalone word "race" was too broad; a deflecting response correctly dismisses the racial detail without naming it
 
+### Process
+- `MERGE_CHECKLIST.md` added: pre-merge gate organised by change type (CLI flags, env vars, domain files, pipeline steps, schema changes, release procedure). Includes explicit version-bearing file list and meta-rule for when the checklist itself needs updating
+- `scripts/check_version.py` added: reads authoritative version from `pyproject.toml` and verifies `src/config/settings.py`, `README.md` badge, and `CHANGELOG.md` header all match. Exits 1 on any mismatch. Run with `--fix` for remediation hints
+- `APP_VERSION` in `src/config/settings.py` fixed: was `1.9.0`, out of sync with `pyproject.toml` (`1.10.1`) — `empathysync --version` was reporting the wrong version
+
+### Docs
+- `CLAUDE.md` revamped: 471 lines → 157. Process gate is the first visible line. Architecture detail removed — it lives in `docs/architecture.md`. Test count updated (443 → 971+)
+- `docs/architecture.md` updated: Phase 17.1 description corrected (logistics-only); Phase 3b (emotional→specific override) added to pipeline diagram; Layer 4 connection steering corrected from stale 5-stage arc to accurate background warmth modifier with `network_empty` flag; test count corrected
+- `TESTING_CHECKLIST.md` rebuilt from 2026-02-11 state: added Section 0 (automated tests first), passive ideation and surveillance test cases, connection steering transparency tests (full sequence covering persistence and network_empty), all CLI flag tests, startup health check tests. Cooldown threshold corrected (120 → 180 minutes). Stale child safety section removed
+
 ---
 
 ## [Unreleased] - Security Hardening & CLI Completeness
