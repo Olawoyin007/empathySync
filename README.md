@@ -30,7 +30,7 @@ It gives full help on practical tasks - writing, coding, explanations. On sensit
 
 Everything runs on your hardware via Ollama. No cloud. No external API calls. No telemetry. No engagement optimization.
 
-The restraint is implemented at the pipeline level - in the code, not in prompts or guidelines that can be rephrased away. That distinction matters. A prompt can be jailbroken. A pipeline step cannot.
+The restraint lives in the pipeline, not only in prompts that can be rephrased away - which makes it harder to bypass, though no safety layer is absolute.
 
 ## Who Uses This
 
