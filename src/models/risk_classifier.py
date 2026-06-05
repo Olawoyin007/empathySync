@@ -164,13 +164,17 @@ class RiskClassifier:
             distress_level = llm_result.get("distress_level", "none")
             if distress_level in ("crisis", "high") and domain not in ("crisis", "harmful"):
                 override = "crisis" if distress_level == "crisis" else "emotional"
-                logger.info(
-                    "Phase 17.1 distress override: distress_level=%s, domain %s -> %s",
-                    distress_level,
-                    domain,
-                    override,
-                )
-                domain = override
+                # Only override practical (logistics) topics with distress signals.
+                # Sensitive domains (spirituality, health, money, relationships) already
+                # have appropriate handling — overriding them to emotional loses specificity.
+                if domain == "logistics":
+                    logger.info(
+                        "Phase 17.1 distress override: distress_level=%s, domain %s -> %s",
+                        distress_level,
+                        domain,
+                        override,
+                    )
+                    domain = override
 
             # Ensure emotional_intensity floors match domain severity.
             # The LLM sometimes underestimates intensity for crisis/high-distress cases.
@@ -192,6 +196,7 @@ class RiskClassifier:
                 "health",
                 "money",
                 "relationships",
+                "spirituality",
                 "emotional",
             }
             confidence_low = self.loader.get_default(
@@ -263,6 +268,18 @@ class RiskClassifier:
                     )
                     domain = keyword_domain
                     sanity_check_triggered = sanity_trigger
+            # Emotional is a catch-all. If keywords find a more specific sensitive domain,
+            # that signal is more precise than the LLM's generic emotional classification.
+            elif domain == "emotional":
+                keyword_domain = self._detect_domain(
+                    user_input, primary_domain=primary_domain, domain_streak=domain_streak
+                )
+                if keyword_domain in sensitive_domains and keyword_domain != "emotional":
+                    logger.info(
+                        "Emotional→specific override: keyword(%s) more specific than catch-all",
+                        keyword_domain,
+                    )
+                    domain = keyword_domain
         else:
             domain = self._detect_domain(
                 user_input, primary_domain=primary_domain, domain_streak=domain_streak
