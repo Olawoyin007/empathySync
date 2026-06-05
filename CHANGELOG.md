@@ -2,6 +2,20 @@
 
 All notable changes to empathySync are documented here.
 
+## [Unreleased]
+
+### Classification
+- Domain accuracy improved from 71% to 87% (+16pp). Key gains: crisis 50→90%, spirituality 33→78%, money 45→82%, relationships 73→91%, harmful 67→89%
+- New passive ideation keywords in `crisis.yaml`: "nobody would miss me", "stockpiling medication", "want everything to stop", "wrote a note"
+- New covert surveillance keywords in `harmful.yaml`: "secretly record", "hidden camera", "track their location without", "without them knowing"
+- 7 new LLM few-shot examples in `llm_classifier.yaml` for spirituality-vs-emotional and money-vs-emotional boundary cases
+- Phase 17.1 distress override restricted to logistics domain only — was incorrectly overriding correctly-identified spirituality/health/money/relationships domains to emotional
+- `spirituality` added to `sensitive_domains` set — was missing, silently blocking the emotional→specific override for spiritual messages
+- New emotional→specific override: when LLM says emotional but keyword detector finds a more specific sensitive domain, the specific domain wins
+- `stress_test_001_relationship_suspicion`: `must_not_contain` tightened — forbidding the standalone word "race" was too broad; a deflecting response correctly dismisses the racial detail without naming it
+
+---
+
 ## [Unreleased] - Security Hardening & CLI Completeness
 
 **"Safer by default. More scriptable at the edge."**
