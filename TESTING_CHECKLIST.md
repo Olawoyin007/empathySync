@@ -130,11 +130,34 @@ After each response, verify:
 - [ ] Shows mode (practical / reflective / crisis detected)
 - [ ] Shows any policy action with a plain-language reason
 
-### 3.3 Response Mode Label
-- [ ] Practical task → label shows "practical"
-- [ ] Sensitive topic → label shows "reflective · [domain]"
-- [ ] Crisis → label shows "crisis detected · sensitive"
-- [ ] When connection steering is active → label shows "connection awareness active"
+### 3.3 Response Mode Label and Steering Transparency
+
+The "Responded as:" line under every response is the transparency mechanism.
+It tells the user exactly how the system behaved and why. Verify each case:
+
+**Normal mode labels:**
+- [ ] Practical task → "Responded as: practical task"
+- [ ] Sensitive topic → "Responded as: reflective · [domain] · keeping it brief"
+- [ ] Crisis → "Responded as: reflective · crisis detected · redirected to support"
+- [ ] Harmful → "Responded as: reflective · declined · harmful content"
+
+**Connection steering transparency:**
+Connection steering is a background modifier that changes response tone when
+isolation is detected. The user must always be able to see it is active.
+
+1. Send an isolation signal: "There is no one I can talk to about this"
+2. [ ] The label on that response shows "connection awareness active" appended
+3. Send a completely different follow-up message (e.g. "help me write an email")
+4. [ ] The label on the new response STILL shows "connection awareness active"
+       (steering stays active for the whole session, not just the triggering turn)
+5. Scroll back through earlier messages
+6. [ ] All messages after the trigger show "connection awareness active"
+       (it persists on replay — stored in message dict, survives Streamlit reruns)
+7. Test with no trusted contacts configured:
+8. [ ] The conversation is warmer but does NOT direct the user to reach out to
+       a specific person (there may be no one)
+9. Test with trusted contacts configured:
+10. [ ] Subtle hints toward people may appear naturally — never pushed
 
 ### 3.4 Dashboard ("My Patterns")
 - [ ] This week vs last week comparison displays
@@ -159,14 +182,19 @@ After each response, verify:
 2. Send "I feel so overwhelmed with work"
 3. [ ] Mode switches to reflective, shorter response, human redirect
 
-### 4.3 Connection Steering
-1. Send a message signalling isolation: "There is no one I can talk to about this"
-2. [ ] Mode label shows "connection awareness active"
-3. Continue the conversation — the steering should be subtle, not intrusive
-4. [ ] Responses feel warmer without explicitly lecturing about loneliness
-5. If no trusted contacts configured:
-   - [ ] System does NOT say "reach out to someone" (there is no one to reach)
-   - [ ] Acknowledges connection takes time, at most once, if it fits naturally
+### 4.3 Connection Steering — Conversation Behaviour
+(UI transparency is tested in Section 3.3. This section tests the tone.)
+
+1. With steering active, continue a normal conversation across several turns
+2. [ ] Responses are warmer in texture — not clinical, not preachy
+3. [ ] The system does NOT start a conversation about loneliness unprompted
+4. [ ] If a friend or family member is mentioned in passing, the response
+       acknowledges them naturally rather than ignoring it
+5. [ ] No repetitive "you should reach out to someone" messaging
+6. If network is empty (no trusted contacts):
+   - [ ] "connection awareness active" label still shows (same transparency)
+   - [ ] At most one gentle mention that building connection takes time,
+         only if it fits the conversation naturally
 
 ### 4.4 Human Handoff Flow
 1. Open "Bring someone in" expander
