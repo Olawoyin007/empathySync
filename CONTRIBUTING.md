@@ -31,9 +31,9 @@ If you're a therapist, counsellor, social worker, UX writer, or ethicist - your 
 2. **Clone your fork**: `git clone https://github.com/your-username/empathySync.git`
 3. **Create a virtual environment**: `python -m venv venv`
 4. **Activate environment**: `source venv/bin/activate` (Linux/Mac) or `venv\Scripts\activate` (Windows)
-5. **Install dependencies**: `pip install -r requirements.txt`
+5. **Install dependencies**: `pip install -e ".[dev]"`
 6. **Copy .env.example to .env** and configure your settings
-7. **Run tests**: `pytest tests/` (443 tests, all must pass)
+7. **Run tests**: `pytest tests/` (971+ tests, all must pass)
 
 ## Development Workflow
 
@@ -90,7 +90,8 @@ Your PR should include:
 
 Before your first PR, please read:
 - [MANIFESTO.md](MANIFESTO.md) - Non-negotiable design principles
-- [CLAUDE.md](CLAUDE.md) - Technical architecture and safety pipeline
+- [CLAUDE.md](CLAUDE.md) - Contributor process guide: pre-merge gates and key patterns
+- [docs/architecture.md](docs/architecture.md) - Architecture and safety pipeline (read before touching src/models/ or src/utils/)
 - [scenarios/README.md](scenarios/README.md) - If modifying the knowledge base
 
 ## Testing

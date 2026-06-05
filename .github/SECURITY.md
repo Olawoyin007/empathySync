@@ -17,7 +17,7 @@ If you discover a vulnerability in:
 - **Harmful content blocking** (ways to extract dangerous information)
 - **Data privacy** (unintended data transmission or exposure)
 
-Please report these **privately** by emailing [your-security-email] or opening a private security advisory on GitHub.
+Please report these **privately** by opening a [private security advisory on GitHub](https://github.com/Olawoyin007/empathySync/security/advisories/new).
 
 **Do NOT open a public issue for security vulnerabilities.**
 
