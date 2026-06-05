@@ -1,6 +1,6 @@
 # System Architecture
 
-This document provides a visual overview of empathySync's architecture. For detailed technical reference, see [CLAUDE.md](../CLAUDE.md).
+This document is the authoritative architecture reference for empathySync.
 
 ## High-Level Overview
 
@@ -89,8 +89,13 @@ User Input
 │         crisis), distress_present (bool),   │
 │       is_practical_technique (bool),        │
 │       llm_confidence (Phase 17.2)           │
-│     Phase 17.1: distress_level=high/crisis  │
-│       → override domain to crisis/emotional │
+│     Phase 17.1: logistics domain ONLY —     │
+│       distress_level=high → emotional       │
+│       distress_level=crisis → crisis        │
+│       (sensitive domains unaffected —       │
+│        spirituality/health/money/           │
+│        relationships already have correct   │
+│        domain, overriding loses specificity)│
 │     Phase 17.2: llm_confidence < threshold  │
 │       on sensitive domains → keyword        │
 │       fallback                              │
@@ -109,7 +114,21 @@ User Input
     │
     ▼
 ┌─────────────────────────────────────────────┐
-│  3b. ISOLATION DETECTION (Phase 16.13)      │
+│  3b. EMOTIONAL→SPECIFIC OVERRIDE            │
+│     "emotional" is a catch-all domain.      │
+│     If LLM returned emotional AND keyword   │
+│     detector finds a more specific          │
+│     sensitive domain (money, health,        │
+│     spirituality, relationships):           │
+│       keyword domain wins                   │
+│     Rationale: emotional language is always │
+│     present in sensitive topics — the       │
+│     specific domain is more actionable.     │
+└─────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────┐
+│  3c. ISOLATION DETECTION (Phase 16.13)      │
 │     Keyword fast-path (34 phrases):         │
 │     "there is no one", "I have nobody"...   │
 │     → activates ConnectionSteering state    │
@@ -410,13 +429,18 @@ Response to User (streamed in real-time)
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │ LAYER 4: Connection Steering (Phase 16.13)                │  │
 │  │ - Injected only when ConnectionSteering.active == True    │  │
-│  │ - Stage-specific instruction:                             │  │
-│  │     0: recognition   - acknowledge quietly, one sentence  │  │
-│  │     1: exploration   - one genuine curiosity question     │  │
-│  │     2: mapping       - surface connections mentioned      │  │
-│  │     3: possibility   - one small, concrete option         │  │
-│  │     4: practical_help- full capability for reaching out   │  │
-│  │ - Or deflection instruction if user stays on task         │  │
+│  │ - Single background warmth modifier — not stage-based     │  │
+│  │   Changes the texture of every response for the session:  │  │
+│  │   notice people mentioned in passing, acknowledge when    │  │
+│  │   the user reaches out to someone                         │  │
+│  │ - Does NOT start a conversation about loneliness          │  │
+│  │ - network_empty=False: warmth modifier + light handoff    │  │
+│  │   hints when contacts are mentioned naturally             │  │
+│  │ - network_empty=True: warmth modifier only. No redirect   │  │
+│  │   to specific people (there may be no one). Acknowledges  │  │
+│  │   that building connection takes time, if it fits.        │  │
+│  │ - Visible in UI: mode label shows                         │  │
+│  │   "connection awareness active" when active               │  │
 │  │ - Cross-cutting: applies in practical OR reflective mode  │  │
 │  │ - Source: connection_building/steering_prompts.yaml       │  │
 │  └───────────────────────────────────────────────────────────┘  │
@@ -570,10 +594,11 @@ empathySync/
 │
 ├── data/                        # Local user data (JSON/SQLite)
 ├── logs/                        # Application logs
-├── tests/                       # Pytest test suite (443 tests)
+├── tests/                       # Pytest test suite (971 unit + ~100 conversation quality)
 └── docs/                        # Documentation
 ```
 
 ---
 
-For detailed code-level documentation, see [CLAUDE.md](../CLAUDE.md).
+For development commands, environment variables, and key patterns, see [CLAUDE.md](../CLAUDE.md).
+For pre-merge and release procedures, see [MERGE_CHECKLIST.md](../MERGE_CHECKLIST.md).
