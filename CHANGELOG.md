@@ -20,6 +20,7 @@ All notable changes to empathySync are documented here.
 - `APP_VERSION` in `src/config/settings.py` fixed: was `1.9.0`, out of sync with `pyproject.toml` (`1.10.1`) — `empathysync --version` was reporting the wrong version
 
 ### Docs
+- `README.md` revamped: removed marketing framing, replaced with direct design-principle statement. "Who Is This For?" renamed to "Who Uses This" with plain-prose format. Pipeline-level enforcement explanation added. Config snippet updated to recommended 12GB pairing (`gemma3:12b` engine, `mistral:7b-instruct` classifier). Documentation section descriptions corrected. Stale 5-stage arc reference removed.
 - `CLAUDE.md` revamped: 471 lines → 157. Process gate is the first visible line. Architecture detail removed — it lives in `docs/architecture.md`. Test count updated (443 → 971+)
 - `docs/architecture.md` updated: Phase 17.1 description corrected (logistics-only); Phase 3b (emotional→specific override) added to pipeline diagram; Layer 4 connection steering corrected from stale 5-stage arc to accurate background warmth modifier with `network_empty` flag; test count corrected
 - `TESTING_CHECKLIST.md` rebuilt from 2026-02-11 state: added Section 0 (automated tests first), passive ideation and surveillance test cases, connection steering transparency tests (full sequence covering persistence and network_empty), all CLI flag tests, startup health check tests. Cooldown threshold corrected (120 → 180 minutes). Stale child safety section removed
