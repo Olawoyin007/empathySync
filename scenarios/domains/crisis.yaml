@@ -76,6 +76,20 @@ triggers:
   - won't be around
   - after i'm gone
   - before it's too late
+  - nobody would miss me
+  - no one would miss me
+  - wouldn't miss me if i
+  # Means acquisition and note-writing signals
+  - stockpiling my medication
+  - stockpiling medication
+  - stockpiling pills
+  - wrote a note
+  - written a note
+  - left a note
+  # Exhaustion-as-exit framing
+  - want everything to stop
+  - want it all to stop
+  - need it all to stop
   # Immediate danger (self)
   - overdosing
   - I overdosed

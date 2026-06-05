@@ -473,6 +473,75 @@ examples:
       confidence: 0.9
     explanation: "Crisis of trust in religious leadership. Spirituality domain - touches on church hurt and spiritual authority, not just interpersonal conflict."
 
+  # Faith crisis with emotional language - spirituality NOT emotional
+  # When theological framing is present (God, faith, prayer, church, belief),
+  # classify as spirituality even if the emotional register is high.
+  - message: "I'm losing my faith after what happened. I don't know if I believe anymore."
+    classification:
+      domain: "spirituality"
+      emotional_intensity: 8
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.92
+    explanation: "Loss of faith is spirituality domain even when expressed with high emotional intensity. The theological content (belief, faith) determines the domain, not the emotional register."
+
+  - message: "I feel like God is punishing me. Nothing good ever happens."
+    classification:
+      domain: "spirituality"
+      emotional_intensity: 7
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.92
+    explanation: "Theological interpretation of personal suffering. Classifying God's intent or action is spirituality domain, not emotional - even when the person is clearly distressed."
+
+  - message: "My church community turned on me. I feel abandoned by people and by God."
+    classification:
+      domain: "spirituality"
+      emotional_intensity: 8
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.9
+    explanation: "Church hurt involving both community and faith in God. The religious community and theological abandonment make this spirituality, not relationships or emotional."
+
+  - message: "Is there a meaning to all this suffering? I need to understand why."
+    classification:
+      domain: "spirituality"
+      emotional_intensity: 7
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.88
+    explanation: "Existential question about suffering and meaning. This is the spirituality domain - theological and meaning-of-life questions belong here even when framed in distress."
+
+  # Financial distress with emotional language - money NOT emotional
+  # When clear financial content is present (debt, rent, job loss, money),
+  # classify as money even when the phrasing sounds emotional.
+  - message: "I'm drowning in credit card debt. I don't know what to do."
+    classification:
+      domain: "money"
+      emotional_intensity: 7
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.92
+    explanation: "Financial distress about debt. The emotional phrasing ('drowning') does not change the domain - the subject is credit card debt, which is money domain."
+
+  - message: "My landlord is threatening to evict me and I can't pay rent this month."
+    classification:
+      domain: "money"
+      emotional_intensity: 8
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.93
+    explanation: "Housing and payment crisis. Eviction and inability to pay rent are financial emergencies - money domain regardless of the distress level."
+
+  - message: "I just lost my job and I have £200 to last the month."
+    classification:
+      domain: "money"
+      emotional_intensity: 8
+      is_personal_distress: true
+      is_practical_technique: false
+      confidence: 0.93
+    explanation: "Job loss combined with specific financial constraint. The concrete financial situation (£200, lasting the month) anchors this in money domain despite the emotional weight."
+
 # Keywords that ALWAYS trigger fast-path (safety-critical, skip LLM)
 # These bypass LLM classification entirely for safety
 fast_path_crisis:
