@@ -2,7 +2,7 @@
 
 All notable changes to empathySync are documented here.
 
-## [Unreleased]
+## [1.10.1] - 2026-06-05
 
 ### Classification
 - Domain accuracy improved from 71% to 87% (+16pp). Key gains: crisis 50→90%, spirituality 33→78%, money 45→82%, relationships 73→91%, harmful 67→89%
@@ -27,7 +27,7 @@ All notable changes to empathySync are documented here.
 
 ---
 
-## [Unreleased] - Security Hardening & CLI Completeness
+## [1.10.0] - 2026-06-01
 
 **"Safer by default. More scriptable at the edge."**
 
