@@ -49,7 +49,10 @@ These are open and acknowledged. Contributor help is welcome.
   on enumerated keyword patterns plus an LLM classifier. Enumeration is never complete: a
   phrasing that escapes both layers can be routed past the intended restraint rather than
   caught by it. The layers narrow the gap; they do not close it. Neither layer alone is a
-  guarantee.
+  guarantee. Testing across 620 known harmful behaviours (JailbreakBench + AdvBench) found
+  97-100% evasion of keyword-only detection (`scripts/scan_mutations.py`), which is why the
+  LLM classifier carries most of the load - but it too can be evaded by sufficiently novel
+  framing.
 - **Safety quality depends on the classifier model.** Nuanced cases - euphemistic crisis
   ("nobody would miss me"), fiction or roleplay framing ("for a story I'm writing"), and
   indirect harmful intent - require a capable classifier. A small or weak local model will

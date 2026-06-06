@@ -2,6 +2,15 @@
 
 All notable changes to empathySync are documented here.
 
+## [Unreleased]
+
+### Docs
+- `THREAT_MODEL.md` added: states the trust boundary (local single-user, no auth by design, localhost only) and the known gaps - enumeration-based harmful/crisis detection is incomplete, safety quality depends on the classifier model, no encryption at rest, the device lock is not access control, and it is not a clinical/emergency service; includes the 620-behaviour keyword-only evasion benchmark (97-100%, JailbreakBench + AdvBench) as evidence for the enumeration gap (#122)
+- `README.md` safety section leaned out: removed the "two independent layers so neither can be bypassed alone" / "keywords are triage, not the gate" overclaim (contradicted by the #121 keylogger backstop) and condensed "How the Safety Pipeline Works" to two layers plus pointers to `THREAT_MODEL.md` and `docs/architecture.md` (benchmark detail moved into the threat model). Keyword count corrected "~250" -> "hundreds". Removed the redundant intro pipeline-restraint sentence; tightened the "tool, not a companion" line; removed a stray rhetorical line (#122)
+- `ROADMAP.md`: added v1.11.0 "Operational Hardening" as the next planned version (Docker entrypoint, issue templates, PR-description validation, dev/main branch model, threat-model follow-through, clean-machine install test) (#122)
+
+---
+
 ## [1.10.1] - 2026-06-05
 
 ### Classification
