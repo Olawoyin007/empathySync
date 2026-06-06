@@ -24,13 +24,12 @@ https://github.com/user-attachments/assets/cce0d214-4cd3-4816-b162-28af19941efb
 empathySync is a local AI assistant built on one design principle:
 
 > *The part of AI that handles your personal life should belong to you.*
-> *That's not a feature - it's the point.*
 
 It gives full help on practical tasks - writing, coding, explanations. On sensitive topics (emotional distress, health, relationships, finances), it applies deliberate restraint: brief responses, human redirects, no follow-up questions designed to keep you talking. When it detects crisis signals, it routes to professional resources immediately, without exception.
 
 Everything runs on your hardware via Ollama. No cloud. No external API calls. No telemetry. No engagement optimization.
 
-The restraint is implemented at the pipeline level - in the code, not in prompts or guidelines that can be rephrased away. That distinction matters. A prompt can be jailbroken. A pipeline step cannot.
+The restraint lives in the pipeline, not only in prompts that can be rephrased away - which makes it harder to bypass, though no safety layer is absolute.
 
 ## Who Uses This
 
@@ -40,7 +39,7 @@ The restraint is implemented at the pipeline level - in the code, not in prompts
 
 **Therapists, counsellors, and domain experts** who want to shape how an AI responds to emotional content - the scenarios, responses, and intervention language are plain YAML files. No programming required. See [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md).
 
-This is not a companion AI or always-on assistant. It is useful help that does not try to become a habit.
+It is a tool you reach for when you need it and put down when you don't, not a companion or an always-on assistant.
 
 <details>
 <summary><strong>The philosophy</strong></summary>
@@ -162,14 +161,14 @@ empathysync --log-level DEBUG  # Set log verbosity (DEBUG, INFO, WARNING, ERROR)
 
 ## How the Safety Pipeline Works
 
-empathySync uses two independent layers so neither can be bypassed alone:
+empathySync uses two complementary detection layers - a keyword fast-path and an LLM classifier - that catch different kinds of cases:
 
-- **Keyword triage** (~250 patterns): fast first-pass detection of known harmful and crisis phrases. Catches obvious cases with zero latency.
+- **Keyword triage** (hundreds of patterns): fast first-pass detection of known harmful and crisis phrases. Catches obvious cases with zero latency.
 - **LLM classifier**: nuanced detection that reads context, not just keywords. Handles rephrased, euphemistic, and indirectly-expressed harmful intent that keywords miss.
 - **Mutation-defense rules** baked into the LLM prompt: fictional framing ("for a story I'm writing"), third-person distancing ("a friend asked"), and euphemistic language do not change the classification - the LLM is instructed to read intent, not surface phrasing.
 - **Confidence calibration**: when the LLM is uncertain on a sensitive topic, keyword detection takes over. False positive is always safer than false negative on crisis content.
 
-Each layer is independent. A rephrased attack that evades keyword detection still hits the LLM layer. Prompt injection that manipulates the LLM still hits the keyword layer. Testing across 620 known harmful behaviors (JailbreakBench + AdvBench) showed 97-100% mutation evasion on keyword-only detection, confirming the LLM layer is the real defense - keywords are triage, not the gate.
+The two layers are complementary, not redundant. A rephrased attack that slips past the keywords can still be caught by the LLM classifier; an obvious phrase the classifier softens is still caught by the keywords. But detection is enumeration-based, and enumeration is never complete - a phrasing that escapes both layers can get through. Testing across 620 known harmful behaviors (JailbreakBench + AdvBench) showed 97-100% evasion of keyword-only detection, which is why the LLM layer carries most of the load. Neither layer alone is a guarantee; see [THREAT_MODEL.md](THREAT_MODEL.md) for what the pipeline does and does not protect.
 
 ## Configuration
 
