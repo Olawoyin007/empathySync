@@ -39,7 +39,7 @@ The restraint lives in the pipeline, not only in prompts that can be rephrased a
 
 **Therapists, counsellors, and domain experts** who want to shape how an AI responds to emotional content - the scenarios, responses, and intervention language are plain YAML files. No programming required. See [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md).
 
-This is not a companion AI or always-on assistant. It is useful help that does not try to become a habit.
+It is a tool you reach for when you need it and put down when you don't, not a companion or an always-on assistant.
 
 <details>
 <summary><strong>The philosophy</strong></summary>
@@ -163,7 +163,7 @@ empathysync --log-level DEBUG  # Set log verbosity (DEBUG, INFO, WARNING, ERROR)
 
 empathySync uses two complementary detection layers - a keyword fast-path and an LLM classifier - that catch different kinds of cases:
 
-- **Keyword triage** (~250 patterns): fast first-pass detection of known harmful and crisis phrases. Catches obvious cases with zero latency.
+- **Keyword triage** (hundreds of patterns): fast first-pass detection of known harmful and crisis phrases. Catches obvious cases with zero latency.
 - **LLM classifier**: nuanced detection that reads context, not just keywords. Handles rephrased, euphemistic, and indirectly-expressed harmful intent that keywords miss.
 - **Mutation-defense rules** baked into the LLM prompt: fictional framing ("for a story I'm writing"), third-person distancing ("a friend asked"), and euphemistic language do not change the classification - the LLM is instructed to read intent, not surface phrasing.
 - **Confidence calibration**: when the LLM is uncertain on a sensitive topic, keyword detection takes over. False positive is always safer than false negative on crisis content.
