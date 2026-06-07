@@ -2390,12 +2390,12 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 | **14. Packaging & Distribution** | **High** | **Medium** | ✅ COMPLETE |
 | **15. CI/CD & Documentation** | **Medium** | **Low** | ✅ COMPLETE |
 | **16. Core Decoupling** | **High** | **Medium** | ✅ COMPLETE |
-| **16.5 Type Safety & Data Contracts** | **High** | **Medium** | 🔴 Do First |
-| **16.6 Async I/O & Performance** | **High** | **Medium** | 🔴 Do First |
-| **16.7 Security Hardening** | **Critical** | **Medium** | 🔴 Do First |
-| **16.8 God Class Decomposition** | **High** | **High** | 🟠 Do Before 17 |
-| **16.9 Test Coverage Expansion** | **High** | **Medium** | 🟠 Do Before 17 |
-| **16.10 Observability & Configuration** | **Medium** | **Medium** | 🟠 Do Before 17 |
+| **16.5 Type Safety & Data Contracts** | **High** | **Medium** | ✅ DONE (Partial) |
+| **16.6 Async I/O & Performance** | **High** | **Medium** | ✅ DONE (Partial) |
+| **16.7 Security Hardening** | **Critical** | **Medium** | ✅ DONE (Partial) |
+| **16.8 God Class Decomposition** | **High** | **High** | ✅ DONE (Partial) |
+| **16.9 Test Coverage Expansion** | **High** | **Medium** | ✅ DONE (Partial) |
+| **16.10 Observability & Configuration** | **Medium** | **Medium** | ✅ DONE (Partial) |
 | **17. Classification Robustness** | **High** | **High** | 🔧 IN PROGRESS |
 | **18. Messaging Integration** | **Medium** | **High** | ⏸ DEFERRED - local-first tension with WhatsApp/Slack |
 | **19. Multilingual Support** | **High** | **High** | 🔵 After 18 |
@@ -2406,7 +2406,7 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 
 ---
 
-## Current Status (2026-04-26)
+## Current Status (2026-06-07)
 
 **Completed**: Phases 1-9.1, 11-16, 16.5-16.13, 17.1-17.4, 17.6-17.10 - **v1.10.1 released**
 
@@ -2424,7 +2424,7 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 
 **Safety pipeline depth**: 7 independent layers - post-crisis check, cooldown, keyword detection, LLM classification, confidence calibration (17.2), distress routing (17.1), sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
-**Test suite**: 918 structural tests + 20 conversation scenario files (stress_test_001-020). Distress corpus CI gate: 0% FN rate. Keyword FP rate on benign content: 7%.
+**Test suite**: 1071 tests (structural + conversation scenario files, stress_test_001-020). Distress corpus CI gate: 0% FN rate. Keyword FP rate on benign content: 7%.
 
 **Next**: Phase 17.5 (cross-model safety validation) or Phase 21 (safety classifier upgrade) - model benchmark framework now in place to support both. Phase 22 (persistent agent daemon) follows after Phase 21.
 
