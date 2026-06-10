@@ -10,6 +10,7 @@ Validates that all dependencies are available before the app launches:
 
 import logging
 import httpx
+import yaml
 from pathlib import Path
 from typing import Dict, List, Optional
 from dataclasses import dataclass, field
@@ -252,12 +253,78 @@ def check_sqlite_database() -> HealthStatus:
         )
 
 
+def check_model_safety_tier() -> HealthStatus:
+    """Check if the configured classifier model is in the validated safety matrix.
+
+    Never blocks startup - an untested model is informational, not a failure.
+    The keyword-based fallback remains active regardless of this check.
+    """
+    classifier_model = settings.OLLAMA_CLASSIFIER_MODEL or settings.OLLAMA_MODEL
+    matrix_path = (
+        Path(__file__).parent.parent.parent / "tests" / "classification" / "model_matrix.yaml"
+    )
+
+    if not matrix_path.exists():
+        return HealthStatus(
+            name="Model Safety",
+            ok=True,
+            critical=False,
+            message="Untested (matrix not found)",
+        )
+
+    try:
+        with open(matrix_path) as f:
+            matrix = yaml.safe_load(f)
+
+        validated = matrix.get("validated_classifier_models", [])
+
+        def _matches(name):
+            return any(
+                name == v or name.startswith(f"{v}:") or v.startswith(f"{name}:") for v in validated
+            )
+
+        if _matches(classifier_model):
+            return HealthStatus(
+                name="Model Safety",
+                ok=True,
+                critical=False,
+                message=f"Tested: `{classifier_model}`",
+            )
+        else:
+            logger.warning(
+                f"Classifier model '{classifier_model}' is not in the safety matrix — "
+                "keyword fallback is active but LLM safety performance is unverified. "
+                "Run: python tests/classification/run_cross_model_eval.py"
+            )
+            return HealthStatus(
+                name="Model Safety",
+                ok=True,
+                critical=False,
+                message=f"Untested: `{classifier_model}`",
+                details=(
+                    f"`{classifier_model}` has not been validated against the distress corpus. "
+                    "The keyword fallback remains active, but LLM safety performance is unverified.\n\n"
+                    "To validate: `python tests/classification/run_cross_model_eval.py`\n"
+                    "Validated models: `tests/classification/model_matrix.yaml`"
+                ),
+            )
+    except Exception as e:
+        logger.error(f"Error reading model safety matrix: {e}")
+        return HealthStatus(
+            name="Model Safety",
+            ok=True,
+            critical=False,
+            message="Untested (matrix unreadable)",
+        )
+
+
 def run_health_checks() -> List[HealthStatus]:
     """Run all startup health checks and return results."""
     checks = [
         check_ollama_server(),
         check_ollama_model(),
         check_classifier_model(),
+        check_model_safety_tier(),
         check_data_directory(),
     ]
 

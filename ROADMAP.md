@@ -1785,7 +1785,7 @@ src/ui/
 
 ---
 
-## Phase 17: Classification Robustness & Safety Evaluation 🔧 IN PROGRESS
+## Phase 17: Classification Robustness & Safety Evaluation 🔧 IN PROGRESS (17.1-17.4 ✅ DONE incl. red-team Gap A + B; only 17.5 Cross-Model Validation remains)
 
 **Goal**: Move from single-label classification to multi-signal safety routing, add calibrated confidence handling, and build a regression test suite of real distress phrasing. Ensure false negatives on distress detection are systematically caught before they reach users.
 
@@ -1842,7 +1842,7 @@ src/ui/
 - [x] Track override in `policy_events` via WellnessGuide for policy transparency
 - [x] 4 new tests (918 total); covers distress_present path, intensity fallback, and genuine practical request non-trigger
 
-### 17.5 Cross-Model Safety Validation 🔜 PLANNED
+### 17.5 Cross-Model Safety Validation ✅ COMPLETE
 **Problem**: empathySync supports any Ollama model, but weaker or differently aligned models vary significantly in judgment, tone, and refusal behavior. The safety pipeline must compensate. Currently tests only run against one model, so there's no visibility into how safety degrades across model tiers.
 
 **Implementation**:
@@ -2351,7 +2351,55 @@ classification - the main conversation model stays unchanged.
 
 ---
 
-## Philosophical Safeguards (Phases 16-22)
+## Phase 23: Restraint Memory - Memory as Guardrail, Not Rapport 🔜 PLANNED
+
+**Goal**: Name, consolidate, and *enforce* the memory principle that Phases 4, 6.5, 7, 11, and 17 already embody: empathySync remembers only what protects the user, never what deepens engagement. Make that guarantee architectural and falsifiable, not just a developer convention.
+
+**Why now**: The pieces exist but are scattered and unnamed - context persistence (6.5), success metrics (7), persistence layer (11), safety evaluation (17). Without a single named principle and an enforced invariant, nothing *stops* a future feature from quietly turning safety state into a personalization profile - the exact "rapport memory" that drives dependency in engagement-optimized systems. This phase makes restraint a property of the store, not the discipline of the developer. It is also the implementable spine of the AISB paper's "restraint as architecture" thesis.
+
+**The principle (Restraint Memory)** - persisted state must be:
+- **Bounded** - only safety/metric fields (turn counts, cooldown timers, dependency-score trajectory, handoff history, anti-engagement metrics). Never message content, never a preference/personality profile.
+- **Inspectable** - the user can read, export, and delete everything held about them, in plain language.
+- **Local** - never leaves the device.
+- **Decaying** - safety state ages out when the protected pattern stops. Forgetting is the success state, not data loss.
+- **Exit-oriented** - the memory's job is to make itself unnecessary.
+
+### 23.1 The Negative Invariant (the load-bearing piece)
+- [ ] Define the exhaustive allowlist of persistable fields in `scenarios/config/system_defaults.yaml` (`restraint_memory.allowed_fields`)
+- [ ] Add a property test (`tests/test_restraint_memory.py`) that serializes every persisted structure (session summaries, wellness-tracker state, handoff log, policy_events) and asserts NO field outside the allowlist is present - in particular, no raw user-message text and no derived "preference"/"persona" field
+- [ ] CI gate: blocking. A PR that persists conversation content or a rapport profile fails the build.
+- [ ] Document the invariant in MANIFESTO.md (one line) and CLAUDE.md (architecture note)
+
+### 23.2 Cross-Session Decay
+- [ ] Extend the per-turn context decay (Phase 6.5) to cross-session safety state: dependency-score trajectory and sensitive-domain counters decay toward baseline after a configurable quiet period (default 30 days with no sensitive sessions in that domain)
+- [ ] Decay is visible, not silent: "Your reliance signal for {domain} has reset - you haven't needed it in a month."
+- [ ] Never decay handoff *availability* (trusted contacts persist); only decay the *risk* signals
+
+### 23.3 "What empathySync Remembers" - one consolidated view
+- [ ] Single sidebar view that renders ALL persisted safety state in plain language (consolidates the Phase 6 transparency, Phase 7 dashboard, and Phase 11 persistence into one honest surface)
+- [ ] One-click "Forget this" per item and "Forget everything" global (reuses Phase 7 delete + Phase 11 store)
+- [ ] Show the allowlist itself: "Here is everything I am even *able* to remember" - the negative space is the reassurance
+
+### 23.4 The Measurement Framework (the evaluation spine)
+**Problem**: "How do you measure whether a cooldown / turn-limit / handoff actually works?" is the question every reviewer asks. Answer it in three honest levels, each wired to existing telemetry.
+- [ ] **Level 1 - Mechanism fidelity (provable now):** deterministic tests that the guardrail fires exactly when its trigger condition is met - cooldown engages at the turn threshold, handoff surfaces at the dependency-score threshold, sanity-check overrides on distress. Auditable per-firing via `policy_events`. (Largely covered by Phase 17; gather under one report.)
+- [ ] **Level 2 - Behavioral outcome (local, user's own trend):** the Phase 7 signals reframed as the success definition - sensitive-domain frequency down, reach-out rate up, did-it-myself up, late-night sensitive sessions down. Never compared across users.
+- [ ] **Level 3 - The honest confound (stated, not hidden):** declining sensitive-domain frequency cannot distinguish healthy disengagement from migration to a less-restricted tool (AISB paper section 6). Document this as a known boundary; clinical validation against a validated attachment instrument is the defined next step, not a current claim.
+- [ ] Produce `docs/measurement.md` capturing the three levels - doubles as the answer for the AISB oral and reviewer Q&A
+
+**Files (planned)**:
+- `tests/test_restraint_memory.py` - the negative-invariant property test (23.1)
+- `scenarios/config/system_defaults.yaml` - `restraint_memory.allowed_fields`, decay window
+- `src/utils/wellness_tracker.py` - cross-session decay (23.2), consolidated remember-view data (23.3)
+- `src/app.py` - "What empathySync Remembers" view (23.3)
+- `docs/measurement.md` - three-level framework (23.4)
+- `MANIFESTO.md`, `CLAUDE.md` - invariant documented
+
+> This phase adds no new data collection. It *constrains* what already exists and proves the constraint holds.
+
+---
+
+## Philosophical Safeguards (Phases 16-23)
 
 Each agent evolution phase must maintain these cross-cutting guarantees:
 
