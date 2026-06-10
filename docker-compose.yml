@@ -3,10 +3,10 @@ services:
     image: ollama/ollama:latest
     container_name: empathysync-ollama
     ports:
-      - "11434:11434"
+      - "127.0.0.1:11434:11434"
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     environment:
-      - OLLAMA_MODEL=${OLLAMA_MODEL}  
+      - OLLAMA_MODEL=${OLLAMA_MODEL}
     volumes:
       - ollama_data:/root/.ollama
       - ./scripts/entrypoint.sh:/entrypoint.sh:ro
@@ -21,12 +21,15 @@ services:
     build: .
     container_name: empathysync-app
     ports:
-      - "8501:8501"
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8501}:8501"
     volumes:
       - ./data:/app/data
       - ./.env:/app/.env:ro
     environment:
       - OLLAMA_HOST=http://ollama:11434
+      # Match your host user: run `id -u` and `id -g` to find these.
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
     depends_on:
       ollama:
         condition: service_healthy
