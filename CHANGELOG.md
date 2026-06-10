@@ -4,6 +4,12 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Infrastructure
+- Docker entrypoint hardening: PUID/PGID privilege drop via `gosu`, bind-mount ownership repair on restart, SIGTERM forwarding to Streamlit; localhost-only port binding in `docker-compose.yml` (was `0.0.0.0`) (#130)
+- CI: docs-only PRs now skip expensive test, lint, and scenario-validation steps while still reporting a passing check (#130)
+- PR validation GitHub Action: blocks PRs missing a `## Summary` or `## Testing` section (#129)
+- Bug report template: added install method and Ollama version fields to environment section (#129)
+
 ### Docs
 - `THREAT_MODEL.md` added: states the trust boundary (local single-user, no auth by design, localhost only) and the known gaps - enumeration-based harmful/crisis detection is incomplete, safety quality depends on the classifier model, no encryption at rest, the device lock is not access control, and it is not a clinical/emergency service; includes the 620-behaviour keyword-only evasion benchmark (97-100%, JailbreakBench + AdvBench) as evidence for the enumeration gap (#122)
 - `README.md` safety section leaned out: removed the "two independent layers so neither can be bypassed alone" / "keywords are triage, not the gate" overclaim (contradicted by the #121 keylogger backstop) and condensed "How the Safety Pipeline Works" to two layers plus pointers to `THREAT_MODEL.md` and `docs/architecture.md` (benchmark detail moved into the threat model). Keyword count corrected "~250" -> "hundreds". Removed the redundant intro pipeline-restraint sentence; tightened the "tool, not a companion" line; removed a stray rhetorical line (#122)

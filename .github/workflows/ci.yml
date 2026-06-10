@@ -15,13 +15,36 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check for docs-only changes
+        id: docs-check
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.sha }}"
+          fi
+          changed=$(git diff --name-only "$BASE" "$HEAD" 2>/dev/null || git diff --name-only HEAD~1 HEAD)
+          non_docs=$(echo "$changed" | grep -Ev '^(docs/|.*\.md$|\.github/[^/]+\.md$)' || true)
+          if [ -z "$non_docs" ]; then
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+            echo "Docs-only change — skipping test suite."
+          else
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up Python ${{ matrix.python-version }}
+        if: steps.docs-check.outputs.docs_only != 'true'
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Cache pip dependencies
+        if: steps.docs-check.outputs.docs_only != 'true'
         uses: actions/cache@v5
         with:
           path: ~/.cache/pip
@@ -30,18 +53,22 @@ jobs:
             ${{ runner.os }}-pip-${{ matrix.python-version }}-
 
       - name: Install dependencies
+        if: steps.docs-check.outputs.docs_only != 'true'
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov "black==25.9.0" flake8
 
       - name: Check formatting (black)
+        if: steps.docs-check.outputs.docs_only != 'true'
         run: black --check --config pyproject.toml src/
 
       - name: Lint (flake8)
+        if: steps.docs-check.outputs.docs_only != 'true'
         run: flake8 src/ --max-line-length=100 --ignore=E501,W503,E203,E402,F401,F841,F541,F824,E722
 
       - name: Run tests
+        if: steps.docs-check.outputs.docs_only != 'true'
         run: pytest tests/ -v --tb=short
 
   validate-scenarios:
@@ -49,16 +76,40 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check for docs-only changes
+        id: docs-check
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.sha }}"
+          fi
+          changed=$(git diff --name-only "$BASE" "$HEAD" 2>/dev/null || git diff --name-only HEAD~1 HEAD)
+          non_docs=$(echo "$changed" | grep -Ev '^(docs/|.*\.md$|\.github/[^/]+\.md$)' || true)
+          if [ -z "$non_docs" ]; then
+            echo "docs_only=true" >> "$GITHUB_OUTPUT"
+            echo "Docs-only change — skipping scenario validation."
+          else
+            echo "docs_only=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up Python
+        if: steps.docs-check.outputs.docs_only != 'true'
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
       - name: Install PyYAML
+        if: steps.docs-check.outputs.docs_only != 'true'
         run: pip install pyyaml
 
       - name: Validate scenario YAML files
+        if: steps.docs-check.outputs.docs_only != 'true'
         run: python scripts/validate_scenarios.py
 
   manifesto-guard:
