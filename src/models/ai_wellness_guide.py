@@ -707,23 +707,29 @@ class WellnessGuide:
 
             # Stream Ollama tokens with rolling buffer so the safety check
             # runs before chunks reach the UI, not after the full response.
+            # _tail carries the last _STREAM_OVERLAP chars from the previous
+            # flush so that harmful phrases split across chunk boundaries are
+            # caught by the next check window (not only by the post-stream pass).
             accumulated = ""
             _buf = ""
+            _tail = ""
             _STREAM_BUFFER_SIZE = 200
+            _STREAM_OVERLAP = 50  # >= len of longest harmful phrase in patterns
             for token in self._call_ollama_stream(prepared.full_prompt, prepared.is_practical):
                 accumulated += token
                 _buf += token
                 if len(_buf) >= _STREAM_BUFFER_SIZE:
-                    if self._contains_harmful_content(_buf):
+                    if self._contains_harmful_content(_tail + _buf):
                         logger.warning("Harmful content detected in stream buffer (mid-stream)")
                         safe_alt = self._get_safe_alternative_response()
                         self._last_streamed_response = safe_alt
                         yield "\n\n" + safe_alt
                         return
+                    _tail = _buf[-_STREAM_OVERLAP:]
                     yield _buf
                     _buf = ""
             if _buf:
-                if self._contains_harmful_content(_buf):
+                if self._contains_harmful_content(_tail + _buf):
                     logger.warning("Harmful content detected in stream buffer (flush)")
                     safe_alt = self._get_safe_alternative_response()
                     self._last_streamed_response = safe_alt
