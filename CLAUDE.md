@@ -68,6 +68,12 @@ See `.env.example` for full documentation and defaults.
 **Optional PostgreSQL** (all or none): `DB_HOST`, `DB_PORT`, `DB_NAME`,
 `DB_USER`, `DB_PASSWORD`
 
+**Docker only:**
+- `APP_BIND` — Host address to bind to (default: `127.0.0.1`; set `0.0.0.0` for LAN access)
+- `APP_PORT` — Host port mapping (default: `8501`)
+- `PUID` — Host user ID the container drops to (default: `1000`)
+- `PGID` — Host group ID the container drops to (default: `1000`)
+
 ## Key Design Constraints
 
 These are non-negotiable. Every feature decision should be checked against them.

@@ -8,6 +8,9 @@ All notable changes to empathySync are documented here.
 - Prompt injection: classification prompt now explicitly instructs the model not to follow instructions inside the `<user_message>` boundary, reducing risk on weaker models (#127)
 - Streaming safety: rolling buffer check now uses a 50-char tail overlap between flushes so harmful phrases split across chunk boundaries are caught before reaching the UI, not only by the post-stream accumulated check (#128)
 
+### Classification
+- Phase 17.5: Cross-model safety validation - `tests/classification/model_matrix.yaml` defines validated classifier models (distress recall ≥ 90%); sidebar now shows "Tested" / "Untested" badge for the active classifier model; startup logs a warning for unvalidated models; `run_cross_model_eval.py` evaluates any Ollama model against the distress corpus and flags models exceeding the 10% false negative threshold (#124)
+
 ### Infrastructure
 - Docker entrypoint hardening: PUID/PGID privilege drop via `gosu`, bind-mount ownership repair on restart, SIGTERM forwarding to Streamlit; localhost-only port binding in `docker-compose.yml` (was `0.0.0.0`) (#130)
 - CI: docs-only PRs now skip expensive test, lint, and scenario-validation steps while still reporting a passing check (#130)

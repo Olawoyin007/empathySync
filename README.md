@@ -88,6 +88,10 @@ This starts both empathySync and Ollama together. The model pulls automatically 
 > **Docker must be installed and its daemon running** before `docker compose up` (Docker Desktop on Windows/macOS, or the `docker` service on Linux).
 > On a GPU machine, Docker still runs Ollama **CPU-only** unless you add a GPU reservation to `docker-compose.yml`. For direct GPU use, the [install.sh](#option-2-installsh) or [pip](#option-3-pip-install) paths talk to your local Ollama, which uses the GPU automatically.
 
+**Network access:** the app binds to `127.0.0.1` by default (localhost only). To reach it from other devices on your network, add `APP_BIND=0.0.0.0` to `.env`.
+
+**File permissions:** if `./data` ends up root-owned after the first run, add `PUID` and `PGID` to `.env` matching your host user (`id -u` / `id -g`). The container uses these to drop privileges before writing to bind-mounted directories.
+
 **Any Ollama model works.** Set `OLLAMA_MODEL` in `.env` before running. Benchmarked recommendations (see [`docs/model-benchmark.md`](docs/model-benchmark.md)):
 
 | Min VRAM | Engine Model | Scenario Pass |
@@ -96,7 +100,7 @@ This starts both empathySync and Ollama together. The model pulls automatically 
 | 8 GB GPU | `qwen2.5:7b-instruct` | 65% |
 | 12 GB GPU | `gemma3:12b` | 75% ✓ best |
 
-The classifier runs on every message and is separate from the engine. Set `OLLAMA_CLASSIFIER_MODEL` to a smaller model to run classification on CPU while the engine uses your GPU - but the classifier must be capable enough to detect crisis language reliably, so pick a model you have verified on the safety scenarios, not the smallest one available. See [`docs/model-benchmark.md`](docs/model-benchmark.md) for recommended classifier/engine pairings by VRAM tier.
+The classifier runs on every message and is separate from the engine. Set `OLLAMA_CLASSIFIER_MODEL` to a smaller model to run classification on CPU while the engine uses your GPU - but the classifier must be capable enough to detect crisis language reliably, so pick a model you have verified on the safety scenarios, not the smallest one available. See [`docs/model-benchmark.md`](docs/model-benchmark.md) for validated classifier models and recommended pairings by VRAM tier.
 
 ### Option 2: install.sh
 
@@ -182,6 +186,11 @@ OLLAMA_CLASSIFIER_MODEL=mistral:7b-instruct  # Separate classifier model (faster
 STORE_CONVERSATIONS=true               # Local storage only
 USE_SQLITE=false                       # SQLite backend (better concurrency)
 ENABLE_DEVICE_LOCK=false               # Multi-device sync safety
+
+# Docker only
+APP_BIND=127.0.0.1                     # Bind address (set to 0.0.0.0 for LAN access)
+PUID=1000                              # Host user ID (prevents root-owned files in ./data)
+PGID=1000                              # Host group ID
 ```
 
 ## Documentation

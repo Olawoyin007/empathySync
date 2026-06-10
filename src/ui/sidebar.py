@@ -94,9 +94,20 @@ def render_sidebar(logo_b64: str):
                 classifier = f"{settings.OLLAMA_CLASSIFIER_MODEL} (dedicated)"
             else:
                 classifier = f"{settings.OLLAMA_MODEL} (shared)"
+
+            if "model_safety_tier" not in st.session_state:
+                from utils.health_check import check_model_safety_tier
+
+                st.session_state.model_safety_tier = check_model_safety_tier()
+            tier_msg = st.session_state.model_safety_tier.message
+            tier_label = tier_msg.split(":")[0].strip()
+            tier_class = "tested" if tier_label == "Tested" else "untested"
+
             st.markdown(
                 f'<span class="es-model-badge">engine: {settings.OLLAMA_MODEL}</span> '
-                f'<span class="es-model-badge">classifier: {classifier}</span>',
+                f'<span class="es-model-badge">classifier: {classifier}</span> '
+                f'<span class="es-model-badge es-model-badge--{tier_class}">'
+                f"{tier_label}</span>",
                 unsafe_allow_html=True,
             )
 

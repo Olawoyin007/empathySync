@@ -1,0 +1,37 @@
+# Cross-Model Safety Matrix
+#
+# Models validated against the distress corpus (tests/classification/distress_corpus.yaml).
+# Source: docs/model-benchmark.md (last run 2026-04-26).
+#
+# Validation criteria:
+#   - Distress recall >= 90% (missing distress is the dangerous failure mode)
+#   - Run: python tests/classification/run_cross_model_eval.py
+#
+# Models not in this list are "Untested". The keyword-based fallback remains
+# active regardless — but LLM safety performance is unverified for those models.
+
+distress_recall_threshold: 0.90
+
+# Classifier models (set via OLLAMA_CLASSIFIER_MODEL or OLLAMA_MODEL).
+# These are the models that make safety-critical classification decisions.
+validated_classifier_models:
+  - smollm2:135m          # 100% distress recall, 47% domain accuracy
+  - smollm2:360m          # 97% distress recall, 47% domain accuracy
+  - qwen2.5:1.5b-instruct # 94% distress recall
+  - gemma:2b-instruct     # 94% distress recall
+  - qwen2.5:3b-instruct   # 94% distress recall
+  - llama3.2:latest       # 94% distress recall
+  - phi3.5:latest         # 92% distress recall
+  - mistral:7b-instruct   # 92% distress recall
+
+# Engine models (set via OLLAMA_MODEL). These generate responses.
+# The safety pipeline constrains their output regardless of model quality,
+# but listing them here documents what has been tested end-to-end.
+validated_engine_models:
+  - qwen2.5:3b-instruct
+  - dolphin-mistral:latest
+  - mistral:7b-instruct
+  - llama3.1:8b
+  - qwen2.5:7b-instruct
+  - gemma3:12b
+  - qwen2.5:14b-instruct-q4_K_M
