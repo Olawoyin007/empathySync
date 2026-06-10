@@ -4,6 +4,10 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Security
+- Prompt injection: classification prompt now explicitly instructs the model not to follow instructions inside the `<user_message>` boundary, reducing risk on weaker models (#127)
+- Streaming safety: rolling buffer check now uses a 50-char tail overlap between flushes so harmful phrases split across chunk boundaries are caught before reaching the UI, not only by the post-stream accumulated check (#128)
+
 ### Infrastructure
 - Docker entrypoint hardening: PUID/PGID privilege drop via `gosu`, bind-mount ownership repair on restart, SIGTERM forwarding to Streamlit; localhost-only port binding in `docker-compose.yml` (was `0.0.0.0`) (#130)
 - CI: docs-only PRs now skip expensive test, lint, and scenario-validation steps while still reporting a passing check (#130)

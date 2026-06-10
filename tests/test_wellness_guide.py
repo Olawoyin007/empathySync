@@ -3295,6 +3295,44 @@ class TestStreaming:
         full = "".join(tokens)
         assert harmful_token not in full
 
+    @patch("utils.http_client.get_http_client")
+    def test_stream_buffer_catches_phrase_split_across_chunk_boundary(self, mock_get_client, guide):
+        """Harmful phrase split across two buffer flushes must still be caught.
+
+        'you should f' ends chunk 1 (safe on its own); 'eel bad' starts the
+        final flush. The overlap tail from chunk 1 joined to chunk 2 produces
+        'you should feel bad', which _contains_harmful_content must catch.
+        """
+        import json as json_mod
+
+        # Chunk 1: 195 safe chars + first 11 chars of 'you should feel' = 206 total.
+        # Buffer hits >= 200 after this single large token and flushes.
+        part1 = "A" * 195 + "you should f"
+        # Chunk 2 (final flush): completes the phrase + trailing text.
+        part2 = "eel bad about this"
+
+        lines = [
+            json_mod.dumps({"response": part1, "done": False}),
+            json_mod.dumps({"response": part2, "done": True}),
+        ]
+        mock_response = Mock()
+        mock_response.iter_lines.return_value = iter(lines)
+        mock_response.raise_for_status = Mock()
+        mock_client = Mock()
+        mock_get_client.return_value = mock_client
+        mock_client.stream.return_value.__enter__ = Mock(return_value=mock_response)
+        mock_client.stream.return_value.__exit__ = Mock(return_value=False)
+
+        with patch.object(
+            guide,
+            "_contains_harmful_content",
+            side_effect=lambda text: "you should feel" in text.lower(),
+        ):
+            tokens = list(guide.generate_response_stream("Write me an email"))
+
+        full = "".join(tokens)
+        assert part2 not in full, "harmful phrase completion must not reach the UI"
+
     # --- ConversationResult streaming tests ---
 
     def test_conversation_result_is_streaming(self):
