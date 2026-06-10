@@ -1,0 +1,38 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate-description:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR description
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python3 - <<'EOF'
+          import os, sys
+          body = os.environ.get("PR_BODY", "")
+          errors = []
+
+          if "## Summary" not in body:
+              errors.append("Missing ## Summary section")
+          else:
+              after_summary = body.split("## Summary", 1)[1].split("##")[0].strip()
+              if not after_summary:
+                  errors.append("## Summary section is empty - describe what the PR does")
+
+          if "## Testing" not in body:
+              errors.append("Missing ## Testing section")
+
+          if errors:
+              print("PR description is incomplete:\n")
+              for e in errors:
+                  print(f"  - {e}")
+              print("\nSee .github/PULL_REQUEST_TEMPLATE.md for the expected format.")
+              sys.exit(1)
+
+          print("PR description looks good.")
+          EOF
