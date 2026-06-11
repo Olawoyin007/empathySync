@@ -1785,7 +1785,7 @@ src/ui/
 
 ---
 
-## Phase 17: Classification Robustness & Safety Evaluation 🔧 IN PROGRESS (17.1-17.4 ✅ DONE incl. red-team Gap A + B; only 17.5 Cross-Model Validation remains)
+## Phase 17: Classification Robustness & Safety Evaluation ✅ COMPLETE (17.1-17.5 done incl. red-team Gap A + B and cross-model validation)
 
 **Goal**: Move from single-label classification to multi-signal safety routing, add calibrated confidence handling, and build a regression test suite of real distress phrasing. Ensure false negatives on distress detection are systematically caught before they reach users.
 
@@ -2444,26 +2444,26 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 | **16.8 God Class Decomposition** | **High** | **High** | ✅ DONE (Partial) |
 | **16.9 Test Coverage Expansion** | **High** | **Medium** | ✅ DONE (Partial) |
 | **16.10 Observability & Configuration** | **Medium** | **Medium** | ✅ DONE (Partial) |
-| **17. Classification Robustness** | **High** | **High** | 🔧 IN PROGRESS |
+| **17. Classification Robustness** | **High** | **High** | ✅ COMPLETE |
 | **18. Messaging Integration** | **Medium** | **High** | ⏸ DEFERRED - local-first tension with WhatsApp/Slack |
 | **19. Multilingual Support** | **High** | **High** | 🔵 After 18 |
 | **20. Native Installer** | **High** | **High** | ⏸ DEFERRED - infra overhead before APIs stabilise |
-| **21. Safety Classifier Upgrade** | **High** | **Medium** | 🔵 After Phase 17 complete |
+| **21. Safety Classifier Upgrade** | **High** | **Medium** | 🔵 Next (issue #125) |
 | **22. Persistent Agent Daemon** | **High** | **High** | 🔵 After Phase 21 |
 | 10. Advanced Detection | High | High | 🔵 Long-term |
 
 ---
 
-## Current Status (2026-06-07)
+## Current Status (2026-06-11)
 
-**Completed**: Phases 1-9.1, 11-16, 16.5-16.13, 17.1-17.4, 17.6-17.10 - **v1.10.1 released**
+**Completed**: Phases 1-9.1, 11-16, 16.5-16.13, 17 (all of 17.1-17.10) - **v1.10.1 released**
 
 **Phase 17 progress**:
 - 17.1 ✅ Multi-label LLM classification (distress_level + distress_present alongside topic domain)
 - 17.2 ✅ Confidence calibration (keyword fallback when LLM confidence < threshold on sensitive domains)
 - 17.3 ✅ Distress detection test suite (60-entry labeled corpus, 72 parametrized tests, FN rate <= 5% CI gate)
 - 17.4 ✅ Sanity check refinement (distress_present as direct trigger alongside intensity heuristic)
-- 17.5 🔜 Cross-model safety validation (planned - now enabled by model benchmark framework)
+- 17.5 ✅ Cross-model safety validation (model matrix, cross-model eval script, startup safety tier check, sidebar badge - #132)
 - 17.6 ✅ Transparency panel complete - plain-language explanations + inline response mode label under each response
 - 17.7 ✅ Adversarial pattern coverage + false positive regression (JBB+AdvBench gap scan, mutation evasion testing, 7 new stress test files, 34.2% keyword coverage)
 - 17.8 ✅ False positive reduction - FP rate 11% -> 7% on JBB benign corpus; narrowed `weapon`, `counterfeit` patterns
@@ -2474,7 +2474,7 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 
 **Test suite**: 1071 tests (structural + conversation scenario files, stress_test_001-020). Distress corpus CI gate: 0% FN rate. Keyword FP rate on benign content: 7%.
 
-**Next**: Phase 17.5 (cross-model safety validation) or Phase 21 (safety classifier upgrade) - model benchmark framework now in place to support both. Phase 22 (persistent agent daemon) follows after Phase 21.
+**Next**: Phase 21 (safety classifier upgrade, issue #125) - evaluate LlamaGuard 3 / WildGuard as a purpose-trained safety classifier. Phase 22 (persistent agent daemon) follows after Phase 21.
 
 **Recent Bug Fixes**:
 - Fixed post-crisis apology bug: LLM no longer apologizes for crisis interventions
@@ -2612,7 +2612,7 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 **v1.2** (Phase 16.7-16.8): Security hardening, god class decomposition ✅ COMPLETE
 **v1.3** (Phase 16.9-16.10): Test coverage expansion, observability, configuration extraction ✅ COMPLETE
 **v1.4** (Phase 16.11): Conversation testing, voice tuning, golden response test suite
-**v1.5** (Phase 17.1-17.4): Multi-label distress routing, confidence calibration, distress corpus CI gate, sanity check refinement ✅ IN PROGRESS
+**v1.5** (Phase 17.1-17.4): Multi-label distress routing, confidence calibration, distress corpus CI gate, sanity check refinement ✅ COMPLETE
 **vNext** (pending): Prompt injection hardening, streaming safety buffer, `--log-level` and `--json` CLI flags, first external code contributions - 🔜 RELEASE PENDING
 **v2.0** (Phase 18): Messaging integration, safety parity across all interfaces - DEFERRED
 **v2.1** (Phase 19): Multilingual support -crisis detection, restraint behaviour, and YAML knowledge base in priority languages
