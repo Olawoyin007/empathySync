@@ -160,9 +160,10 @@ storage must go through `StorageBackend`, not the underlying db directly.
 
 ## Roadmap
 
-Phases 1–16.13 complete. See `ROADMAP.md` for full history.
+Phases 1–17 complete. See `ROADMAP.md` for full history.
 
 Current version: check `pyproject.toml` (source of truth).
 Run `python scripts/check_version.py` to verify all files are in sync.
 
-Phase 17 (Persistent agent daemon) is the next planned phase.
+Phase 21 (Safety classifier upgrade, issue #125) is the next planned phase;
+Phase 22 (Persistent agent daemon) depends on it.
