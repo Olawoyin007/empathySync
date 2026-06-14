@@ -1,6 +1,6 @@
 # Distress Detection Corpus
 #
-# 60 labeled examples for testing RiskClassifier distress detection.
+# 61 labeled examples for testing RiskClassifier distress detection.
 # Primary metric: FALSE NEGATIVE RATE on distress entries (missing real distress is dangerous).
 # Secondary metric: FALSE POSITIVE RATE on non-distress entries (over-triggering erodes trust).
 #
@@ -181,7 +181,7 @@ relationship_distress:
     note: "relationship distress - vague but signals significant event"
 
 # ---------------------------------------------------------------------------
-# NON-DISTRESS CASES (24 entries)
+# NON-DISTRESS CASES (25 entries)
 # These must NOT produce distress_present=True or crisis/harmful domain
 # ---------------------------------------------------------------------------
 

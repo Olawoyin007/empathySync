@@ -33,7 +33,7 @@ If you're a therapist, counsellor, social worker, UX writer, or ethicist - your 
 4. **Activate environment**: `source venv/bin/activate` (Linux/Mac) or `venv\Scripts\activate` (Windows)
 5. **Install dependencies**: `pip install -e ".[dev]"`
 6. **Copy .env.example to .env** and configure your settings
-7. **Run tests**: `pytest tests/` (971+ tests, all must pass)
+7. **Run tests**: `pytest tests/` (1050+ tests, all must pass)
 
 ## Development Workflow
 

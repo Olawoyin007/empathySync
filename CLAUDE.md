@@ -33,7 +33,7 @@ empathysync --log-level DEBUG            # Override log verbosity
 docker compose up
 
 # Tests
-pytest tests/                            # Full suite (971 unit + 100 conversation)
+pytest tests/                            # Full suite (1052 unit + 20 conversation)
 pytest tests/ --cov=src                  # With coverage
 pytest tests/ -m "not conversation"      # Skip Ollama-dependent tests
 python tests/classification/run_domain_eval.py          # Domain accuracy eval
@@ -103,11 +103,11 @@ tests/
 ├── test_conversation_session.py    # ConversationSession orchestration
 ├── test_validate_scenarios.py      # YAML schema validation
 └── classification/
-    ├── domain_corpus.yaml          # 90 labeled examples for accuracy eval
+    ├── domain_corpus.yaml          # 91 labeled examples for accuracy eval
     └── run_domain_eval.py          # Per-domain accuracy report
 ```
 
-Current counts: ~971 unit tests, ~100 conversation quality scenarios.
+Current counts: ~1052 unit tests, 20 conversation quality scenarios.
 
 Pre-existing known failure: `stress_test_001` conversation tier is
 non-deterministic (LLM output varies); the structural tier always passes.
