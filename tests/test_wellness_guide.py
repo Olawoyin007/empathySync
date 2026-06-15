@@ -380,6 +380,33 @@ class TestRiskClassifier:
             assert result["domain"] == "logistics"
             assert not result.get("sanity_check_override")
 
+    def test_sanity_check_distress_present_no_keyword_routes_emotional(self, classifier):
+        """
+        Regression for #135: logistics + distress_present=True, but no domain keyword
+        matches (e.g. interview avoidance/anxiety). The keyword detector stays on
+        logistics, so the override must fall back to 'emotional' rather than leaving
+        it as a practical task.
+        """
+        distress_no_keyword = {
+            "domain": "logistics",
+            "emotional_intensity": 2.0,  # low - must rely on distress_present, not intensity
+            "is_personal_distress": True,
+            "is_practical_technique": False,
+            "confidence": 0.80,
+            "distress_level": "moderate",  # Phase 17.1 won't fire (needs high/crisis)
+            "distress_present": True,
+            "classification_method": "llm",
+        }
+        with patch.object(classifier._llm_classifier, "classify", return_value=distress_no_keyword):
+            result = classifier.classify(
+                "I have an interview on wednesday and I'm now starting to think to just cancel it",
+                [],
+            )
+            assert result["domain"] == "emotional", (
+                f"distress_present with no specific keyword should route to emotional, "
+                f"got domain={result['domain']}"
+            )
+
 
 class TestWellnessPrompts:
     """Tests for WellnessPrompts prompt generation"""
