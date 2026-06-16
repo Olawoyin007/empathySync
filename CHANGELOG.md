@@ -9,6 +9,7 @@ All notable changes to empathySync are documented here.
 - Streaming safety: rolling buffer check now uses a 50-char tail overlap between flushes so harmful phrases split across chunk boundaries are caught before reaching the UI, not only by the post-stream accumulated check (#128)
 
 ### Classification
+- Phase 17.4 distress fallback (#135): when the LLM labels a message `logistics` but explicitly flags `distress_present=True` and the keyword detector finds no specific sensitive domain (e.g. "thinking of cancelling my interview" - avoidance/anxiety with no domain keyword), the message now routes to `emotional` instead of being treated as a practical task. Previously the sanity check only overrode `logistics` when keywords found a *different* domain, so distress-flagged messages with no matching keyword stayed practical and were mislabeled "Responded as: practical task". Gated on `distress_present` (the explicit LLM flag), not intensity alone, so animated-but-fine practical requests are unaffected. Domain accuracy unchanged (logistics errors remain keyword-boundary cases, none flip to emotional)
 - Phase 17.5: Cross-model safety validation - `tests/classification/model_matrix.yaml` defines validated classifier models (distress recall ≥ 90%); sidebar now shows "Tested" / "Untested" badge for the active classifier model; startup logs a warning for unvalidated models; `run_cross_model_eval.py` evaluates any Ollama model against the distress corpus and flags models exceeding the 10% false negative threshold (#124)
 
 ### Infrastructure

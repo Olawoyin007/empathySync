@@ -110,6 +110,11 @@ User Input
 │       if keyword_domain != logistics:       │
 │         override to keyword_domain          │
 │         log sanity_check_override signal    │
+│       elif distress_present=True:           │
+│         (keyword found nothing specific but  │
+│          LLM flagged distress, e.g.         │
+│          "thinking of cancelling my         │
+│          interview") → override to emotional│
 └─────────────────────────────────────────────┘
     │
     ▼

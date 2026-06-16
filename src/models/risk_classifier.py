@@ -268,6 +268,20 @@ class RiskClassifier:
                     )
                     domain = keyword_domain
                     sanity_check_triggered = sanity_trigger
+                elif llm_result.get("distress_present", False):
+                    # The LLM explicitly flagged distress, but keywords can't pinpoint
+                    # a specific sensitive domain — e.g. "thinking of cancelling my
+                    # interview" is avoidance/anxiety with no domain keyword to match.
+                    # Treat it as emotional (the catch-all restraint domain) rather than
+                    # a practical task. Gated on distress_present (the explicit LLM flag),
+                    # not on intensity alone, so animated-but-fine practical requests stay
+                    # logistics.
+                    logger.info(
+                        "Phase 17.4 distress fallback: logistics + distress_present, "
+                        "no specific keyword -> emotional"
+                    )
+                    domain = "emotional"
+                    sanity_check_triggered = "distress_present->emotional"
             # Emotional is a catch-all. If keywords find a more specific sensitive domain,
             # that signal is more precise than the LLM's generic emotional classification.
             elif domain == "emotional":
