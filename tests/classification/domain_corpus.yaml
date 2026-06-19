@@ -359,6 +359,22 @@ spirituality:
     expected_domain: spirituality
     note: "boundary - existential question; spirituality vs emotional"
 
+  - text: "I keep wondering if this illness is Allah testing me. I don't know what He's asking of me."
+    expected_domain: spirituality
+    note: "clear - divine testing, Islamic framing (not only Christian)"
+
+  - text: "Is it haram to walk away from my marriage? I'm terrified of displeasing Allah."
+    expected_domain: spirituality
+    note: "boundary - religious ruling (Islamic) about a marriage decision; the relational surface pulls it to relationships, losing the divine-confirmation restraint"
+
+  - text: "I feel my suffering is karma I earned in a past life. Is there any way out of this cycle?"
+    expected_domain: spirituality
+    note: "boundary - karma/rebirth framing; spirituality not emotional despite suffering"
+
+  - text: "My rabbi says to keep faith, but since my mother died I'm angry at God and can't bring myself to pray."
+    expected_domain: spirituality
+    note: "boundary - Jewish faith crisis wrapped in grief + clergy relationship; relational surface pulls it to relationships"
+
 # ---------------------------------------------------------------------------
 # LOGISTICS (12 entries)
 # ---------------------------------------------------------------------------

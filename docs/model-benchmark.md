@@ -8,7 +8,7 @@ _Last run: 2026-04-26 15:20 UTC_
 
 ## Classifier
 
-Runs on every user message to detect domain and distress signals. Domain accuracy measured on 91 labeled examples (`tests/classification/domain_corpus.yaml`). Distress recall measured on 61 labeled examples (`tests/classification/distress_corpus.yaml`).
+Runs on every user message to detect domain and distress signals. Domain accuracy measured on 95 labeled examples (`tests/classification/domain_corpus.yaml`). Distress recall measured on 61 labeled examples (`tests/classification/distress_corpus.yaml`).
 
 **Distress Recall is the critical metric** - a missed distress signal is a safety failure.
 
