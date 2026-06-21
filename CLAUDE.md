@@ -103,7 +103,7 @@ tests/
 ├── test_conversation_session.py    # ConversationSession orchestration
 ├── test_validate_scenarios.py      # YAML schema validation
 └── classification/
-    ├── domain_corpus.yaml          # 95 labeled examples for accuracy eval
+    ├── domain_corpus.yaml          # 94 labeled examples for accuracy eval
     └── run_domain_eval.py          # Per-domain accuracy report
 ```
 
