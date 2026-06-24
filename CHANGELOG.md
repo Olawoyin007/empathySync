@@ -5,6 +5,7 @@ All notable changes to empathySync are documented here.
 ## [Unreleased]
 
 ### Security
+- Encryption-at-rest notice: a one-time UI warning now states that conversations are stored unencrypted and points to `THREAT_MODEL.md`. `THREAT_MODEL.md` already documents "no encryption at rest" as a known gap, but a user on a shared machine will not read it before their history is written to disk - this surfaces that honesty in the app itself, matching the transparency principle. Shown only when `STORE_CONVERSATIONS` is on; dismissing it writes a marker under the (git-ignored) data dir so it never nags again
 - Prompt injection: classification prompt now explicitly instructs the model not to follow instructions inside the `<user_message>` boundary, reducing risk on weaker models (#127)
 - Streaming safety: rolling buffer check now uses a 50-char tail overlap between flushes so harmful phrases split across chunk boundaries are caught before reaching the UI, not only by the post-stream accumulated check (#128)
 

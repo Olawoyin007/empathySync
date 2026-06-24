@@ -40,6 +40,32 @@ apply_page_config()
 apply_custom_css()
 
 
+def display_encryption_notice():
+    """One-time notice that local data is stored unencrypted.
+
+    THREAT_MODEL.md is explicit that there is no encryption at rest, but a user
+    running on a shared machine will not read it before their conversation
+    history is written to disk. This surfaces that honesty in the UI itself,
+    matching the transparency philosophy used elsewhere. Only shown when
+    persistence is on; dismissing it writes a marker so it never nags again.
+    """
+    if not settings.STORE_CONVERSATIONS:
+        return
+    ack_marker = settings.DATA_DIR / ".encryption_notice_ack"
+    if ack_marker.exists():
+        return
+    st.warning(
+        f"Conversations are stored **unencrypted** at `{settings.DATA_DIR}`. "
+        "On a shared machine, enable full-disk encryption. See `THREAT_MODEL.md`."
+    )
+    if st.button("Understood - don't show this again"):
+        try:
+            ack_marker.touch()
+        except OSError:
+            pass  # Non-critical: the notice simply shows again next launch
+        st.rerun()
+
+
 def main():
     """Main application function"""
 
@@ -115,6 +141,9 @@ def main():
             except Exception:
                 pass  # Non-critical: pruning can retry next session
         st.session_state.data_pruned = True
+
+    # One-time notice: local data is stored unencrypted at rest (THREAT_MODEL.md)
+    display_encryption_notice()
 
     # Phase 11: Check device lock status (enables read-only mode if locked by other)
     display_lock_warning()
