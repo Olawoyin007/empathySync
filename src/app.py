@@ -54,7 +54,7 @@ def display_encryption_notice():
     ack_marker = settings.DATA_DIR / ".encryption_notice_ack"
     if ack_marker.exists():
         return
-    st.warning(
+    st.caption(
         f"Conversations are stored **unencrypted** at `{settings.DATA_DIR}`. "
         "On a shared machine, enable full-disk encryption. See `THREAT_MODEL.md`."
     )
