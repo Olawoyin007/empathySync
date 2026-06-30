@@ -41,6 +41,24 @@ behind your own authenticated tunnel or reverse proxy; empathySync provides none
   maximum length (`src/models/llm_classifier.py`), so untrusted text is treated as data, not
   as instructions to the classifier.
 
+## Engineering controls
+
+The protections above are enforced in code at the locations below. This table is
+the quick index for reviewers: a change that weakens one of these is a regression,
+not a refactor. The prose above explains *why* each control exists; this maps
+*where* it lives.
+
+| Control | Enforcement | Where |
+|---------|-------------|-------|
+| No external calls | Only outbound traffic is to the local `OLLAMA_HOST` | `src/models/llm_classifier.py`, `src/utils/http_client.py` |
+| Prompt-injection boundary | User message wrapped in `<user_message>` tags, truncated to 5000 chars | `src/models/llm_classifier.py` |
+| Mid-stream harmful-output check | 200-char rolling buffer scanned before tokens reach the UI | `src/models/ai_wellness_guide.py` |
+| No SQL injection via dynamic names | Table and column whitelists; all values parameterized | `src/utils/storage_backend.py` |
+| Write gate | `_ensure_write_allowed()` at the top of every write method | `src/utils/write_gate.py`, `src/utils/storage_backend.py` |
+| Atomic writes | `mkstemp` + `fsync` + `os.replace` (no torn files on crash) | `src/utils/storage_backend.py` |
+| `OLLAMA_HOST` validation | http(s) scheme checked at config load | `src/config/settings.py` |
+| Non-root container | `gosu` drops root to `PUID:PGID`; Ollama bound to `127.0.0.1` | `docker/entrypoint.sh`, `docker-compose.yml` |
+
 ## Known gaps
 
 These are open and acknowledged. Contributor help is welcome.
