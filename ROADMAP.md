@@ -2620,18 +2620,24 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 
 ---
 
-## Next Up: v1.11.0 - Operational Hardening (planned, post-v1.10.1)
+## v1.11.0 - Operational Hardening (released 2026-07-02)
 
 Contributor-experience and operational improvements identified from reviewing mature
 self-hosted OSS projects. None are bugs in v1.10.1; they harden the project as the
 contributor base grows.
 
-- [ ] Docker entrypoint hardening: PUID/PGID permission handling, CUDA detection, SIGTERM signal forwarding
-- [ ] Issue templates (`.github/`) requesting install method, OS, Ollama version, and model
-- [ ] PR-description validation GitHub Action (summary present, type-of-change, testing notes)
+- [x] Docker entrypoint hardening: PUID/PGID permission handling, CUDA detection, SIGTERM signal forwarding
+- [x] Issue templates (`.github/`) requesting install method, OS, Ollama version, and model
+- [x] PR-description validation GitHub Action (summary present, type-of-change, testing notes)
 - [ ] `dev`/`main` branch model: PRs target `dev`, `main` stays curated
 - [ ] THREAT_MODEL.md follow-through: address documented gaps (filesystem/shell sandboxing options, optional encryption at rest)
 - [ ] Clean-machine install test before public demos: verify the "runs on your laptop" path end to end
+
+Shipped alongside the operational items: THREAT_MODEL.md engineering-controls table and a
+one-time in-app encryption-at-rest notice (transparency, not encryption itself), plus the
+Phase 17.4 distress fallback and Phase 17.5 cross-model safety validation. The three
+unchecked items above are deferred to a later release - optional encryption at rest and the
+`dev`/`main` split in particular remain open.
 
 ---
 
