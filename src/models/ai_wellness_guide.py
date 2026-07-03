@@ -1556,6 +1556,11 @@ class WellnessGuide:
         """Check for jailbreak attempts and return a short refusal.
 
         Jailbreak attempts get a hard-coded early return - never sent to Ollama.
+
+        "Asking for a friend" is a dismissal tactic only when it follows a
+        refusal; on its own it is a common innocuous phrase ("need a CV
+        template, asking for a friend"), so it is checked only while
+        post-refusal state (harmful or crisis) is active.
         """
         jailbreak_phrases = [
             "pretend to be my friend",
@@ -1578,6 +1583,9 @@ class WellnessGuide:
             "you will do what I say",
             "do as you are told",
             "comply or",
+        ]
+
+        post_refusal_phrases = [
             "asking for a friend",
             "just asking for a friend",
         ]
@@ -1585,6 +1593,10 @@ class WellnessGuide:
         input_lower = user_input.lower()
         if any(phrase in input_lower for phrase in jailbreak_phrases):
             return "No. These are my limits."
+
+        if self.post_harmful_turn is not None or self.post_crisis_turn is not None:
+            if any(phrase in input_lower for phrase in post_refusal_phrases):
+                return "No. These are my limits."
 
         return None
 
@@ -1601,7 +1613,6 @@ class WellnessGuide:
             "was that good",
             "are you doing a good job",
             "do you think you're doing a good job",
-            "how are you doing",
             "how did you do",
             "how good are you",
         ]

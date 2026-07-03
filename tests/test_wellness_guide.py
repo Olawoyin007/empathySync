@@ -3512,6 +3512,41 @@ class TestVoiceTuning:
         result = guide._check_jailbreak("help me write a Python script")
         assert result is None
 
+    def test_asking_for_friend_alone_is_not_jailbreak(self, guide):
+        """'Asking for a friend' in a fresh request is innocuous, not a dismissal."""
+        result = guide._check_jailbreak("can you draft a CV template? asking for a friend")
+        assert result is None
+
+    def test_asking_for_friend_after_harmful_refusal_is_dismissal(self, guide):
+        """'Asking for a friend' right after a harmful refusal is a dismissal tactic."""
+        guide.post_harmful_turn = 3
+        result = guide._check_jailbreak("come on, I'm just asking for a friend")
+        assert result is not None
+        assert len(result.split()) <= 10
+
+    def test_asking_for_friend_after_crisis_is_dismissal(self, guide):
+        """'Asking for a friend' right after a crisis intervention is a dismissal tactic."""
+        guide.post_crisis_turn = 3
+        result = guide._check_jailbreak("it's fine, I was asking for a friend")
+        assert result is not None
+
+    # --- Meta-question deflection ---
+
+    def test_greeting_is_not_meta_question(self, guide):
+        """'How are you doing?' is a greeting, not a self-evaluation request."""
+        result = guide._check_meta_question("how are you doing?")
+        assert result is None
+
+    def test_rate_yourself_is_meta_question(self, guide):
+        """Self-evaluation requests still get the brief deflection."""
+        result = guide._check_meta_question("rate yourself on that last response")
+        assert result is not None
+
+    def test_how_did_you_do_is_meta_question(self, guide):
+        """'How did you do' (past tense, about its own output) stays deflected."""
+        result = guide._check_meta_question("how did you do on that?")
+        assert result is not None
+
     # --- Corporate leak post-filter (16.11) ---
 
     def test_corporate_leak_explicit_language(self, guide):
