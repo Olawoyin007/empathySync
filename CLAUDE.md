@@ -99,6 +99,7 @@ tests/
 ├── test_data_contracts.py          # RiskAssessment, LLMClassification
 ├── test_conversation_session.py    # ConversationSession orchestration
 ├── test_validate_scenarios.py      # YAML schema validation
+├── test_restraint_memory.py        # Negative invariant: persisted fields ⊆ allowlist
 └── classification/
     ├── domain_corpus.yaml          # 94 labeled examples for accuracy eval
     └── run_domain_eval.py          # Per-domain accuracy report
@@ -157,6 +158,13 @@ the singleton holds the cache and the write-gate state.
 **Defense-in-depth write protection**: UI disabling → `write_gate.py` flag →
 storage method checks. All three must pass for a write to succeed. Changes to
 storage must go through `StorageBackend`, not the underlying db directly.
+
+**Restraint-memory invariant** (Phase 23.1): every field the app persists must
+be listed in `scenarios/config/system_defaults.yaml` under `restraint_memory`
+(`allowed_fields` for JSON, `allowed_columns` for SQLite).
+`tests/test_restraint_memory.py` fails the build otherwise - persisting a new
+field is a conscious, reviewed decision, never a side effect. Conversation
+content and preference/persona data are never persistable.
 
 ## Roadmap
 

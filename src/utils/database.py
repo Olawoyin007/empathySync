@@ -541,10 +541,9 @@ def migrate_from_json(wellness_json_path: Path, network_json_path: Path) -> bool
                 # Session intents
                 for intent in wellness.get("session_intents", []):
                     db.execute(
-                        "INSERT INTO session_intents (intent, user_input, created_at) VALUES (?, ?, ?)",
+                        "INSERT INTO session_intents (intent, created_at) VALUES (?, ?)",
                         (
                             intent.get("intent", "unknown"),
-                            intent.get("user_input", ""),
                             intent.get(
                                 "timestamp", intent.get("created_at", datetime.now().isoformat())
                             ),

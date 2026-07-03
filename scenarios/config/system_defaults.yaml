@@ -130,3 +130,79 @@ retention:
   max_task_pattern_uses: 100
   max_policy_events: 1000
   historical_days: 3650           # ~10 years for full history queries
+
+# --- Restraint Memory (Phase 23.1) ---
+# The exhaustive allowlist of persistable fields. This is the negative
+# invariant that makes "memory as guardrail, not rapport" falsifiable:
+# tests/test_restraint_memory.py serializes every persisted structure and
+# fails the build if ANY field outside this list is written. Adding a field
+# here is a conscious, reviewed decision - never a side effect.
+#
+# Consciously allowed free-text fields (user-entered form input, never
+# conversation transcript or derived preference/persona data):
+#   check_ins.notes            - the daily check-in note the user types
+#   independence_records.notes - the "I did it myself" note the user types
+#   self_reports.response      - the user's answer to a self-report prompt
+#   people.* / reach_outs.*    - trusted-network contact data the user enters
+#   handoffs.message_preview   - first 100 chars of the outreach message the
+#                                user sent to a trusted person (powers the
+#                                handoff follow-up); outreach text, not
+#                                conversation content
+# Free-form "details" dicts are additionally scanned against the forbidden
+# key names below.
+restraint_memory:
+  forbidden_field_names:        # must not appear ANYWHERE in persisted data
+    - message
+    - messages
+    - content
+    - conversation
+    - transcript
+    - user_input
+    - prompt
+    - persona
+    - preference
+    - preferences
+    - profile
+  allowed_fields:
+    wellness_root: [schema_version, created_at, check_ins, usage_sessions,
+                    policy_events, session_intents, task_patterns,
+                    independence_records, handoff_events, self_reports]
+    check_ins: [date, datetime, feeling_score, notes]
+    usage_sessions: [date, datetime, domains_touched, duration_minutes, hour,
+                     max_risk_weight, turn_count]
+    policy_events: [action_taken, date, datetime, domain, policy_type, risk_weight]
+    session_intents: [auto_detected, date, datetime, intent, was_check_in]
+    task_patterns: [count, count_at_last_shown, dismissal_count, first_use,
+                    graduation_shown_count, last_dismissal, last_graduation_shown,
+                    last_use, uses]
+    task_pattern_uses: [date, datetime]
+    independence_records: [category, date, datetime, notes]
+    handoff_events: [context, date, datetime, details, domain, event_type, outcome]
+    self_reports: [date, datetime, details, response, type]
+    network_root: [schema_version, created_at, people, reach_outs, handoffs]
+    people: [added_at, contact, domains, id, last_contact, name, notes, relationship]
+    reach_outs: [date, datetime, method, notes, person_name, topic]
+    handoffs: [context, date, datetime, domain, follow_up_shown, id,
+               message_preview, outcome, person_name, status]
+  # SQLite column allowlist (column names diverge from the JSON field names).
+  # Structural/bookkeeping columns carry no user data. Legacy exceptions are
+  # deny-named columns that predate the invariant; a schema v3 migration will
+  # drop session_intents.user_input (dormant - asserted empty by the test)
+  # and rename self_reports.content to response.
+  allowed_columns:
+    schema_info: [version, migrated_at, description]
+    check_ins: [id, feeling_score, notes, created_at]
+    usage_sessions: [id, started_at, ended_at, duration_minutes, turn_count,
+                     max_risk_weight, domains_touched, intent, created_at]
+    policy_events: [id, session_id, event_type, domain, action_taken,
+                    explanation, risk_weight, created_at]
+    session_intents: [id, session_id, intent, user_input, created_at]
+    independence_records: [id, task_category, milestone, notes, created_at]
+    handoff_events: [id, handoff_type, domain, person_name, completed, notes, created_at]
+    self_reports: [id, report_type, content, score, created_at]
+    task_patterns: [id, pattern_type, count, last_seen, metadata, created_at]
+    trusted_people: [id, name, relationship, contact, notes, domains, added_at, last_contact]
+    reach_outs: [id, person_id, method, notes, outcome, created_at]
+  legacy_deny_named_columns:
+    session_intents: [user_input]   # dormant; must be empty; drop in schema v3
+    self_reports: [content]         # holds the user's self-report answer; rename in v3

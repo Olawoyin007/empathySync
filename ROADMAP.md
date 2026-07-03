@@ -156,10 +156,12 @@ whichever label the LLM reaches first wins forever. Measured consequences:
 The invariant must exist before Phase 22 adds cross-session persistence, so that
 what the daemon is *able* to remember is constrained by design, not audited after.
 
-- [ ] Define the exhaustive allowlist of persistable fields in `scenarios/config/system_defaults.yaml` (`restraint_memory.allowed_fields`)
-- [ ] Add a property test (`tests/test_restraint_memory.py`) that serializes every persisted structure (session summaries, wellness-tracker state, handoff log, policy_events) and asserts NO field outside the allowlist is present - in particular, no raw user-message text and no derived "preference"/"persona" field
-- [ ] CI gate: blocking. A PR that persists conversation content or a rapport profile fails the build.
-- [ ] Document the invariant in MANIFESTO.md (one line) and CLAUDE.md (architecture note)
+- [x] Define the exhaustive allowlist of persistable fields in `scenarios/config/system_defaults.yaml` (`restraint_memory.allowed_fields` for JSON, `allowed_columns` for SQLite, plus `forbidden_field_names` deny-list)
+- [x] Add a property test (`tests/test_restraint_memory.py`) that serializes every persisted structure (wellness-tracker state, trusted network, handoff log, policy_events - both backends) and asserts NO field outside the allowlist is present - in particular, no raw user-message text and no derived "preference"/"persona" field
+- [x] CI gate: blocking. A PR that persists conversation content or a rapport profile fails the build.
+- [x] Document the invariant in CLAUDE.md (key pattern) and THREAT_MODEL.md (engineering-controls row)
+- [ ] MANIFESTO.md one-liner: blocked by the manifesto-guard CI rule (changes require a discussion issue first) - open that issue when convenient
+- [x] Found by the invariant on first run: a dormant `user_input` parameter/column in the storage layer (never populated, but a standing capability to persist raw messages) - write path removed; column asserted empty until the schema v3 migration drops it. `self_reports.content` (the user's self-report answer under a deny-listed name) documented as a legacy exception to rename in v3.
 
 ### 23.2 Cross-Session Decay
 - [ ] Extend the per-turn context decay (Phase 6.5) to cross-session safety state: dependency-score trajectory and sensitive-domain counters decay toward baseline after a configurable quiet period (default 30 days with no sensitive sessions in that domain)

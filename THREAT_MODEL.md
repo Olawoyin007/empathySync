@@ -58,6 +58,7 @@ not a refactor. The prose above explains *why* each control exists; this maps
 | Atomic writes | `mkstemp` + `fsync` + `os.replace` (no torn files on crash) | `src/utils/storage_backend.py` |
 | `OLLAMA_HOST` validation | http(s) scheme checked at config load | `src/config/settings.py` |
 | Non-root container | `gosu` drops root to `PUID:PGID`; Ollama bound to `127.0.0.1` | `docker/entrypoint.sh`, `docker-compose.yml` |
+| Restraint-memory invariant | Property test serializes every persisted structure (both backends) and fails the build if any field outside the allowlist is written - no conversation content, no preference/persona data, ever | `tests/test_restraint_memory.py`, `scenarios/config/system_defaults.yaml` (`restraint_memory`) |
 
 ## Known gaps
 

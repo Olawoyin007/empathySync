@@ -19,11 +19,15 @@ python tests/classification/run_domain_eval.py
 # Structural conversation quality (no Ollama required)
 pytest tests/test_conversation_quality.py -m "not conversation" -v
 
+# Restraint-memory negative invariant (persisted fields ⊆ allowlist)
+pytest tests/test_restraint_memory.py -v
+
 # Version consistency
 python scripts/check_version.py
 ```
 
-Expected: `pytest` all green, domain eval ≥87% overall, version check passes.
+Expected: `pytest` all green, domain eval at or above the 86% baseline
+(81/94 on mistral:7b-instruct), version check passes.
 
 ---
 
