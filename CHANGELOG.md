@@ -4,6 +4,35 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Added (Phase 23.1 - restraint-memory negative invariant)
+- The memory principle is now architectural and falsifiable: every field the app
+  persists must appear in the new `restraint_memory` allowlist in
+  `scenarios/config/system_defaults.yaml` (`allowed_fields` for the JSON backend,
+  `allowed_columns` for SQLite, plus a `forbidden_field_names` deny-list -
+  message/content/transcript/persona/preference/etc. may not appear anywhere).
+  `tests/test_restraint_memory.py` exercises every public persistence API against
+  both backends and fails the build on any field outside the allowlist - persisting
+  a new field becomes a conscious, reviewed decision instead of a side effect.
+  Documented as a CLAUDE.md key pattern and a THREAT_MODEL.md engineering-controls
+  row. (MANIFESTO.md one-liner deferred: the manifesto-guard CI rule requires a
+  discussion issue first)
+- What the invariant caught on its first run: a dormant `user_input` parameter in
+  `StorageBackend.add_session_intent` (interface, both backends, and a SQLite
+  column) - never populated by any caller, but a standing capability to persist
+  raw user messages. The write path is removed; the legacy column must now be
+  provably empty (asserted by the test) until a schema v3 migration drops it.
+  `self_reports.content` (the user's self-report answer stored under a deny-listed
+  column name) is documented as the second legacy exception, to be renamed
+  `response` in v3
+- Consciously allowlisted free-text fields, with rationale in the YAML: check-in
+  notes, independence notes, self-report responses (user-entered form input),
+  trusted-network contact data, and `handoffs.message_preview` (first 100 chars of
+  the user's outreach message to a trusted person - powers the handoff follow-up;
+  outreach text, not conversation content)
+- `TESTING_CHECKLIST.md`: invariant added to the automated gates; corrected the
+  stale "domain eval >=87%" expectation to the real baseline (86%, 81/94 on
+  mistral:7b-instruct)
+
 ### Changed
 - Minimum supported Python is now 3.10 (was 3.9, EOL since October 2025). CI matrix
   updated to 3.10-3.14, adding coverage for 3.13 and 3.14 which were previously

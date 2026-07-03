@@ -132,7 +132,6 @@ class StorageBackend(ABC):
         intent: str,
         was_check_in: bool = False,
         auto_detected: bool = False,
-        user_input: str = "",
     ) -> Dict:
         """Record session intent."""
         pass
@@ -486,7 +485,6 @@ class JSONBackend(StorageBackend):
         intent: str,
         was_check_in: bool = False,
         auto_detected: bool = False,
-        user_input: str = "",
     ) -> Dict:
         self._ensure_write_allowed()
         data = self._load_wellness()
@@ -497,7 +495,6 @@ class JSONBackend(StorageBackend):
             "intent": intent,
             "was_check_in": was_check_in,
             "auto_detected": auto_detected,
-            "user_input": user_input,
         }
         if "session_intents" not in data:
             data["session_intents"] = []
@@ -1102,12 +1099,9 @@ class SQLiteBackend(StorageBackend):
         intent: str,
         was_check_in: bool = False,
         auto_detected: bool = False,
-        user_input: str = "",
     ) -> Dict:
         self._ensure_write_allowed()
-        cursor = self.db.execute(
-            "INSERT INTO session_intents (intent, user_input) VALUES (?, ?)", (intent, user_input)
-        )
+        cursor = self.db.execute("INSERT INTO session_intents (intent) VALUES (?)", (intent,))
         self.db.commit()
 
         return {
@@ -1117,7 +1111,6 @@ class SQLiteBackend(StorageBackend):
             "intent": intent,
             "was_check_in": was_check_in,
             "auto_detected": auto_detected,
-            "user_input": user_input,
         }
 
     def get_session_intents_for_period(self, start_date: date, end_date: date = None) -> List[Dict]:
