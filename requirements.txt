@@ -1,4 +1,7 @@
 # Core Dependencies (all that's needed to run empathySync)
+# Keep in sync with [project.dependencies] in pyproject.toml.
+# CI installs from pyproject (pip install -e .), so drift there fails the build;
+# Docker and install.sh install from this file.
 streamlit>=1.28.0
 httpx>=0.26.0
 python-dotenv>=1.0.0

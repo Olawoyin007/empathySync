@@ -4,7 +4,7 @@ This guide walks you through installing and configuring empathySync on your loca
 
 ## Prerequisites
 
-- **Python 3.9+**
+- **Python 3.10+**
 - **Ollama** - Local LLM runtime ([ollama.com](https://ollama.com))
 - **Git** (optional, for cloning)
 

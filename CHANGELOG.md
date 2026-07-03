@@ -4,6 +4,18 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Changed
+- Minimum supported Python is now 3.10 (was 3.9, EOL since October 2025). CI matrix
+  updated to 3.10-3.14, adding coverage for 3.13 and 3.14 which were previously
+  untested. `requires-python`, classifiers, black `target-version`, and mypy
+  `python_version` bumped in `pyproject.toml`; `install.sh` version check and the
+  README/setup prerequisites updated to match
+- CI now installs the package from `pyproject.toml` (`pip install -e .`) instead of
+  `requirements.txt`, so a dependency added to one file but not the other fails the
+  build instead of drifting silently. `requirements.txt` stays as the install source
+  for Docker and `install.sh`, with a sync note in its header; the pip cache key now
+  hashes `pyproject.toml`
+
 ### Refactored
 - Config values are now read at call time instead of being baked into module-level
   constants at import time (`MAX_INPUT_LENGTH`, `TURN_LIMITS`,
