@@ -52,7 +52,7 @@ not a refactor. The prose above explains *why* each control exists; this maps
 |---------|-------------|-------|
 | No external calls | Only outbound traffic is to the local `OLLAMA_HOST` | `src/models/llm_classifier.py`, `src/utils/http_client.py` |
 | Prompt-injection boundary | User message wrapped in `<user_message>` tags, truncated to 5000 chars | `src/models/llm_classifier.py` |
-| Mid-stream harmful-output check | 200-char rolling buffer scanned before tokens reach the UI | `src/models/ai_wellness_guide.py` |
+| Mid-stream output voice check | 200-char rolling buffer scanned for manipulative-language patterns (false intimacy, dependency-encouraging phrasing, `safe_alternatives.yaml`) before tokens reach the UI. Not a dangerous-content scanner - blocking harmful *requests* is the input-side layers' job | `src/models/ai_wellness_guide.py` |
 | No SQL injection via dynamic names | Table and column whitelists; all values parameterized | `src/utils/storage_backend.py` |
 | Write gate | `_ensure_write_allowed()` at the top of every write method | `src/utils/write_gate.py`, `src/utils/storage_backend.py` |
 | Atomic writes | `mkstemp` + `fsync` + `os.replace` (no torn files on crash) | `src/utils/storage_backend.py` |
