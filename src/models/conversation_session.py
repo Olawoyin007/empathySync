@@ -126,7 +126,82 @@ class ConversationSession:
         """
         t_msg_start = time.perf_counter()
 
-        # Add user message to history
+        early = self._run_pre_llm_steps(user_input)
+        if early is not None:
+            return early
+
+        # Step 4: Generate response via WellnessGuide safety pipeline
+        response = self.guide.generate_response(
+            user_input,
+            self.wellness_mode,
+            self.messages,
+            wellness_tracker=self.tracker,
+            connection_steering=self.connection_steering,
+        )
+
+        return self._finalize_turn(response, user_input, t_msg_start)
+
+    def process_message_stream(self, user_input: str) -> ConversationResult:
+        """
+        Process a user message and return a streaming ConversationResult.
+
+        Pre-LLM pipeline steps (cooldown, connection-seeking, intent shift)
+        run synchronously. If they produce an early return, the result has
+        response set and response_stream=None.
+
+        Otherwise, result.response_stream is an iterator that yields tokens.
+        After consuming the stream, call finalize_stream() to populate
+        post-stream metadata (graduation, handoff, message history).
+        """
+        early = self._run_pre_llm_steps(user_input)
+        if early is not None:
+            return early
+
+        # Step 4: Get streaming generator from WellnessGuide
+        stream = self.guide.generate_response_stream(
+            user_input,
+            self.wellness_mode,
+            self.messages,
+            wellness_tracker=self.tracker,
+            connection_steering=self.connection_steering,
+        )
+
+        # Store user_input and start time for finalize_stream
+        self._pending_stream_input = user_input
+        self._stream_start_time = time.perf_counter()
+
+        return ConversationResult(
+            response="",
+            response_stream=stream,
+            pending_shift=self.pending_shift,
+            turn_count=self.turn_count,
+            steering_active=self.connection_steering.active,
+        )
+
+    def finalize_stream(self) -> ConversationResult:
+        """
+        Populate post-stream metadata after the token stream is consumed.
+
+        Call this after fully consuming result.response_stream. It reads
+        the accumulated response from WellnessGuide, updates message history,
+        and runs graduation/handoff checks.
+
+        Returns a ConversationResult with final metadata (no stream).
+        """
+        response = getattr(self.guide, "_last_streamed_response", "")
+        user_input = getattr(self, "_pending_stream_input", "")
+        t_start = getattr(self, "_stream_start_time", time.perf_counter())
+        return self._finalize_turn(response, user_input, t_start)
+
+    def _run_pre_llm_steps(self, user_input: str) -> Optional[ConversationResult]:
+        """
+        Shared pre-LLM pipeline (steps 1-3.5) for both response paths.
+
+        Appends the user message and runs the cooldown, first-turn intent,
+        intent-shift, and isolation checks. Returns an early
+        ConversationResult (cooldown block or connection redirect), or None
+        to proceed to response generation.
+        """
         self.messages.append({"role": "user", "content": user_input})
 
         # Step 1: Check cooldown
@@ -154,12 +229,7 @@ class ConversationSession:
                 self.tracker.record_session_intent(INTENT_CONNECTION, auto_detected=True)
                 self.session_intent = INTENT_CONNECTION
 
-                # Get connection response
-                if connection_type == "ai_relationship":
-                    responses = self.loader.get_connection_responses("ai_relationship")
-                else:
-                    responses = self.loader.get_connection_responses(connection_type)
-
+                responses = self.loader.get_connection_responses(connection_type)
                 if responses:
                     response = random.choice(responses)
                     self.messages.append({"role": "assistant", "content": response})
@@ -194,18 +264,19 @@ class ConversationSession:
                     network_empty=len(self.network.get_all_people()) == 0,
                 )
 
-        # Step 4: Generate response via WellnessGuide safety pipeline
-        response = self.guide.generate_response(
-            user_input,
-            self.wellness_mode,
-            self.messages,
-            wellness_tracker=self.tracker,
-            connection_steering=self.connection_steering,
-        )
+        return None
 
+    def _finalize_turn(self, response: str, user_input: str, t_start: float) -> ConversationResult:
+        """
+        Shared post-LLM pipeline (steps 4.5-8) for both response paths.
+
+        Appends the assistant message, runs the isolation, task-category,
+        graduation, and handoff checks, and builds the final
+        ConversationResult.
+        """
         self.messages.append({"role": "assistant", "content": response})
 
-        # Step 4.5: Post-response isolation checks
+        # Step 4.5: Post-response isolation check
         # Check LLM-detected isolation (for cases keyword fast-path missed)
         if not self.connection_steering.active and self.guide.last_risk_assessment:
             isolation_level = self.guide.last_risk_assessment.get("isolation_level", "none")
@@ -262,191 +333,7 @@ class ConversationSession:
         # Step 8: Build result
         should_rerun = self.guide.last_policy_action is not None or self.pending_shift is not None
 
-        self._log_perf(t_msg_start)
-
-        return ConversationResult(
-            response=response,
-            risk_assessment=self.guide.last_risk_assessment,
-            policy_action=self.guide.last_policy_action,
-            pending_shift=self.pending_shift,
-            pending_graduation=self.pending_graduation,
-            suggested_handoff_person=suggested_person,
-            suggested_handoff_domain=suggested_domain,
-            turn_count=self.turn_count,
-            should_rerun=should_rerun,
-            steering_active=self.connection_steering.active,
-        )
-
-    def process_message_stream(self, user_input: str) -> ConversationResult:
-        """
-        Process a user message and return a streaming ConversationResult.
-
-        Pre-LLM pipeline steps (cooldown, connection-seeking, intent shift)
-        run synchronously. If they produce an early return, the result has
-        response set and response_stream=None.
-
-        Otherwise, result.response_stream is an iterator that yields tokens.
-        After consuming the stream, call finalize_stream() to populate
-        post-stream metadata (graduation, handoff, message history).
-        """
-        # Add user message to history
-        self.messages.append({"role": "user", "content": user_input})
-
-        # Step 1: Check cooldown
-        should_cooldown, cooldown_reason = self.tracker.should_enforce_cooldown()
-        if should_cooldown:
-            suggested_person = None
-            people = self.network.get_all_people()
-            if people:
-                person = random.choice(people)
-                suggested_person = person.get("name")
-
-            return ConversationResult(
-                response="",
-                is_cooldown_active=True,
-                cooldown_message=cooldown_reason,
-                suggested_handoff_person=suggested_person,
-                turn_count=self.turn_count,
-            )
-
-        # Step 2: First-turn processing
-        if self.turn_count == 1:
-            is_connection, connection_type = self.classifier.is_connection_seeking(user_input)
-            if is_connection:
-                self.tracker.record_session_intent(INTENT_CONNECTION, auto_detected=True)
-                self.session_intent = INTENT_CONNECTION
-
-                if connection_type == "ai_relationship":
-                    responses = self.loader.get_connection_responses("ai_relationship")
-                else:
-                    responses = self.loader.get_connection_responses(connection_type)
-
-                if responses:
-                    response = random.choice(responses)
-                    self.messages.append({"role": "assistant", "content": response})
-
-                    return ConversationResult(
-                        response=response,
-                        pending_connection_redirect={"type": connection_type},
-                        should_rerun=True,
-                        turn_count=self.turn_count,
-                    )
-            else:
-                detected_intent, confidence = self.classifier.detect_intent(user_input)
-                if confidence >= _CONFIDENCE_THRESHOLD:
-                    self.tracker.record_session_intent(detected_intent, auto_detected=True)
-                    self.session_intent = detected_intent
-
-        # Step 3: Intent shift detection
-        if self.session_intent and len(self.messages) > 2 and not self.acknowledged_shift:
-            shift = self.classifier.detect_intent_shift(
-                self.messages, self.session_intent, user_input
-            )
-            if shift and shift.get("is_concerning"):
-                self.pending_shift = shift
-
-        # Step 3.5: Isolation detection - keyword fast-path before LLM call
-        if not self.connection_steering.active:
-            if self._check_isolation_signals(user_input):
-                self.connection_steering.activate(
-                    self.turn_count,
-                    network_empty=len(self.network.get_all_people()) == 0,
-                )
-
-        # Step 4: Get streaming generator from WellnessGuide
-        stream = self.guide.generate_response_stream(
-            user_input,
-            self.wellness_mode,
-            self.messages,
-            wellness_tracker=self.tracker,
-            connection_steering=self.connection_steering,
-        )
-
-        # Store user_input and start time for finalize_stream
-        self._pending_stream_input = user_input
-        self._stream_start_time = time.perf_counter()
-
-        return ConversationResult(
-            response="",
-            response_stream=stream,
-            pending_shift=self.pending_shift,
-            turn_count=self.turn_count,
-            steering_active=self.connection_steering.active,
-        )
-
-    def finalize_stream(self) -> ConversationResult:
-        """
-        Populate post-stream metadata after the token stream is consumed.
-
-        Call this after fully consuming result.response_stream. It reads
-        the accumulated response from WellnessGuide, updates message history,
-        and runs graduation/handoff checks.
-
-        Returns a ConversationResult with final metadata (no stream).
-        """
-        # Get the accumulated response from the guide
-        response = getattr(self.guide, "_last_streamed_response", "")
-
-        # Add to message history
-        self.messages.append({"role": "assistant", "content": response})
-
-        # Post-response isolation checks (LLM-detected, for next turn)
-        if not self.connection_steering.active and self.guide.last_risk_assessment:
-            isolation_level = self.guide.last_risk_assessment.get("isolation_level", "none")
-            if isolation_level in ("active", "passive"):
-                self.connection_steering.activate(
-                    self.turn_count,
-                    network_empty=len(self.network.get_all_people()) == 0,
-                )
-
-        # Step 5: Track task category for practical tasks
-        should_check_graduation = False
-        if self.guide.last_risk_assessment:
-            domain = self.guide.last_risk_assessment.get("domain", "")
-            if domain == "logistics":
-                user_input = getattr(self, "_pending_stream_input", "")
-                task_category, confidence = self.classifier.detect_task_category(user_input)
-                if task_category and confidence >= _CONFIDENCE_THRESHOLD:
-                    self.tracker.record_task_category(task_category)
-                    self.last_task_category = task_category
-
-                    if not self.graduation_shown_this_session:
-                        should_check_graduation = True
-
-        # Step 6: Check graduation eligibility
-        if should_check_graduation and self.last_task_category:
-            category_config = self.loader.get_graduation_category(self.last_task_category)
-            if category_config:
-                threshold = category_config.get("threshold", 10)
-                grad_settings = self.loader.get_graduation_settings()
-                max_dismissals = grad_settings.get("max_dismissals", 3)
-
-                should_show, reason = self.tracker.should_show_graduation_prompt(
-                    self.last_task_category, threshold, max_dismissals
-                )
-                if should_show:
-                    prompts = self.loader.get_graduation_prompts(self.last_task_category)
-                    if prompts:
-                        self.pending_graduation = {
-                            "category": self.last_task_category,
-                            "prompt": random.choice(prompts),
-                        }
-                        self.tracker.record_graduation_shown(self.last_task_category)
-
-        # Step 7: Determine suggested handoff
-        suggested_person = None
-        suggested_domain = None
-        if self.guide.last_policy_action:
-            domain = self.guide.last_policy_action.get("domain", "")
-            if domain in ["relationships", "money", "health", "spirituality"]:
-                people = self.network.get_people_for_domain(domain)
-                if people:
-                    suggested_person = people[0].get("name")
-                    suggested_domain = domain
-
-        should_rerun = self.guide.last_policy_action is not None or self.pending_shift is not None
-
-        self._log_perf(getattr(self, "_stream_start_time", time.perf_counter()))
+        self._log_perf(t_start)
 
         return ConversationResult(
             response=response,

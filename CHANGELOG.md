@@ -4,6 +4,17 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Refactored
+- Deduplicated the ConversationSession pipelines (`src/models/conversation_session.py`,
+  -113 lines). `process_message` and `process_message_stream`/`finalize_stream`
+  each carried a full copy of the pre-LLM steps (cooldown, first-turn intent,
+  intent-shift, isolation fast-path) and post-LLM steps (LLM-detected isolation,
+  task category, graduation, handoff, result build) - a fix applied to one path
+  could silently miss the other. Both paths now share `_run_pre_llm_steps()` and
+  `_finalize_turn()`. Pure refactor: no behavior change, all 104 session tests and
+  the full suite pass unchanged. Also folded a no-op `ai_relationship` if/else
+  (both branches made the identical call)
+
 ### Fixed
 - Two false positives in the pre-LLM interceptors (`src/models/ai_wellness_guide.py`):
   "asking for a friend" was an unconditional jailbreak trigger, so an innocuous fresh
