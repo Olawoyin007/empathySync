@@ -14,6 +14,14 @@ All notable changes to empathySync are documented here.
   meta-question list, so a plain greeting got "Not something I track." - removed;
   genuine self-evaluation phrasings ("rate yourself", "how did you do") still deflect.
   Six regression tests added
+- Turn limits are now counted per domain (`src/models/ai_wellness_guide.py`). The
+  check compared the *global* session turn count against the *current domain's*
+  limit, so 14 turns of coding followed by a first health question tripped health's
+  limit (15) on that first health turn - the user was told "we've been talking about
+  this for a while" about a topic they raised one message ago. Each domain now has
+  its own counter; limits fire after N turns *in that domain*. Within-domain
+  enforcement is unchanged. Four regression tests added;
+  `docs/architecture.md` step 6 updated to state the per-domain semantics
 
 ### Removed
 - Dead configuration that was never read by any code and misled contributors about

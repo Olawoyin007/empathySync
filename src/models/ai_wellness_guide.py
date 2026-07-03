@@ -133,6 +133,9 @@ class WellnessGuide:
         # Session state tracking
         self.session_turn_count = 0
         self.session_domains = []
+        # Turn limits are per domain: a long practical session must not make
+        # the first turn in a sensitive domain trip that domain's limit.
+        self.domain_turn_counts = {}
         self.session_max_risk = 0.0
         self.last_risk_assessment = None
         self.last_policy_action = None
@@ -310,6 +313,7 @@ class WellnessGuide:
         domain = risk_assessment["domain"]
         if domain not in self.session_domains:
             self.session_domains.append(domain)
+        self.domain_turn_counts[domain] = self.domain_turn_counts.get(domain, 0) + 1
         self.session_max_risk = max(self.session_max_risk, risk_assessment["risk_weight"])
 
         # Log context inheritance if it occurred
@@ -481,9 +485,11 @@ class WellnessGuide:
             prepared.domain = domain
             return prepared
 
-        # 4) Check turn limits by risk level
+        # 4) Check turn limits by risk level - counted per domain, not per
+        # session, so an established practical session doesn't make the first
+        # turn in a sensitive domain trip that domain's limit.
         turn_limit = TURN_LIMITS.get(domain, 15)
-        if self.session_turn_count >= turn_limit:
+        if self.domain_turn_counts.get(domain, 0) >= turn_limit:
             self._log_policy(
                 "turn_limit_reached",
                 domain,
@@ -1683,6 +1689,7 @@ class WellnessGuide:
         """Reset session state for new conversation."""
         self.session_turn_count = 0
         self.session_domains = []
+        self.domain_turn_counts = {}
         self.session_max_risk = 0.0
         self.last_risk_assessment = None
         self.last_policy_action = None

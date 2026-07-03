@@ -161,7 +161,8 @@ User Input
     ▼
 ┌─────────────────────────────────────────────┐
 │  6. TURN LIMIT CHECK                        │
-│     Each domain has max turns (configurable │
+│     Turns counted PER DOMAIN and compared   │
+│     to that domain's limit (configurable    │
 │     in system_defaults.yaml):               │
 │     logistics:30, money:15, health:15,      │
 │     relationships:15, spirituality:10       │
