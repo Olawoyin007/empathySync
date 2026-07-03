@@ -30,14 +30,14 @@ if command -v python3 &> /dev/null; then
     PY=$(python3 --version 2>&1 | awk '{print $2}')
     PY_MAJOR=$(echo "$PY" | cut -d. -f1)
     PY_MINOR=$(echo "$PY" | cut -d. -f2)
-    if [ "$PY_MAJOR" -ge 3 ] && [ "$PY_MINOR" -ge 9 ]; then
+    if [ "$PY_MAJOR" -ge 3 ] && [ "$PY_MINOR" -ge 10 ]; then
         ok "Python $PY"
     else
-        fail "Python $PY found, but 3.9+ is required"
+        fail "Python $PY found, but 3.10+ is required"
         exit 1
     fi
 else
-    fail "Python 3 not found. Install Python 3.9+ first."
+    fail "Python 3 not found. Install Python 3.10+ first."
     echo "  Ubuntu/Debian: sudo apt install python3 python3-venv python3-pip"
     echo "  macOS: brew install python3"
     exit 1

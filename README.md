@@ -135,7 +135,7 @@ empathysync --log-level DEBUG  # Set log verbosity (DEBUG, INFO, WARNING, ERROR)
 
 ### Requirements
 
-- Python 3.9+
+- Python 3.10+
 - [Ollama](https://ollama.com/) running locally (or via Docker)
 - 8GB RAM recommended (4GB minimum with smaller models)
 - GPU optional but improves response time
