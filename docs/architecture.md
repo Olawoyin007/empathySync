@@ -599,7 +599,7 @@ empathySync/
 │
 ├── data/                        # Local user data (JSON/SQLite)
 ├── logs/                        # Application logs
-├── tests/                       # Pytest test suite (1052 unit + 20 conversation quality)
+├── tests/                       # Pytest test suite (1053 unit + 20 conversation quality)
 └── docs/                        # Documentation
 ```
 

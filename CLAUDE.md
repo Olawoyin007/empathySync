@@ -33,7 +33,7 @@ empathysync --log-level DEBUG            # Override log verbosity
 docker compose up
 
 # Tests
-pytest tests/                            # Full suite (1052 unit + 20 conversation)
+pytest tests/                            # Full suite (1053 unit + 20 conversation)
 pytest tests/ --cov=src                  # With coverage
 pytest tests/ -m "not conversation"      # Skip Ollama-dependent tests
 python tests/classification/run_domain_eval.py          # Domain accuracy eval
@@ -64,9 +64,6 @@ See `.env.example` for full documentation and defaults.
 - `USE_SQLITE` — SQLite backend instead of JSON (default: `false`)
 - `ENABLE_DEVICE_LOCK` — Heartbeat lock for multi-device sync (default: `false`)
 - `LOCK_STALE_TIMEOUT` — Seconds until a stale lock expires (default: `300`)
-
-**Optional PostgreSQL** (all or none): `DB_HOST`, `DB_PORT`, `DB_NAME`,
-`DB_USER`, `DB_PASSWORD`
 
 **Docker only:**
 - `APP_BIND` — Host address to bind to (default: `127.0.0.1`; set `0.0.0.0` for LAN access)
@@ -107,7 +104,7 @@ tests/
     └── run_domain_eval.py          # Per-domain accuracy report
 ```
 
-Current counts: ~1052 unit tests, 20 conversation quality scenarios.
+Current counts: ~1053 unit tests, 20 conversation quality scenarios.
 
 Pre-existing known failure: `stress_test_001` conversation tier is
 non-deterministic (LLM output varies); the structural tier always passes.
