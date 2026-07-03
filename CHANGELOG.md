@@ -2,6 +2,27 @@
 
 All notable changes to empathySync are documented here.
 
+## [Unreleased]
+
+### Removed
+- Dead configuration that was never read by any code and misled contributors about
+  the architecture: PostgreSQL settings (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`,
+  `DB_PASSWORD`, the `database_url` property, and the DB branch of `validate_config()`)
+  - no PostgreSQL driver has ever been a dependency and both storage backends are
+  JSON/SQLite; `ENABLE_ANALYTICS` - unused, and its existence contradicted the
+  no-telemetry principle; unused `HOST`/`PORT` fields (`src/config/settings.py`);
+  the empty `src/prompts/blessed_mode_prompts.py`
+- `.env.example` entries for variables that no code reads: the PostgreSQL block,
+  `SECRET_KEY` (there is no session signing anywhere - the "generate for production"
+  instruction was actively misleading), and `SESSION_TIMEOUT_MINUTES`
+- Stale `docs/setup.md` sections: PostgreSQL configuration and troubleshooting for
+  `psycopg2-binary` and `sentence-transformers`, neither of which is a dependency
+
+### Documentation
+- Removed the "Optional PostgreSQL" env var section from `CLAUDE.md`
+- Corrected unit test count 1052 -> 1053 (`CLAUDE.md`, `docs/architecture.md`),
+  verified against a full `pytest -m "not conversation"` run
+
 ## v1.11.0 (2026-07-02) - Operational Hardening
 
 ### Security

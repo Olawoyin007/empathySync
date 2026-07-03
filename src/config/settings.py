@@ -21,24 +21,6 @@ class Settings:
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
-    # Server
-    HOST: str = os.getenv("HOST", "127.0.0.1")
-    PORT: int = int(os.getenv("STREAMLIT_SERVER_PORT", "8501"))
-
-    # Database (leveraging PostgreSQL)
-    DB_HOST: str = os.getenv("DB_HOST", "")
-    DB_PORT: Optional[int] = int(os.getenv("DB_PORT", "5432")) if os.getenv("DB_PORT") else None
-    DB_NAME: str = os.getenv("DB_NAME", "")
-    DB_USER: str = os.getenv("DB_USER", "")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
-
-    @property
-    def database_url(self) -> Optional[str]:
-        """Construct database URL from components"""
-        if not all([self.DB_HOST, self.DB_PORT, self.DB_NAME, self.DB_USER, self.DB_PASSWORD]):
-            return None
-        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-
     # Ollama Configuration
     OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "")
@@ -76,7 +58,6 @@ class Settings:
     LOCK_STALE_TIMEOUT: int = int(os.getenv("LOCK_STALE_TIMEOUT", "300"))
 
     # Privacy & Security
-    ENABLE_ANALYTICS: bool = os.getenv("ENABLE_ANALYTICS", "false").lower() == "true"
     STORE_CONVERSATIONS: bool = os.getenv("STORE_CONVERSATIONS", "true").lower() == "true"
     CONVERSATION_RETENTION_DAYS: int = int(os.getenv("CONVERSATION_RETENTION_DAYS", "30"))
 
@@ -108,17 +89,6 @@ class Settings:
             missing.append("OLLAMA_HOST (must start with http:// or https://)")
         if not self.OLLAMA_MODEL:
             missing.append("OLLAMA_MODEL")
-
-        # Database validation only if any DB setting is provided
-        if any([self.DB_HOST, self.DB_NAME, self.DB_USER, self.DB_PASSWORD]):
-            if not self.DB_HOST:
-                missing.append("DB_HOST")
-            if not self.DB_NAME:
-                missing.append("DB_NAME")
-            if not self.DB_USER:
-                missing.append("DB_USER")
-            if not self.DB_PASSWORD:
-                missing.append("DB_PASSWORD")
 
         return missing
 

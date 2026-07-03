@@ -66,14 +66,6 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Troubleshooting Dependencies
-
-**psycopg2-binary fails to install:**
-PostgreSQL is optional. You can comment out the database lines in requirements.txt if you only want local JSON storage.
-
-**sentence-transformers takes long to install:**
-This is normal - it downloads model files. Be patient.
-
 ## Step 5: Configure Environment
 
 ```bash
@@ -112,18 +104,6 @@ CONVERSATION_RETENTION_DAYS=30
 # Intelligent classification (Phase 9)
 # Uses LLM for context-aware domain detection
 LLM_CLASSIFICATION_ENABLED=true
-```
-
-### PostgreSQL (Optional)
-
-Only configure if you want database storage instead of local JSON files:
-
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=empathysync
-DB_USER=your_username
-DB_PASSWORD=your_password
 ```
 
 ## Step 6: Verify Installation
