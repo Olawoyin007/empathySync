@@ -3600,3 +3600,80 @@ class TestVoiceTuning:
         risk = {"risk_weight": 1.0}
         result = guide._process_response(long_response, "test", risk, is_practical=True)
         assert len(result.split()) >= 190  # Should keep most words
+
+
+class TestPerDomainTurnLimits:
+    """Turn limits count turns in the domain, not turns in the session.
+
+    Regression tests for the 2026-07-03 fix: the check compared the global
+    session_turn_count against the current domain's limit, so a long practical
+    session made the first turn in a sensitive domain trip that domain's limit.
+    """
+
+    @pytest.fixture
+    def mock_settings(self):
+        with patch("models.ai_wellness_guide.settings") as mock:
+            mock.OLLAMA_HOST = "http://localhost:11434"
+            mock.OLLAMA_MODEL = "llama2"
+            mock.OLLAMA_TEMPERATURE = 0.7
+            yield mock
+
+    @pytest.fixture
+    def guide(self, mock_settings):
+        from models.ai_wellness_guide import WellnessGuide
+
+        return WellnessGuide()
+
+    def _assessment(self, domain):
+        """Fixed keyword-style assessment so tests never touch Ollama."""
+        return {
+            "domain": domain,
+            "emotional_intensity": 2.0,
+            "emotional_weight": "low_weight",
+            "emotional_weight_score": 0.0,
+            "dependency_risk": 0.0,
+            "risk_weight": 2.0,
+            "classification_method": "keyword",
+        }
+
+    def test_first_turn_in_new_domain_does_not_trip_limit(self, guide):
+        """14 practical turns then the first health turn: health's limit (15) must not fire."""
+        guide.session_turn_count = 14
+        guide.domain_turn_counts = {"logistics": 14}
+        guide.primary_domain = "logistics"
+        with patch.object(
+            guide.risk_classifier, "classify", return_value=self._assessment("health")
+        ):
+            prepared = guide._prepare_response("health question")
+        assert guide.domain_turn_counts["health"] == 1
+        assert prepared.early_return is None
+        assert prepared.full_prompt
+
+    def test_domain_limit_still_enforced_within_domain(self, guide):
+        """The 10th spirituality turn trips spirituality's limit (10)."""
+        guide.domain_turn_counts = {"spirituality": 9}
+        with patch.object(
+            guide.risk_classifier, "classify", return_value=self._assessment("spirituality")
+        ):
+            prepared = guide._prepare_response("about my faith")
+        assert prepared.early_return is not None
+        assert guide.last_policy_action is not None
+        assert guide.last_policy_action["type"] == "turn_limit_reached"
+
+    def test_counts_accumulate_per_domain(self, guide):
+        """Each turn increments only the assessed domain's counter."""
+        with patch.object(
+            guide.risk_classifier, "classify", return_value=self._assessment("logistics")
+        ):
+            guide._prepare_response("write an email")
+            guide._prepare_response("now a cover letter")
+        with patch.object(
+            guide.risk_classifier, "classify", return_value=self._assessment("money")
+        ):
+            guide._prepare_response("budget question")
+        assert guide.domain_turn_counts == {"logistics": 2, "money": 1}
+
+    def test_reset_session_clears_domain_counts(self, guide):
+        guide.domain_turn_counts = {"logistics": 5, "health": 2}
+        guide.reset_session()
+        assert guide.domain_turn_counts == {}
