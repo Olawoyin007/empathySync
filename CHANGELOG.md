@@ -22,6 +22,27 @@ All notable changes to empathySync are documented here.
 - Removed the "Optional PostgreSQL" env var section from `CLAUDE.md`
 - Corrected unit test count 1052 -> 1053 (`CLAUDE.md`, `docs/architecture.md`),
   verified against a full `pytest -m "not conversation"` run
+- ROADMAP.md restructured after a full project review (2026-07-03). It had grown to
+  2,653 lines, ~90% completed-phase history, with a status block still dated 2026-06-11
+  claiming v1.10.1 and a stale section using the old phase numbering (daemon as
+  "Phase 17"). Completed Phases 1-17 moved verbatim to `docs/roadmap-history.md`;
+  ROADMAP.md now holds planned work only
+- Roadmap decisions recorded in the restructure: Phase 18 (messaging) retired outright -
+  WhatsApp/Slack contradict the local-first promise; Signal-only remains a possibility
+  after the daemon exists. Phase 10 folded into Phases 21/22. Phase 20 rewritten around
+  package-manager distribution instead of native installers + code signing. Phase 21
+  gains 21.4 (domain routing corrections covering the measured #135/#137 gaps: symmetric
+  specific->specific override, contentless-continuation fallback) and an upfront VRAM/
+  swap-latency benchmark. Phase 23.1 (negative memory invariant) pulled ahead of Phase 22
+  so the daemon is built inside the memory constraint; Phase 22.2 rescoped to allowlisted
+  structured fields (free-text session summaries would be derived message content, which
+  the invariant forbids). Phase 19 gains 19.0 (extract hardcoded English strings from
+  Python to YAML) and now runs after Phase 21 so the safety model carries the
+  cross-language crisis floor. v1.11.0 deferred items resolved: dev/main split dropped,
+  app-level encryption at rest dropped in favour of the documented FDE guidance,
+  clean-machine install test kept
+- `CLAUDE.md` roadmap section updated to the new execution order (23.1 -> 21 -> 22 -> 19)
+  and to point at `docs/roadmap-history.md`
 
 ## v1.11.0 (2026-07-02) - Operational Hardening
 

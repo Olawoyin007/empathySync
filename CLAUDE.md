@@ -119,7 +119,8 @@ Full details are in the docs — do not duplicate them here.
 | Persistence, storage backends, multi-device sync | `docs/persistence.md` |
 | Model benchmarks and recommendations | `docs/model-benchmark.md` |
 | Scenario editing guide | `scenarios/README.md` |
-| Roadmap and phase history | `ROADMAP.md` |
+| Roadmap (planned phases) | `ROADMAP.md` |
+| Completed phase history | `docs/roadmap-history.md` |
 | Pre-merge checklist | `MERGE_CHECKLIST.md` |
 
 **Before modifying anything in `src/models/`, `src/utils/`, or the safety
@@ -157,10 +158,13 @@ storage must go through `StorageBackend`, not the underlying db directly.
 
 ## Roadmap
 
-Phases 1–17 complete. See `ROADMAP.md` for full history.
+Phases 1–17 complete. See `docs/roadmap-history.md` for the full record;
+`ROADMAP.md` holds only planned work.
 
 Current version: check `pyproject.toml` (source of truth).
 Run `python scripts/check_version.py` to verify all files are in sync.
 
-Phase 21 (Safety classifier upgrade, issue #125) is the next planned phase;
-Phase 22 (Persistent agent daemon) depends on it.
+Execution order: Phase 23.1 (negative memory invariant), then Phase 21
+(safety classifier upgrade, issue #125, incl. 21.4 domain-routing
+corrections), then Phase 22 (persistent agent daemon), then Phase 19
+(multilingual).
