@@ -5,6 +5,27 @@ All notable changes to empathySync are documented here.
 ## [Unreleased]
 
 ### Refactored
+- Config values are now read at call time instead of being baked into module-level
+  constants at import time (`MAX_INPUT_LENGTH`, `TURN_LIMITS`,
+  `POST_CRISIS_CLEAR_AFTER`, `IDENTITY_REMINDER_FREQUENCY` in
+  `ai_wellness_guide.py`; `_CONFIDENCE_THRESHOLD` in `conversation_session.py`).
+  Previously `reload_scenarios()` (hot reload) silently never refreshed these five
+  values, undermining the "tune YAML without touching Python" contract. Four
+  near-identical `_load_*()` loader functions removed; two tests pin the
+  call-time-read behavior. Also replaced the fragile `"prepared" in dir()` idiom in
+  both `generate_response` exception handlers with an explicit `prepared = None`
+
+### Documentation (safety-claim accuracy)
+- The mid-stream streaming buffer check was described as intercepting "harmful
+  content", overstating what it detects: `_contains_harmful_content()` matches the
+  manipulative-voice patterns from `safe_alternatives.yaml` (false intimacy,
+  dependency-encouraging phrasing), not dangerous-instruction content - blocking
+  harmful requests is the input-side layers' job. `THREAT_MODEL.md` engineering-
+  controls row, `CLAUDE.md` key-patterns entry, and the `docs/architecture.md`
+  streaming box now say exactly that. Scanning *output* for dangerous content with
+  the Phase 21 safety model is noted as a stretch goal in the roadmap
+
+### Refactored (session pipelines)
 - Deduplicated the ConversationSession pipelines (`src/models/conversation_session.py`,
   -113 lines). `process_message` and `process_message_stream`/`finalize_stream`
   each carried a full copy of the pre-LLM steps (cooldown, first-turn intent,

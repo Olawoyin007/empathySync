@@ -52,20 +52,6 @@ class ConnectionSteering:
         self.network_empty = network_empty
 
 
-def _load_confidence_threshold() -> float:
-    """Load intent detection confidence threshold from system_defaults.yaml, fallback to 0.6."""
-    try:
-        loader = get_scenario_loader()
-        defaults = loader.get_system_defaults()
-        return float(defaults.get("classification", {}).get("confidence_threshold", 0.6))
-    except Exception:
-        return 0.6
-
-
-# Minimum confidence for auto-detected intent and task category to be accepted.
-_CONFIDENCE_THRESHOLD = _load_confidence_threshold()
-
-
 class ConversationSession:
     """
     Framework-agnostic conversation session manager.
@@ -109,6 +95,21 @@ class ConversationSession:
     def turn_count(self) -> int:
         """Number of user messages in this session."""
         return sum(1 for m in self.messages if m["role"] == "user")
+
+    @property
+    def _confidence_threshold(self) -> float:
+        """Minimum confidence for auto-detected intent and task category.
+
+        Read at call time (not import time) so reload_scenarios() picks up
+        edits to system_defaults.yaml without a restart. Falls back to 0.6
+        on any unreadable value - config problems must not break messaging.
+        """
+        try:
+            return float(
+                self.loader.get_default("classification", "confidence_threshold", fallback=0.6)
+            )
+        except (TypeError, ValueError):
+            return 0.6
 
     def process_message(self, user_input: str) -> ConversationResult:
         """
@@ -243,7 +244,7 @@ class ConversationSession:
             else:
                 # Auto-detect intent from first message
                 detected_intent, confidence = self.classifier.detect_intent(user_input)
-                if confidence >= _CONFIDENCE_THRESHOLD:
+                if confidence >= self._confidence_threshold:
                     self.tracker.record_session_intent(detected_intent, auto_detected=True)
                     self.session_intent = detected_intent
 
@@ -292,7 +293,7 @@ class ConversationSession:
             domain = self.guide.last_risk_assessment.get("domain", "")
             if domain == "logistics":
                 task_category, confidence = self.classifier.detect_task_category(user_input)
-                if task_category and confidence >= _CONFIDENCE_THRESHOLD:
+                if task_category and confidence >= self._confidence_threshold:
                     self.tracker.record_task_category(task_category)
                     self.last_task_category = task_category
 

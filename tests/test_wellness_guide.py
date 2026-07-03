@@ -3677,3 +3677,30 @@ class TestPerDomainTurnLimits:
         guide.domain_turn_counts = {"logistics": 5, "health": 2}
         guide.reset_session()
         assert guide.domain_turn_counts == {}
+
+
+class TestConfigHotReload:
+    """Config values are read at call time, not baked in at import time."""
+
+    @pytest.fixture
+    def mock_settings(self):
+        with patch("models.ai_wellness_guide.settings") as mock:
+            mock.OLLAMA_HOST = "http://localhost:11434"
+            mock.OLLAMA_MODEL = "llama2"
+            mock.OLLAMA_TEMPERATURE = 0.7
+            yield mock
+
+    @pytest.fixture
+    def guide(self, mock_settings):
+        from models.ai_wellness_guide import WellnessGuide
+
+        return WellnessGuide()
+
+    def test_turn_limit_reads_loader_at_call_time(self, guide):
+        """A YAML override picked up by the loader takes effect without restart."""
+        with patch.object(guide.prompts.loader, "get_default", return_value={"health": 3}):
+            assert guide._get_turn_limit("health") == 3
+
+    def test_turn_limit_unknown_domain_defaults(self, guide):
+        with patch.object(guide.prompts.loader, "get_default", return_value=None):
+            assert guide._get_turn_limit("no_such_domain") == 15

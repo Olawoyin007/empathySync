@@ -139,8 +139,10 @@ field in the prompt.
 
 **Mid-Stream Safety Buffer** (`src/models/ai_wellness_guide.py`): A 200-char
 rolling buffer accumulates tokens before yielding to the UI. `_contains_harmful_content()`
-runs on each flush — harmful content is intercepted before it reaches the
-screen, not only after the full response.
+runs on each flush — it matches the manipulative-voice patterns from
+`safe_alternatives.yaml` (false intimacy, dependency-encouraging phrasing), so
+voice violations are intercepted before they reach the screen. It is not a
+dangerous-content scanner; blocking harmful requests is the input-side layers' job.
 
 **emotional→specific override** (`src/models/risk_classifier.py`): When the
 LLM classifies a message as `emotional` (catch-all) but the keyword detector

@@ -207,8 +207,11 @@ User Input
 │     Tokens accumulated in 200-char rolling  │
 │     buffer before yielding to UI            │
 │     _contains_harmful_content() runs on     │
-│     each buffer flush (mid-stream check)    │
-│     Harmful content intercepted before it   │
+│     each buffer flush (mid-stream check):   │
+│     matches manipulative-voice patterns     │
+│     (safe_alternatives.yaml), NOT dangerous │
+│     content - that is the input layers' job │
+│     Voice violation intercepted before it   │
 │     reaches the UI - safe alternative       │
 │     response substituted immediately        │
 └─────────────────────────────────────────────┘

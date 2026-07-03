@@ -21,23 +21,6 @@ from models.ollama_client import OllamaClient
 logger = logging.getLogger(__name__)
 
 
-def _load_max_input_length() -> int:
-    """Load max input length from system_defaults.yaml, fallback to 5000."""
-    try:
-        from utils.scenario_loader import get_scenario_loader
-
-        loader = get_scenario_loader()
-        defaults = loader.get_system_defaults()
-        return int(defaults.get("ollama", {}).get("max_input_length", 5000))
-    except Exception:
-        return 5000
-
-
-# Maximum allowed input length in characters. Prevents OOM on Ollama
-# and ensures classification latency stays bounded.
-MAX_INPUT_LENGTH = _load_max_input_length()
-
-
 @dataclass
 class PreparedResponse:
     """Result of the pre-LLM pipeline in generate_response().
@@ -54,8 +37,9 @@ class PreparedResponse:
     is_likely_practical: bool = False
 
 
-# Session limits by risk level — loaded from system_defaults.yaml if available,
-# otherwise uses these hardcoded defaults.
+# Session limits by risk level — YAML overrides from system_defaults.yaml are
+# merged over these in _get_turn_limit(), read at call time so that
+# reload_scenarios() picks up edits without a restart.
 _DEFAULT_TURN_LIMITS = {
     "logistics": 30,
     "money": 15,
@@ -65,54 +49,6 @@ _DEFAULT_TURN_LIMITS = {
     "crisis": 1,
     "harmful": 1,
 }
-
-
-def _load_turn_limits():
-    """Load turn limits from config, falling back to hardcoded defaults."""
-    try:
-        from utils.scenario_loader import get_scenario_loader
-
-        loader = get_scenario_loader()
-        configured = loader.get_default("session", "turn_limits", fallback=None)
-        if configured:
-            return {**_DEFAULT_TURN_LIMITS, **configured}
-    except Exception:
-        pass
-    return _DEFAULT_TURN_LIMITS
-
-
-TURN_LIMITS = _load_turn_limits()
-
-
-def _load_post_crisis_clear_after() -> int:
-    """Load post-crisis state clear-after turns from system_defaults.yaml, fallback to 3."""
-    try:
-        from utils.scenario_loader import get_scenario_loader
-
-        loader = get_scenario_loader()
-        defaults = loader.get_system_defaults()
-        return int(defaults.get("session", {}).get("post_crisis_clear_after", 3))
-    except Exception:
-        return 3
-
-
-POST_CRISIS_CLEAR_AFTER = _load_post_crisis_clear_after()
-
-
-def _load_identity_reminder_frequency() -> int:
-    """Load identity reminder frequency from system_defaults.yaml, fallback to 9."""
-    try:
-        from utils.scenario_loader import get_scenario_loader
-
-        loader = get_scenario_loader()
-        defaults = loader.get_system_defaults()
-        return int(defaults.get("session", {}).get("identity_reminder_frequency", 9))
-    except Exception:
-        return 9
-
-
-# Identity reminder frequency (every N turns in Reflective mode only)
-IDENTITY_REMINDER_FREQUENCY = _load_identity_reminder_frequency()
 
 
 class WellnessGuide:
@@ -244,9 +180,12 @@ class WellnessGuide:
             conversation_history = []
 
         # Truncate oversized input to prevent Ollama OOM / slow classification
-        if len(user_input) > MAX_INPUT_LENGTH:
-            logger.warning(f"Input truncated from {len(user_input)} to {MAX_INPUT_LENGTH} chars")
-            user_input = user_input[:MAX_INPUT_LENGTH]
+        max_input_length = int(
+            self.prompts.loader.get_default("ollama", "max_input_length", fallback=5000)
+        )
+        if len(user_input) > max_input_length:
+            logger.warning(f"Input truncated from {len(user_input)} to {max_input_length} chars")
+            user_input = user_input[:max_input_length]
 
         # Quick check if this looks like a practical request (for fallback purposes)
         practical_indicators = [
@@ -488,7 +427,7 @@ class WellnessGuide:
         # 4) Check turn limits by risk level - counted per domain, not per
         # session, so an established practical session doesn't make the first
         # turn in a sensitive domain trip that domain's limit.
-        turn_limit = TURN_LIMITS.get(domain, 15)
+        turn_limit = self._get_turn_limit(domain)
         if self.domain_turn_counts.get(domain, 0) >= turn_limit:
             self._log_policy(
                 "turn_limit_reached",
@@ -526,7 +465,10 @@ class WellnessGuide:
 
         # Add identity reminder periodically (only for non-practical conversations)
         identity_reminder = ""
-        if not is_practical and self.session_turn_count % IDENTITY_REMINDER_FREQUENCY == 0:
+        identity_reminder_frequency = int(
+            self.prompts.loader.get_default("session", "identity_reminder_frequency", fallback=9)
+        )
+        if not is_practical and self.session_turn_count % identity_reminder_frequency == 0:
             identity_reminder = (
                 "\n\n[Remember: Include a brief reminder that you are software, not a person.]"
             )
@@ -554,8 +496,11 @@ class WellnessGuide:
                 "The system responded correctly to protect the user. "
                 "If they mention the intervention, acknowledge calmly without self-criticism.]"
             )
-            # Clear the state after 3 turns
-            if self.session_turn_count > self.post_crisis_turn + POST_CRISIS_CLEAR_AFTER:
+            # Clear the state after the configured number of turns
+            post_crisis_clear_after = int(
+                self.prompts.loader.get_default("session", "post_crisis_clear_after", fallback=3)
+            )
+            if self.session_turn_count > self.post_crisis_turn + post_crisis_clear_after:
                 self.post_crisis_turn = None
 
         full_prompt = (
@@ -646,6 +591,7 @@ class WellnessGuide:
         6. Generate response
         7. Post-process for safety
         """
+        prepared = None
         try:
             prepared = self._prepare_response(
                 user_input,
@@ -666,7 +612,7 @@ class WellnessGuide:
         except Exception as e:
             logger.error(f"Error generating response: {str(e)}")
             return self._get_fallback_response(
-                is_practical=prepared.is_likely_practical if "prepared" in dir() else False
+                is_practical=prepared.is_likely_practical if prepared else False
             )
 
     def generate_response_stream(
@@ -687,6 +633,7 @@ class WellnessGuide:
         single chunk. The accumulated response is stored on
         self._last_streamed_response for post-stream metadata population.
         """
+        prepared = None
         try:
             prepared = self._prepare_response(
                 user_input,
@@ -810,7 +757,7 @@ class WellnessGuide:
         except Exception as e:
             logger.error(f"Error in streaming response: {str(e)}")
             fallback = self._get_fallback_response(
-                is_practical=prepared.is_likely_practical if "prepared" in dir() else False
+                is_practical=prepared.is_likely_practical if prepared else False
             )
             self._last_streamed_response = fallback
             yield fallback
@@ -990,6 +937,16 @@ class WellnessGuide:
         # This will be handled by injecting post-crisis context into the system prompt
         # For now, let normal processing continue but keep the state for prompt injection
         return None
+
+    def _get_turn_limit(self, domain: str) -> int:
+        """Per-domain turn limit — YAML override merged over the hardcoded defaults.
+
+        Read at call time (not import time) so reload_scenarios() picks up
+        edits to system_defaults.yaml without a restart.
+        """
+        configured = self.prompts.loader.get_default("session", "turn_limits", fallback=None)
+        limits = {**_DEFAULT_TURN_LIMITS, **configured} if configured else _DEFAULT_TURN_LIMITS
+        return limits.get(domain, 15)
 
     def _get_turn_limit_response(self, domain: str) -> str:
         """Return response when session turn limit is reached."""
