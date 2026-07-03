@@ -4,6 +4,17 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- Two false positives in the pre-LLM interceptors (`src/models/ai_wellness_guide.py`):
+  "asking for a friend" was an unconditional jailbreak trigger, so an innocuous fresh
+  request ("can you draft a CV template? asking for a friend") got a hard "No. These
+  are my limits." Its own code comment described it as a dismissal tactic *after a
+  refusal* - it is now gated on active post-refusal state (`post_harmful_turn` /
+  `post_crisis_turn`), where it still fires. And "how are you doing" was in the
+  meta-question list, so a plain greeting got "Not something I track." - removed;
+  genuine self-evaluation phrasings ("rate yourself", "how did you do") still deflect.
+  Six regression tests added
+
 ### Removed
 - Dead configuration that was never read by any code and misled contributors about
   the architecture: PostgreSQL settings (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`,
