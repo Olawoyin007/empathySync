@@ -93,10 +93,22 @@ blanket block: dangerous categories (violence, weapons, CSAM, malware) route to 
 refusal; S6 routes to the existing health/money restraint domains. A naive wiring would
 regress empathySync into refusing legitimate health questions.
 
+**Mutation recall (the hard test, `scripts/eval_guard_mutations.py`):** base-phrasing
+recall is not the real adversarial bar - keyword detection evaded 97-100% of *mutated*
+phrasings in Phase 17.7. Running SORRY-Bench-style mutations through `llama-guard3:1b`:
+**50% overall** (vs. 0-3% keyword), but strongly category-dependent - third_person 85%,
+roleplay 65%, slang 55%, euphemism 45%, **hypothetical/fiction 0%**. Two consequences:
+(1) the guard is a large net gain but is *additive*, not a replacement - 21.2 must keep
+the existing prompt-engineered classifier's "fiction doesn't change the classification"
+rules active, precisely where the guard is weakest. (2) Caveat: the engine generates the
+mutations, so some misses may be the engine softening intent rather than true guard
+evasion - 50% is a floor; the hypothetical category needs a manual read during 21.2.
+
 - [x] Benchmark VRAM contention / model-swap latency (`scripts/benchmark_guard_swap.py`)
 - [x] Pull models via Ollama, benchmark inference latency (8B and 1B)
 - [x] Run JBB+AdvBench through each model, measure recall vs. keyword baseline
 - [x] Run benign corpus through each model, measure false positive rate
+- [x] Run mutation corpus through the guard, measure mutation recall (`eval_guard_mutations.py`)
 - [x] Decision gate: recall improvement >= 20pp AND FP <= 15% - **PASSED for 1B**
 - [x] Hardware note: `llama-guard3:1b` (~1.6GB) co-resides with a 12GB-class engine;
       the 8B needs its own headroom or a per-message swap
@@ -110,6 +122,9 @@ classification - the main conversation model stays unchanged.
 - [ ] When set, `LLMClassifier` routes `harmful` domain decisions through safety model instead
   of the general classifier
 - [ ] Fast-path patterns remain in place as pre-filter (zero latency for obvious cases)
+- [ ] **Keep the existing classifier's fiction/hypothetical rules active** (21.1 mutation
+  finding): the guard catches 0% of hypothetical-framed harm, so it complements - does not
+  replace - the prompt-engineered classifier. Run both; treat either flagging harm as harm.
 - [ ] **Category mapping, not blanket block** (21.1 finding): map LlamaGuard S1-S14 to
   empathySync domains - dangerous categories (violence/weapons/CSAM/malware) → harmful
   refusal; S6 specialized-advice → existing health/money restraint domains. Do NOT treat
