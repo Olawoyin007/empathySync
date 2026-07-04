@@ -4,6 +4,8 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+## v1.12.0 (2026-07-04) - Restraint Memory & Safety Groundwork
+
 ### Added (Phase 21.1 - safety-model evaluation)
 - Guard-model evaluation harness: `scripts/benchmark_guard_swap.py` (VRAM
   contention / model-swap latency) and `scripts/eval_guard_recall.py` (recall vs.
