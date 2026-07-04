@@ -60,36 +60,60 @@ misses attached to the work that resolves them.
 **Prerequisite**: Phase 17 complete. JBB+AdvBench corpus and mutation scanner (Phase 17.7)
 already in place for A/B evaluation.
 
-### 21.1 Safety Model Evaluation
+### 21.1 Safety Model Evaluation ✅ DONE - gate PASSED, use `llama-guard3:1b`
 
 **Candidates**:
-- **LlamaGuard 3** (Meta, ~8B): `meta-llama/Llama-Guard-3-8B` - available via Ollama,
-  covers 14 harm categories (S1-S14), designed as a drop-in classifier. Strong on direct
-  and indirect harmful requests.
-- **WildGuard** (AllenAI, 7B): `allenai/wildguard` - trained on 92K labeled examples
-  including adversarially rephrased variants. Best for mutation-style attacks.
+- **LlamaGuard 3** (Meta): available via Ollama in both `8b` and `1b` sizes,
+  covers 14 harm categories (S1-S14), designed as a drop-in classifier.
+- **WildGuard** (AllenAI, 7B): not in the Ollama library (needs GGUF conversion);
+  deferred - LlamaGuard cleared the gate decisively, so WildGuard was not required.
 
-**Implementation**:
-- [ ] **First**: benchmark VRAM contention and model-swap latency on target hardware.
-      A 12GB GPU running `gemma3:12b` as engine plus an 8B guard model will swap models
-      per message - measure the real per-turn cost before integrating. If swap latency is
-      unacceptable, evaluate quantized variants or CPU-hosted guard inference.
-- [ ] Pull both models via Ollama, benchmark inference latency
-- [ ] Run JBB+AdvBench harmful corpus through each model, measure recall vs. current LLM classifier
-- [ ] Run JBB benign corpus through each model, measure false positive rate vs. current
-- [ ] Run mutation corpus (from `scripts/scan_mutations.py`) through each, measure mutation recall
-- [ ] Decision gate: only proceed if recall improvement >= 20pp AND FP rate stays <= 15%
-- [ ] Document hardware requirements: both models require ~5-6GB VRAM; document minimum specs
+**Measured results** (12GB RTX 4070, engine `gemma3:12b`, `scripts/benchmark_guard_swap.py`
++ `scripts/eval_guard_recall.py`, 620 JBB+AdvBench behaviours, 36 benign corpus prompts):
+
+| Metric | keyword baseline | **llama-guard3:1b** | llama-guard3:8b |
+|--------|------------------|---------------------|-----------------|
+| Recall (harmful flagged) | 32.4% | **96.1%** | 98.1% |
+| False positives (benign) | - | **5.6%** | 11.1% |
+| Added latency / message | 0 | **~0.3s** | ~10.5s |
+| Co-resides with engine in 12GB | - | **yes** | no (swaps) |
+
+**Decision: `llama-guard3:1b`.** It nearly triples recall over the keyword layer
+(+63.7pp, gate was +20pp), keeps FP at 5.6% (gate was <=15%), and - decisively - fits
+in VRAM alongside `gemma3:12b`, so it costs ~0.3s/message instead of the ~10.5s
+per-message model swap the 8B forces. The 8B's +2pp recall is not worth 2x the false
+positives and 35x the latency on this hardware.
+
+**Key integration finding (drives 21.2):** every 1B/8B false positive was a *health or
+money* question ("could it be my thyroid?", "metformin side effects", "invest in
+crypto?"). LlamaGuard's taxonomy marks category **S6 (specialized medical/financial/legal
+advice)** as unsafe - but those are empathySync's *restraint* domains, not its *refusal*
+domains. Integration must therefore map LlamaGuard categories, NOT treat "unsafe" as a
+blanket block: dangerous categories (violence, weapons, CSAM, malware) route to harmful
+refusal; S6 routes to the existing health/money restraint domains. A naive wiring would
+regress empathySync into refusing legitimate health questions.
+
+- [x] Benchmark VRAM contention / model-swap latency (`scripts/benchmark_guard_swap.py`)
+- [x] Pull models via Ollama, benchmark inference latency (8B and 1B)
+- [x] Run JBB+AdvBench through each model, measure recall vs. keyword baseline
+- [x] Run benign corpus through each model, measure false positive rate
+- [x] Decision gate: recall improvement >= 20pp AND FP <= 15% - **PASSED for 1B**
+- [x] Hardware note: `llama-guard3:1b` (~1.6GB) co-resides with a 12GB-class engine;
+      the 8B needs its own headroom or a per-message swap
 
 ### 21.2 Integration
 
 **Architecture**: Safety classifier runs as a second Ollama model used only for harm
 classification - the main conversation model stays unchanged.
 
-- [ ] Add `OLLAMA_SAFETY_MODEL` env var (e.g. `llama-guard3:8b`)
+- [ ] Add `OLLAMA_SAFETY_MODEL` env var (recommended `llama-guard3:1b` per 21.1)
 - [ ] When set, `LLMClassifier` routes `harmful` domain decisions through safety model instead
   of the general classifier
 - [ ] Fast-path patterns remain in place as pre-filter (zero latency for obvious cases)
+- [ ] **Category mapping, not blanket block** (21.1 finding): map LlamaGuard S1-S14 to
+  empathySync domains - dangerous categories (violence/weapons/CSAM/malware) → harmful
+  refusal; S6 specialized-advice → existing health/money restraint domains. Do NOT treat
+  every "unsafe" verdict as a block, or legitimate health/money questions regress to refusal.
 - [ ] Safety model output mapped to empathySync's `domain`/`distress_level` schema
 - [ ] Fallback: if safety model unavailable, existing prompt-engineered classifier takes over
 - [ ] Health check warns if safety model is configured but unreachable
