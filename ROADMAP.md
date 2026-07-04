@@ -200,7 +200,7 @@ what the daemon is *able* to remember is constrained by design, not audited afte
 - [x] CI gate: blocking. A PR that persists conversation content or a rapport profile fails the build.
 - [x] Document the invariant in CLAUDE.md (key pattern) and THREAT_MODEL.md (engineering-controls row)
 - [ ] MANIFESTO.md one-liner: blocked by the manifesto-guard CI rule (changes require a discussion issue first) - open that issue when convenient
-- [x] Found by the invariant on first run: a dormant `user_input` parameter/column in the storage layer (never populated, but a standing capability to persist raw messages) - write path removed; column asserted empty until the schema v3 migration drops it. `self_reports.content` (the user's self-report answer under a deny-listed name) documented as a legacy exception to rename in v3.
+- [x] Found by the invariant on first run: a dormant `user_input` parameter/column in the storage layer (never populated, but a standing capability to persist raw messages) - write path removed in 23.1, and the SQLite column dropped by the schema v3 migration (`database.py` `_migrate_v2_to_v3`; the invariant test now asserts the column is gone, not merely empty). `self_reports.content` (the user's self-report answer under a deny-listed name) stays a documented legacy exception; renaming it to `response` is deferred (touches both backends and unversioned JSON data).
 
 ### 23.2 Cross-Session Decay
 - [ ] Extend the per-turn context decay (Phase 6.5) to cross-session safety state: dependency-score trajectory and sensitive-domain counters decay toward baseline after a configurable quiet period (default 30 days with no sensitive sessions in that domain)

@@ -186,9 +186,9 @@ restraint_memory:
                message_preview, outcome, person_name, status]
   # SQLite column allowlist (column names diverge from the JSON field names).
   # Structural/bookkeeping columns carry no user data. Legacy exceptions are
-  # deny-named columns that predate the invariant; a schema v3 migration will
-  # drop session_intents.user_input (dormant - asserted empty by the test)
-  # and rename self_reports.content to response.
+  # deny-named columns that predate the invariant. Schema v3 dropped the dormant
+  # session_intents.user_input column; renaming self_reports.content to response
+  # remains deferred (touches both backends and unversioned JSON data).
   allowed_columns:
     schema_info: [version, migrated_at, description]
     check_ins: [id, feeling_score, notes, created_at]
@@ -196,7 +196,7 @@ restraint_memory:
                      max_risk_weight, domains_touched, intent, created_at]
     policy_events: [id, session_id, event_type, domain, action_taken,
                     explanation, risk_weight, created_at]
-    session_intents: [id, session_id, intent, user_input, created_at]
+    session_intents: [id, session_id, intent, created_at]
     independence_records: [id, task_category, milestone, notes, created_at]
     handoff_events: [id, handoff_type, domain, person_name, completed, notes, created_at]
     self_reports: [id, report_type, content, score, created_at]
@@ -204,5 +204,4 @@ restraint_memory:
     trusted_people: [id, name, relationship, contact, notes, domains, added_at, last_contact]
     reach_outs: [id, person_id, method, notes, outcome, created_at]
   legacy_deny_named_columns:
-    session_intents: [user_input]   # dormant; must be empty; drop in schema v3
-    self_reports: [content]         # holds the user's self-report answer; rename in v3
+    self_reports: [content]         # holds the user's self-report answer; rename deferred to a future migration

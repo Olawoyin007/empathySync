@@ -242,18 +242,16 @@ class TestRestraintMemorySQLite:
                         "that is not a documented legacy exception"
                     )
 
-    def test_dormant_user_input_column_stays_empty(self, db_conn):
-        """The legacy session_intents.user_input column must never hold data.
+    def test_user_input_column_is_gone(self, db_conn):
+        """The session_intents.user_input column must not exist.
 
-        The write path was removed in Phase 23.1; the column itself is dropped
-        by the planned schema v3 migration. Until then, any value appearing
-        here means raw message text is being persisted again.
+        The write path was removed in Phase 23.1 and the column itself was
+        dropped by the schema v3 migration. Its reappearance would mean a
+        standing capability to persist raw message text has returned.
         """
-        rows = db_conn.execute(
-            "SELECT user_input FROM session_intents "
-            "WHERE user_input IS NOT NULL AND user_input != ''"
-        ).fetchall()
-        assert not rows, (
-            f"session_intents.user_input contains data: {rows[:3]} - "
-            "raw user input must never be persisted (restraint_memory invariant)"
+        columns = [r[1] for r in db_conn.execute("PRAGMA table_info(session_intents)")]
+        assert "user_input" not in columns, (
+            "session_intents.user_input exists again - the schema v3 migration "
+            "dropped it because raw user input must never be persistable "
+            "(restraint_memory invariant)"
         )
