@@ -207,6 +207,7 @@ CREATE TABLE reach_outs (
 |---------|-------------|
 | v1 | Initial schema |
 | v2 | Added `ON DELETE CASCADE` to reach_outs foreign key |
+| v3 | Dropped the dormant `session_intents.user_input` column (raw message text must never be persistable; enforced by the restraint-memory invariant) |
 
 Migrations run automatically on startup via `_run_migrations()` in `database.py`. After migration, `PRAGMA foreign_key_check` verifies no FK violations.
 

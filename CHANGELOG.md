@@ -4,6 +4,16 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Changed
+- Schema v3 migration: dropped the dormant `session_intents.user_input` SQLite
+  column (`src/utils/database.py`, `_migrate_v2_to_v3`). The write path was
+  removed in Phase 23.1; the column itself was a standing capability to persist
+  raw message text. Existing databases rebuild the table on startup, preserving
+  all other columns. The restraint-memory invariant test now asserts the column
+  is gone rather than merely empty; a migration test covers the v2->v3 rebuild.
+  Renaming `self_reports.content` to `response` remains deferred - it touches
+  both backends and unversioned JSON data - and stays a documented legacy exception.
+
 ## v1.12.0 (2026-07-04) - Restraint Memory & Safety Groundwork
 
 ### Added (Phase 21.1 - safety-model evaluation)

@@ -30,7 +30,7 @@ from config.settings import settings
 logger = logging.getLogger(__name__)
 
 # Current schema version - increment when schema changes
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 # Thread-local storage for connections
 _local = threading.local()
@@ -266,7 +266,6 @@ def _create_schema(conn: sqlite3.Connection):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id INTEGER REFERENCES usage_sessions(id),
             intent TEXT NOT NULL,
-            user_input TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
 
@@ -363,6 +362,8 @@ def _run_migrations(conn: sqlite3.Connection):
     # Run migrations in order
     if current_version < 2:
         _migrate_v1_to_v2(conn)
+    if current_version < 3:
+        _migrate_v2_to_v3(conn)
 
     # Future migrations would go here
 
@@ -412,6 +413,48 @@ def _migrate_v1_to_v2(conn: sqlite3.Connection):
 
     conn.commit()
     logger.info("Migration v1 -> v2 completed")
+
+
+def _migrate_v2_to_v3(conn: sqlite3.Connection):
+    """
+    Drop the dormant session_intents.user_input column.
+
+    The write path for this column was removed in Phase 23.1 (raw user input
+    must never be persisted); the column itself lingered as a standing capability
+    to store message content. SQLite before 3.35 has no DROP COLUMN, so we
+    recreate the table without it. The restraint-memory invariant
+    (tests/test_restraint_memory.py) enforces that no such column returns.
+    """
+    logger.info("Running migration v2 -> v3: Dropping dormant session_intents.user_input")
+
+    conn.executescript(
+        """
+        -- Recreate session_intents without the user_input column
+        CREATE TABLE session_intents_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER REFERENCES usage_sessions(id),
+            intent TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        -- Copy existing data (user_input is intentionally not carried over)
+        INSERT INTO session_intents_new (id, session_id, intent, created_at)
+        SELECT id, session_id, intent, created_at FROM session_intents;
+
+        -- Drop old table
+        DROP TABLE session_intents;
+
+        -- Rename new table
+        ALTER TABLE session_intents_new RENAME TO session_intents;
+
+        -- Record migration
+        INSERT INTO schema_info (version, migrated_at, description)
+        VALUES (3, datetime('now'), 'Dropped dormant session_intents.user_input column');
+    """
+    )
+
+    conn.commit()
+    logger.info("Migration v2 -> v3 completed")
 
 
 # ==================== CONVENIENCE FUNCTIONS ====================

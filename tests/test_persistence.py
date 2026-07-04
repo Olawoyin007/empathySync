@@ -99,6 +99,59 @@ class TestDatabaseModule:
 
         assert version >= 1
 
+    def test_migration_v2_to_v3_drops_user_input(self, temp_data_dir):
+        """A v2 database is migrated to v3: session_intents.user_input is
+        dropped and the remaining columns' data survives."""
+        import sqlite3
+        import utils.database as db_module
+
+        db_module._connection = None
+        db_module._db_path = None
+        db_path = temp_data_dir / "empathySync.db"
+
+        # Build a minimal v2 database by hand (session_intents still has user_input)
+        raw = sqlite3.connect(db_path)
+        raw.executescript(
+            """
+            CREATE TABLE schema_info (
+                version INTEGER PRIMARY KEY,
+                migrated_at TEXT NOT NULL,
+                description TEXT
+            );
+            CREATE TABLE usage_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT);
+            CREATE TABLE session_intents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER REFERENCES usage_sessions(id),
+                intent TEXT NOT NULL,
+                user_input TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            INSERT INTO schema_info (version, migrated_at, description)
+            VALUES (2, datetime('now'), 'test seed v2');
+            INSERT INTO session_intents (intent, user_input, created_at)
+            VALUES ('practical', 'raw message text', '2026-01-01T00:00:00');
+            """
+        )
+        raw.commit()
+        raw.close()
+
+        with patch("utils.database.settings") as mock_settings:
+            mock_settings.DATA_DIR = temp_data_dir
+
+            conn = db_module.get_db()  # triggers _ensure_schema -> migrations
+
+            columns = [r[1] for r in conn.execute("PRAGMA table_info(session_intents)")]
+            assert "user_input" not in columns
+
+            row = conn.execute("SELECT intent, created_at FROM session_intents").fetchone()
+            assert row[0] == "practical"
+            assert row[1] == "2026-01-01T00:00:00"
+
+            version = conn.execute("SELECT MAX(version) FROM schema_info").fetchone()[0]
+            assert version == 3
+
+            db_module.close_db()
+
     def test_checkpoint_for_sync(self, temp_data_dir):
         """Test that checkpoint consolidates WAL."""
         import utils.database as db_module
