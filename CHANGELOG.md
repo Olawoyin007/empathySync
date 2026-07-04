@@ -4,6 +4,18 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Added (Phase 21.1 - safety-model evaluation)
+- Guard-model evaluation harness: `scripts/benchmark_guard_swap.py` (VRAM
+  contention / model-swap latency) and `scripts/eval_guard_recall.py` (recall vs.
+  the keyword baseline plus a false-positive check on benign corpus prompts).
+- Phase 21.1 decision gate PASSED. On a 12GB card with `gemma3:12b` as engine,
+  `llama-guard3:1b` reaches 96.1% recall over 620 JBB+AdvBench behaviours (vs.
+  32.4% keyword-only, +63.7pp) at 5.6% false positives, and co-resides with the
+  engine at ~0.3s/message. The 8B variant (98.1% recall) was rejected: +2pp recall
+  costs 2x the false positives and a ~10.5s per-message model swap. ROADMAP 21.1
+  records the choice and the category-mapping finding that shapes 21.2 (LlamaGuard's
+  S6 specialized-advice verdict must route to health/money restraint, not refusal).
+
 ### Added (Phase 23.1 - restraint-memory negative invariant)
 - The memory principle is now architectural and falsifiable: every field the app
   persists must appear in the new `restraint_memory` allowlist in
