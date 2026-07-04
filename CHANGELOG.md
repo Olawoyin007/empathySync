@@ -4,10 +4,19 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+## v1.12.0 (2026-07-04) - Restraint Memory & Safety Groundwork
+
 ### Added (Phase 21.1 - safety-model evaluation)
 - Guard-model evaluation harness: `scripts/benchmark_guard_swap.py` (VRAM
-  contention / model-swap latency) and `scripts/eval_guard_recall.py` (recall vs.
-  the keyword baseline plus a false-positive check on benign corpus prompts).
+  contention / model-swap latency), `scripts/eval_guard_recall.py` (recall vs.
+  the keyword baseline plus a false-positive check on benign corpus prompts), and
+  `scripts/eval_guard_mutations.py` (mutation recall - does the guard still flag
+  harm after adversarial rephrasing).
+- Mutation-recall result completing the #125 checklist: `llama-guard3:1b` catches
+  50% of SORRY-Bench-style mutations (vs. 0-3% keyword-only), but 0% of
+  hypothetical/fiction framing. Conclusion recorded in ROADMAP 21.2: the guard is
+  additive, not a replacement - the existing prompt-engineered classifier's fiction
+  rules stay active where the guard is weakest.
 - Phase 21.1 decision gate PASSED. On a 12GB card with `gemma3:12b` as engine,
   `llama-guard3:1b` reaches 96.1% recall over 620 JBB+AdvBench behaviours (vs.
   32.4% keyword-only, +63.7pp) at 5.6% false positives, and co-resides with the
