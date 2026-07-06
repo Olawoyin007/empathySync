@@ -37,6 +37,11 @@ class Settings:
     # Falls back to OLLAMA_MODEL if not set. Recommended: mistral:7b-instruct
     OLLAMA_CLASSIFIER_MODEL: str = os.getenv("OLLAMA_CLASSIFIER_MODEL", "")
 
+    # Dedicated safety guard model (Phase 21.2, optional, off by default).
+    # When set (e.g. llama-guard3:1b), an additive LlamaGuard layer classifies
+    # input hazards alongside the base classifier. Unset = disabled.
+    OLLAMA_SAFETY_MODEL: str = os.getenv("OLLAMA_SAFETY_MODEL", "")
+
     # LLM Classification (Phase 9)
     # When enabled, uses the Ollama model to intelligently classify messages
     # instead of relying solely on keyword matching

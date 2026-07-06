@@ -183,6 +183,7 @@ OLLAMA_TEMPERATURE=0.7
 # Optional
 LLM_CLASSIFICATION_ENABLED=true        # Intelligent context-aware classification
 OLLAMA_CLASSIFIER_MODEL=mistral:7b-instruct  # Separate classifier model (faster; falls back to OLLAMA_MODEL)
+# OLLAMA_SAFETY_MODEL=llama-guard3:1b  # Optional additive LlamaGuard layer (off by default; Phase 21.2, not yet wired)
 STORE_CONVERSATIONS=true               # Local storage only
 USE_SQLITE=false                       # SQLite backend (better concurrency)
 ENABLE_DEVICE_LOCK=false               # Multi-device sync safety
