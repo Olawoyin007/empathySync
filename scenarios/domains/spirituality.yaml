@@ -33,6 +33,8 @@ triggers:
   - holy spirit
   - jesus told
   - allah
+  - haram
+  - halal
   - divine message
   - divine will
   - divine guidance
@@ -40,6 +42,9 @@ triggers:
   - god's presence
   - god is punishing me
   - god is testing me
+  - god's will
+  - gods will
+  - god testing me
   - god doesn't hear me
   - forsaken by god
   - why does god allow
@@ -79,6 +84,8 @@ triggers:
   - born again
   - saved
   - baptism
+  - baptised
+  - baptized
   - confirmation
   - communion
   - sacrament
@@ -157,7 +164,13 @@ triggers:
   - religious trauma
   - church hurt
   - spiritual abuse
-  - cult
+  # "cult" as a bare substring false-matches "diffiCULT", "CULTure", "ocCULT",
+  # "CULTivate" - use forms where "cult" is followed by a space + noun (culture
+  # cannot follow) so the match stays precise.
+  - cult leader
+  - cult member
+  - cult survivor
+  - cult following
   - left my church
   - leaving the church
   - deconstructing

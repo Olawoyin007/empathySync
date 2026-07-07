@@ -133,6 +133,22 @@ User Input
     │
     ▼
 ┌─────────────────────────────────────────────┐
+│  3b'. SPIRITUALITY OVERRIDE (Phase 21.4)    │
+│     Religious framing (deity, clergy,       │
+│     rulings like "haram"/"god's will") is   │
+│     high-precision but low-volume, so it    │
+│     ties with and loses to the relational/  │
+│     emotional surface of the same sentence. │
+│     If the LLM chose any non-spirituality   │
+│     domain AND keyword detection finds       │
+│     spirituality: spirituality wins.        │
+│     The symmetric specific→specific case the│
+│     one-directional overrides above missed  │
+│     (#137). crisis/harmful never overridden.│
+└─────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────┐
 │  3c. ISOLATION DETECTION (Phase 16.13)      │
 │     Keyword fast-path (34 phrases):         │
 │     "there is no one", "I have nobody"...   │

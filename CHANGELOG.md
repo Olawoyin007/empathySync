@@ -37,6 +37,25 @@ All notable changes to empathySync are documented here.
   not pulled, it warns that the guard is inactive and failing open on every
   message - previously that misconfiguration was silent. Non-critical (the guard
   fails open by design, so it never blocks startup). 5 offline tests.
+- Phase 21.4 spirituality routing corrections (#137). Religious framing (deity
+  names, clergy, rulings like "haram"/"god's will") is high-precision but
+  low-volume, so it ties with and loses to the relational/emotional surface of the
+  same sentence, and every other override was one-directional - so a religious
+  question the LLM read as `relationships` (e.g. "is it haram to leave my
+  marriage") silently lost its spirituality restraint. Three coordinated fixes in
+  `src/models/risk_classifier.py` + `scenarios/domains/spirituality.yaml`: added
+  the missing high-signal triggers (`haram`, `halal`, `god's will`, `baptised`);
+  a keyword tie-break that resolves ties toward spirituality; and a symmetric
+  specific→spirituality override (runs regardless of LLM confidence; never touches
+  crisis/harmful). Domain eval 81/94 → **83/94** (spirituality 10/13 → 12/13), no
+  net regression. 11 deterministic tests (`tests/test_spirituality_routing.py`).
+
+### Fixed
+- `cult` was a bare-substring trigger that false-matched "diffiCULT", "CULTure",
+  "CULTivate", "ocCULT" - routing ordinary messages to `spirituality`. Replaced
+  with collision-safe forms (`cult leader`, `cult member`, `cult survivor`, `cult
+  following`). Latent since the trigger was added; surfaced by the Phase 21.4
+  spirituality override, which now trusts keyword spirituality signals.
 
 ### Changed
 - Schema v3 migration: dropped the dormant `session_intents.user_input` SQLite

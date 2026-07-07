@@ -26,8 +26,8 @@ pytest tests/test_restraint_memory.py -v
 python scripts/check_version.py
 ```
 
-Expected: `pytest` all green, domain eval at or above the 86% baseline
-(81/94 on mistral:7b-instruct), version check passes.
+Expected: `pytest` all green, domain eval at or above the 88% baseline
+(83/94 on mistral:7b-instruct, post Phase 21.4), version check passes.
 
 ---
 
