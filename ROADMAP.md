@@ -135,7 +135,8 @@ classification - the main conversation model stays unchanged.
 - [x] Safety model output mapped to empathySync's `domain` (REFUSE→harmful, CRISIS→crisis) (#160)
 - [x] Fallback: if safety model unavailable, guard fails open (ALLOW) and the existing
   prompt-engineered classifier remains authoritative (#159)
-- [ ] Health check warns if safety model is configured but unreachable
+- [x] Health check warns if safety model is configured but unreachable
+  (`check_safety_guard` in `src/utils/health_check.py`; non-critical since the guard fails open)
 - [ ] Stretch: evaluate running the guard model over the *output* stream as well - the
   current mid-stream buffer scans for manipulative-voice patterns, not dangerous content
 

@@ -32,6 +32,11 @@ All notable changes to empathySync are documented here.
   section (harm-recall criterion, distinct from the classifier distress-recall
   list), and added `tests/test_safety_guard_integration.py` (conversation-tier, 3
   tests, skipped when the guard model is absent) to lock in both properties.
+- Startup health check for the safety guard (`check_safety_guard` in
+  `src/utils/health_check.py`). When `OLLAMA_SAFETY_MODEL` is set but the model is
+  not pulled, it warns that the guard is inactive and failing open on every
+  message - previously that misconfiguration was silent. Non-critical (the guard
+  fails open by design, so it never blocks startup). 5 offline tests.
 
 ### Changed
 - Schema v3 migration: dropped the dormant `session_intents.user_input` SQLite

@@ -203,6 +203,71 @@ def check_classifier_model() -> HealthStatus:
         )
 
 
+def check_safety_guard() -> HealthStatus:
+    """Check the optional LlamaGuard safety model (Phase 21.2).
+
+    Non-critical: the guard is additive and fails open, so the base pipeline
+    stays authoritative whether or not it is reachable. But if it is configured
+    and *not* pulled, warn - otherwise the operator believes a guard is running
+    when every message is silently failing open to ALLOW.
+    """
+    guard_model = settings.OLLAMA_SAFETY_MODEL
+    if not guard_model:
+        return HealthStatus(
+            name="Safety Guard",
+            ok=True,
+            message="Disabled (OLLAMA_SAFETY_MODEL not set)",
+            critical=False,
+        )
+
+    try:
+        client = get_http_client()
+        response = client.get(f"{settings.OLLAMA_HOST}/api/tags", timeout=5)
+        if response.status_code != 200:
+            return HealthStatus(
+                name="Safety Guard",
+                ok=True,
+                message=f"Cannot verify `{guard_model}` - guard fails open until reachable",
+                critical=False,
+            )
+
+        available_models = [m.get("name", "") for m in response.json().get("models", [])]
+        model_found = any(
+            m == guard_model or m.startswith(f"{guard_model}:") for m in available_models
+        )
+
+        if model_found:
+            return HealthStatus(
+                name="Safety Guard",
+                ok=True,
+                message=f"`{guard_model}` available",
+                critical=False,
+            )
+
+        logger.warning(
+            f"Safety model '{guard_model}' is configured but not pulled - the guard is "
+            f"failing open (ALLOW) on every message. Run: ollama pull {guard_model}"
+        )
+        return HealthStatus(
+            name="Safety Guard",
+            ok=True,
+            message=f"Configured `{guard_model}` not found - guard inactive (failing open)",
+            critical=False,
+            details=(
+                f"`OLLAMA_SAFETY_MODEL={guard_model}` is set but the model is not pulled, so the "
+                "additive safety layer is doing nothing. The base pipeline remains active.\n\n"
+                f"To activate the guard: `ollama pull {guard_model}`"
+            ),
+        )
+    except Exception:
+        return HealthStatus(
+            name="Safety Guard",
+            ok=True,
+            message=f"Cannot verify `{guard_model}` - guard fails open until reachable",
+            critical=False,
+        )
+
+
 def check_data_directory() -> HealthStatus:
     """Check if the data directory exists and is writable."""
     data_dir = settings.DATA_DIR
@@ -325,6 +390,7 @@ def run_health_checks() -> List[HealthStatus]:
         check_ollama_model(),
         check_classifier_model(),
         check_model_safety_tier(),
+        check_safety_guard(),
         check_data_directory(),
     ]
 
