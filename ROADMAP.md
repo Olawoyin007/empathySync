@@ -167,12 +167,19 @@ whichever label the LLM reaches first wins forever. Measured consequences:
   short-continuation LLM-skip plus the practical empty-generation fallback.
 
 **Implementation**:
-- [ ] Symmetric specific→specific override: when keywords find a *different* sensitive
-      domain than the LLM's sensitive-domain label, resolve by keyword-priority rather
-      than always keeping the LLM label
+- [x] Symmetric specific→spirituality override: when keyword detection finds spirituality
+      but the LLM chose a different domain, spirituality wins (runs regardless of confidence;
+      never overrides crisis/harmful). Investigation finding: the ROADMAP premise was
+      incomplete - keyword detection *also* lost the flagship cases (haram/rabbi tie-broke to
+      relationships; god's will/baptised weren't triggers at all), so the fix is three parts:
+      missing high-signal triggers + a keyword tie-break toward spirituality + the override.
+      Scoped to spirituality-wins (the measured gravity-well victim) to bound regression risk.
 - [ ] Contentless-continuation fallback: short continuations with no domain signal
-      inherit session context instead of defaulting to logistics
-- [ ] Re-run domain eval; the four known spirituality boundary misses are the acceptance test
+      inherit session context instead of defaulting to logistics (#135 residual - deferred,
+      separate from the spirituality gravity well)
+- [x] Re-ran domain eval: 81/94 → 83/94; the four spirituality boundary misses (haram, rabbi,
+      god's will, baptised) are deterministically fixed. Also fixed a latent `cult` substring
+      bug (matched "difficult"/"culture") the override surfaced.
 
 **Files to create**:
 - `src/models/safety_classifier.py` - LlamaGuard/WildGuard adapter implementing the same

@@ -215,6 +215,9 @@ class RiskClassifier:
 
             low_confidence_triggered = False
             sanity_check_triggered = None  # Phase 17.4: set to trigger reason string when fired
+            spirituality_override = (
+                False  # Phase 21.4: set when specific->spirituality correction fires
+            )
             if llm_confidence < confidence_low and domain in sensitive_domains:
                 # Very low confidence on a sensitive domain - keyword takes over
                 keyword_domain = self._detect_domain(
@@ -301,6 +304,24 @@ class RiskClassifier:
                         keyword_domain,
                     )
                     domain = keyword_domain
+
+            # Phase 21.4: spirituality specific->specific correction (#137).
+            # The overrides above only rescue "emotional" and "logistics" labels, so
+            # a religious question the LLM reads as relational/health/money ("is it
+            # haram to leave my marriage", "my rabbi says keep faith") keeps that
+            # label and silently loses the spirituality restraint. This is the
+            # gap left by every other override being one-directional. When keyword
+            # detection - now tuned for high-signal religious terms - finds
+            # spirituality but the LLM chose a different domain, spirituality wins.
+            # Runs regardless of confidence, since the LLM here is confidently wrong.
+            if domain not in ("spirituality", "crisis", "harmful"):
+                keyword_domain = self._detect_domain(
+                    user_input, primary_domain=primary_domain, domain_streak=domain_streak
+                )
+                if keyword_domain == "spirituality":
+                    logger.info("Phase 21.4 spirituality override: llm=%s -> spirituality", domain)
+                    domain = "spirituality"
+                    spirituality_override = True
         else:
             domain = self._detect_domain(
                 user_input, primary_domain=primary_domain, domain_streak=domain_streak
@@ -382,6 +403,10 @@ class RiskClassifier:
             # Phase 17.4: Flag sanity check overrides for policy transparency.
             if sanity_check_triggered:
                 result["sanity_check_override"] = sanity_check_triggered
+
+            # Phase 21.4: Flag spirituality specific->specific corrections.
+            if spirituality_override:
+                result["spirituality_override"] = True
 
         # Check for dependency intervention
         intervention = self.loader.get_dependency_intervention(dependency_risk)
@@ -485,6 +510,17 @@ class RiskClassifier:
                     best_domain,
                 )
                 return primary_domain
+
+        # Phase 21.4: break ties toward spirituality. Religious framing (deity
+        # names, clergy, rulings like "haram" / "god's will") is high-precision but
+        # low-volume - it routinely ties 1-1 with the relational or emotional surface
+        # of the same sentence ("haram to leave my marriage", "my rabbi... my mother
+        # died"). Plain max() then loses spirituality on dict order, dropping the
+        # "don't confirm religious rulings" restraint. When spirituality is among the
+        # most-matched domains, it wins.
+        max_count = max(domain_matches.values())
+        if domain_matches.get("spirituality") == max_count:
+            return "spirituality"
 
         # Return the domain with the most trigger matches
         return max(domain_matches, key=domain_matches.get)
