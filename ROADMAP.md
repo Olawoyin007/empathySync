@@ -118,29 +118,37 @@ evasion - 50% is a floor; the hypothetical category needs a manual read during 2
 **Architecture**: Safety classifier runs as a second Ollama model used only for harm
 classification - the main conversation model stays unchanged.
 
-- [ ] Add `OLLAMA_SAFETY_MODEL` env var (recommended `llama-guard3:1b` per 21.1)
-- [ ] When set, `LLMClassifier` routes `harmful` domain decisions through safety model instead
-  of the general classifier
-- [ ] Fast-path patterns remain in place as pre-filter (zero latency for obvious cases)
-- [ ] **Keep the existing classifier's fiction/hypothetical rules active** (21.1 mutation
+- [x] Add `OLLAMA_SAFETY_MODEL` env var (recommended `llama-guard3:1b` per 21.1) (#159)
+- [x] When set, the guard runs additively inside `RiskClassifier.classify()` and escalates the
+  `domain` toward safety (REFUSE→harmful, CRISIS→crisis); it does not replace the general
+  classifier (#160)
+- [x] Fast-path patterns remain in place as pre-filter (keyword fast-path unchanged) (#160)
+- [x] **Keep the existing classifier's fiction/hypothetical rules active** (21.1 mutation
   finding): the guard catches 0% of hypothetical-framed harm, so it complements - does not
-  replace - the prompt-engineered classifier. Run both; treat either flagging harm as harm.
-- [ ] **Category mapping, not blanket block** (21.1 finding): map LlamaGuard S1-S14 to
+  replace - the prompt-engineered classifier. Guard is additive; the base classifier is
+  untouched. Run both; treat either flagging harm as harm. (#160)
+- [x] **Category mapping, not blanket block** (21.1 finding): map LlamaGuard S1-S14 to
   empathySync domains - dangerous categories (violence/weapons/CSAM/malware) → harmful
-  refusal; S6 specialized-advice → existing health/money restraint domains. Do NOT treat
-  every "unsafe" verdict as a block, or legitimate health/money questions regress to refusal.
-- [ ] Safety model output mapped to empathySync's `domain`/`distress_level` schema
-- [ ] Fallback: if safety model unavailable, existing prompt-engineered classifier takes over
+  refusal; S6 specialized-advice → existing health/money restraint (RESTRAIN, a no-op). Do NOT
+  treat every "unsafe" verdict as a block, or legitimate health/money questions regress to
+  refusal. (#159 mapping, #160 wiring; 21.3 proved 0 benign S6 refusals end-to-end)
+- [x] Safety model output mapped to empathySync's `domain` (REFUSE→harmful, CRISIS→crisis) (#160)
+- [x] Fallback: if safety model unavailable, guard fails open (ALLOW) and the existing
+  prompt-engineered classifier remains authoritative (#159)
 - [ ] Health check warns if safety model is configured but unreachable
 - [ ] Stretch: evaluate running the guard model over the *output* stream as well - the
   current mid-stream buffer scans for manipulative-voice patterns, not dangerous content
 
 ### 21.3 Evaluation & Regression
 
-- [ ] Re-run `scripts/scan_harmful_gaps.py` and `scripts/scan_mutations.py` with safety model
-- [ ] Add safety model to `tests/classification/model_matrix.yaml`
-- [ ] Update distress corpus tests to include safety model as a test target
-- [ ] Document new coverage baseline in CHANGELOG
+- [x] Re-ran `scripts/eval_guard_recall.py` + `scripts/eval_guard_mutations.py` with the safety
+  model in 21.1 (recall gate); 21.3 additionally measured the *wired* guard end-to-end
+- [x] Add safety model to `tests/classification/model_matrix.yaml` (new `validated_safety_models`
+  section, harm-recall criterion)
+- [x] Validate the wired guard by integration regression - `tests/test_safety_guard_integration.py`
+  (anti-regression: 0 benign S6 refusals; recall: disguised harm escalated). The guard is a harm
+  classifier, not a distress classifier, so it is validated on harm recall, not the distress corpus.
+- [x] Document new coverage baseline in CHANGELOG
 
 ### 21.4 Domain Routing Corrections (measured gaps from #135 / #137)
 
