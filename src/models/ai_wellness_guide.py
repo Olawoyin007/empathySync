@@ -310,6 +310,17 @@ class WellnessGuide:
                 wellness_tracker,
             )
 
+        # Phase 21.2: Log additive safety-guard escalations for policy transparency
+        if risk_assessment.get("safety_guard_override"):
+            action = risk_assessment["safety_guard_override"]
+            self._log_policy(
+                "safety_guard_override",
+                domain,
+                10.0,
+                f"LlamaGuard safety layer escalated classification to {action}",
+                wellness_tracker,
+            )
+
         # 3) Hard-coded safety responses (don't trust model to comply)
 
         # Self-evaluation deflection: short early exit for "rate yourself" type questions.

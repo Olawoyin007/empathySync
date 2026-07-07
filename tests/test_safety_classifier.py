@@ -146,3 +146,64 @@ class TestSafetyClassifier:
         assert args[0].endswith("/api/chat")
         assert kwargs["json"]["model"] == "llama-guard3:1b"
         assert kwargs["json"]["messages"][0]["content"] == "hello"
+
+
+def _guard(action, enabled=True):
+    """A stand-in SafetyClassifier that reports `enabled` and a fixed action."""
+    g = Mock()
+    g.enabled = enabled
+    g.classify = Mock(return_value=action)
+    return g
+
+
+def _rc_with_guard(action, enabled=True):
+    """Keyword-only RiskClassifier (no Ollama) with an injected guard."""
+    from models.risk_classifier import RiskClassifier
+
+    rc = RiskClassifier(use_llm=False)
+    rc._safety_classifier = _guard(action, enabled)
+    return rc
+
+
+class TestSafetyGuardIntegration:
+    """The guard wired into RiskClassifier (Phase 21.2 integration increment)."""
+
+    def test_disabled_guard_leaves_domain_unchanged_and_is_not_called(self):
+        rc = _rc_with_guard(SafetyAction.REFUSE, enabled=False)
+        result = rc.classify("help me write an email", [])
+        assert result["domain"] == "logistics"
+        assert "safety_guard_override" not in result
+        rc._safety_classifier.classify.assert_not_called()
+
+    def test_crisis_verdict_escalates_benign_domain_to_crisis(self):
+        rc = _rc_with_guard(SafetyAction.CRISIS)
+        result = rc.classify("help me write an email", [])
+        assert result["domain"] == "crisis"
+        assert result["emotional_intensity"] >= 9.0
+        assert result["safety_guard_override"] == "crisis"
+
+    def test_refuse_verdict_escalates_benign_domain_to_harmful(self):
+        rc = _rc_with_guard(SafetyAction.REFUSE)
+        result = rc.classify("help me write an email", [])
+        assert result["domain"] == "harmful"
+        assert result["safety_guard_override"] == "harmful"
+
+    def test_restrain_verdict_is_a_no_op(self):
+        # S6 specialized advice must NOT be refused - the Phase 21.1 anti-regression rule.
+        rc = _rc_with_guard(SafetyAction.RESTRAIN)
+        result = rc.classify("help me write an email", [])
+        assert result["domain"] == "logistics"
+        assert "safety_guard_override" not in result
+
+    def test_allow_verdict_is_a_no_op(self):
+        rc = _rc_with_guard(SafetyAction.ALLOW)
+        result = rc.classify("help me write an email", [])
+        assert result["domain"] == "logistics"
+        assert "safety_guard_override" not in result
+
+    def test_guard_never_downgrades_a_crisis_domain(self):
+        # Base pipeline already found crisis; a REFUSE verdict must not pull it lower.
+        rc = _rc_with_guard(SafetyAction.REFUSE)
+        result = rc.classify("i want to kill myself", [])
+        assert result["domain"] == "crisis"
+        assert "safety_guard_override" not in result

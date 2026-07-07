@@ -5,15 +5,23 @@ All notable changes to empathySync are documented here.
 ## [Unreleased]
 
 ### Added
-- Additive LlamaGuard safety classifier (Phase 21.2, landed dark):
-  `SafetyClassifier` (`src/models/safety_classifier.py`) behind the optional
-  `OLLAMA_SAFETY_MODEL` env var. It maps LlamaGuard's S1-S14 hazard categories to
-  empathySync actions - dangerous categories refuse, S11 routes to crisis, and
-  crucially S6 (specialized medical/financial/legal advice) routes to the existing
-  health/money restraint rather than a refusal (the anti-regression finding from
-  the Phase 21.1 evaluation). Additive on top of the base classifier, fails open,
-  and off by default. Unit-tested (34 tests); not yet wired into the request
-  pipeline - integration is a follow-up increment.
+- Additive LlamaGuard safety classifier (Phase 21.2): `SafetyClassifier`
+  (`src/models/safety_classifier.py`) behind the optional `OLLAMA_SAFETY_MODEL`
+  env var. It maps LlamaGuard's S1-S14 hazard categories to empathySync actions -
+  dangerous categories refuse, S11 routes to crisis, and crucially S6 (specialized
+  medical/financial/legal advice) routes to the existing health/money restraint
+  rather than a refusal (the anti-regression finding from the Phase 21.1
+  evaluation). Additive on top of the base classifier, fails open, and off by
+  default. Unit-tested (34 tests).
+- Wired the safety classifier into the pipeline (`RiskClassifier.classify()`).
+  When `OLLAMA_SAFETY_MODEL` is set, the guard runs after the base classification
+  and can only escalate the domain toward safety - REFUSE -> the `harmful`
+  hard-stop, CRISIS -> the `crisis` hard-stop - reusing the existing Step-5 hard
+  stops. RESTRAIN (S6) is a deliberate no-op so health/money questions keep their
+  restraint routing instead of being refused. It never downgrades a domain, and
+  escalations are logged as a `safety_guard_override` policy event for
+  transparency. Off by default, so the change is inert unless a guard model is
+  configured. 6 integration tests added.
 
 ### Changed
 - Schema v3 migration: dropped the dormant `session_intents.user_input` SQLite

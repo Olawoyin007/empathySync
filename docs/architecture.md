@@ -144,6 +144,23 @@ User Input
     │
     ▼
 ┌─────────────────────────────────────────────┐
+│  3d. SAFETY GUARD ESCALATION (Phase 21.2)   │
+│     Only if OLLAMA_SAFETY_MODEL is set       │
+│     (off by default). Additive LlamaGuard    │
+│     runs after the base classification:      │
+│       REFUSE (dangerous cats) → harmful      │
+│       CRISIS (S11 self-harm)  → crisis       │
+│       RESTRAIN (S6 advice)    → no-op        │
+│         (keeps health/money restraint —     │
+│          the Phase 21.1 anti-regression)     │
+│       ALLOW                   → no-op        │
+│     Escalate-only: never downgrades a domain.│
+│     Fails open (ALLOW) if guard unreachable. │
+│     Logs safety_guard_override policy event. │
+└─────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────┐
 │  4. MODE SELECTION                          │
 │     domain == "logistics" → Practical Mode  │
 │     OR is_practical_technique → Practical   │
