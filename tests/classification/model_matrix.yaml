@@ -35,3 +35,16 @@ validated_engine_models:
   - qwen2.5:7b-instruct
   - gemma3:12b
   - qwen2.5:14b-instruct-q4_K_M
+
+# Safety guard models (set via OLLAMA_SAFETY_MODEL, Phase 21.2, off by default).
+# A different model class from the classifier above: an ADDITIVE harm classifier,
+# not a distress classifier. It is validated on harm recall, not distress recall.
+#
+# Validation criteria (Phase 21.1 gate + 21.3 integration regression):
+#   - Harm recall >= keyword baseline + 20pp, false-positive rate <= 15%
+#     (21.1: llama-guard3:1b = 96.1% recall / 5.6% FP vs 32.4% keyword baseline)
+#   - Integrated anti-regression: 0 benign health/money (S6) refusals with the
+#     guard on - S6 maps to RESTRAIN, never a refusal
+#   - Verified by tests/test_safety_guard_integration.py (-m conversation)
+validated_safety_models:
+  - llama-guard3:1b       # 96.1% harm recall, 5.6% FP, ~0.3s/msg (co-resident)

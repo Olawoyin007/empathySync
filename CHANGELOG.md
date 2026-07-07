@@ -22,6 +22,16 @@ All notable changes to empathySync are documented here.
   escalations are logged as a `safety_guard_override` policy event for
   transparency. Off by default, so the change is inert unless a guard model is
   configured. 6 integration tests added.
+- Phase 21.3 integration regression baseline. Measured the wired guard end-to-end
+  (`llama-guard3:1b`) against the domain corpus and keyword-evading harm probes:
+  enabling the guard causes **0 refusals** of benign health/money (S6) questions -
+  the anti-regression the S6->RESTRAIN mapping exists to guarantee - while catching
+  4/5 disguised-harm probes the keyword base missed (self-harm correctly to
+  `crisis`, not merely `harmful`). Registered the guard in
+  `tests/classification/model_matrix.yaml` under a new `validated_safety_models`
+  section (harm-recall criterion, distinct from the classifier distress-recall
+  list), and added `tests/test_safety_guard_integration.py` (conversation-tier, 3
+  tests, skipped when the guard model is absent) to lock in both properties.
 
 ### Changed
 - Schema v3 migration: dropped the dormant `session_intents.user_input` SQLite
