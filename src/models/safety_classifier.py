@@ -22,9 +22,10 @@ Design constraints, straight from the Phase 21.1 evaluation:
 
   - Off by default. Active only when OLLAMA_SAFETY_MODEL is set.
 
-NOTE (Phase 21.2): this module is landed dark. It is unit-tested but not yet wired
-into the request pipeline; mapping SafetyAction into RiskClassifier / the Step 5
-hard-stop is a follow-up increment.
+Phase 21.2: wired into RiskClassifier.classify(). When OLLAMA_SAFETY_MODEL is set,
+the guard runs after the base classification and escalates the domain toward safety
+only - REFUSE -> the 'harmful' hard-stop, CRISIS -> the 'crisis' hard-stop - while
+RESTRAIN (S6) defers to the existing restraint routing. It never downgrades a domain.
 """
 
 import logging

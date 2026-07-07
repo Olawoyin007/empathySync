@@ -13,6 +13,7 @@ from utils.scenario_loader import get_scenario_loader, ScenarioLoader
 from config.settings import settings
 from models.enums import Domain, Intent, EmotionalWeight, ClassificationMethod
 from models.emotional_weight_assessor import EmotionalWeightAssessor
+from models.safety_classifier import SafetyClassifier, SafetyAction
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,12 @@ class RiskClassifier:
         self.loader = scenario_loader or get_scenario_loader()
         self._trigger_cache: Optional[Dict[str, str]] = None
         self.emotional = EmotionalWeightAssessor(self.loader)
+
+        # Phase 21.2: additive LlamaGuard safety layer. Off unless
+        # OLLAMA_SAFETY_MODEL is set; when disabled, classify() is a no-op that
+        # returns ALLOW without any HTTP call, so the default configuration is
+        # unaffected.
+        self._safety_classifier = SafetyClassifier()
 
         # Determine LLM classification setting
         if use_llm is None:
@@ -316,6 +323,25 @@ class RiskClassifier:
                 if domain == "crisis":
                     emotional_intensity = max(emotional_intensity, 9.0)
 
+        # Phase 21.2: additive LlamaGuard escalation. Runs only when a guard model
+        # is configured. It can escalate the domain toward safety but never
+        # downgrades it, so it strictly ADDS refusals/crisis routes on top of the
+        # base classification. RESTRAIN (S6 specialized advice) is intentionally a
+        # no-op: the existing restraint routing already handles health/money, and
+        # refusing those is the exact Phase 21.1 regression to avoid.
+        safety_guard_override = None
+        if self._safety_classifier.enabled:
+            guard_action = self._safety_classifier.classify(user_input)
+            if guard_action == SafetyAction.CRISIS and domain != "crisis":
+                logger.warning("Safety guard escalation: %s -> crisis", domain)
+                domain = "crisis"
+                emotional_intensity = max(emotional_intensity, 9.0)
+                safety_guard_override = "crisis"
+            elif guard_action == SafetyAction.REFUSE and domain not in ("crisis", "harmful"):
+                logger.warning("Safety guard escalation: %s -> harmful", domain)
+                domain = "harmful"
+                safety_guard_override = "harmful"
+
         # Always use keyword matching for these (LLM doesn't handle them yet)
         dependency_risk = self._assess_dependency(conversation_history)
         emotional_weight, weight_score = self._assess_emotional_weight(user_input)
@@ -331,6 +357,10 @@ class RiskClassifier:
             "risk_weight": risk_weight,
             "classification_method": classification_method,
         }
+
+        # Phase 21.2: flag safety-guard escalations for policy transparency.
+        if safety_guard_override:
+            result["safety_guard_override"] = safety_guard_override
 
         # Add LLM-specific fields if available
         if llm_result:

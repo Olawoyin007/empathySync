@@ -60,8 +60,10 @@ See `.env.example` for full documentation and defaults.
 - `OLLAMA_CLASSIFIER_MODEL` — Dedicated classifier model; falls back to
   `OLLAMA_MODEL` if unset. Smaller models run faster (~9s vs ~19s).
 - `OLLAMA_SAFETY_MODEL` — Optional additive LlamaGuard model (e.g.
-  `llama-guard3:1b`). Off by default. Landed but not yet wired into the pipeline
-  (Phase 21.2).
+  `llama-guard3:1b`). Off by default. When set, runs alongside the base
+  classifier and can only escalate toward safety (dangerous → harmful hard-stop,
+  self-harm → crisis); S6 specialized advice defers to existing restraint. Never
+  downgrades (Phase 21.2).
 
 **Storage:**
 - `USE_SQLITE` — SQLite backend instead of JSON (default: `false`)
