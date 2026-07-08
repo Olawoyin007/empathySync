@@ -33,7 +33,7 @@ empathysync --log-level DEBUG            # Override log verbosity
 docker compose up
 
 # Tests
-pytest tests/                            # Full suite (1053 unit + 20 conversation)
+pytest tests/                            # Full suite (1126 unit + 23 conversation)
 pytest tests/ --cov=src                  # With coverage
 pytest tests/ -m "not conversation"      # Skip Ollama-dependent tests
 python tests/classification/run_domain_eval.py          # Domain accuracy eval
@@ -110,7 +110,7 @@ tests/
     └── run_domain_eval.py          # Per-domain accuracy report
 ```
 
-Current counts: ~1053 unit tests, 20 conversation quality scenarios.
+Current counts: ~1126 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
 
 Pre-existing known failure: `stress_test_001` conversation tier is
 non-deterministic (LLM output varies); the structural tier always passes.
@@ -173,13 +173,11 @@ content and preference/persona data are never persistable.
 
 ## Roadmap
 
-Phases 1–17 complete. See `docs/roadmap-history.md` for the full record;
-`ROADMAP.md` holds only planned work.
+Phases 1–17, 21, and 23.1 complete. See `docs/roadmap-history.md` for the
+full record; `ROADMAP.md` holds only planned work.
 
 Current version: check `pyproject.toml` (source of truth).
 Run `python scripts/check_version.py` to verify all files are in sync.
 
-Execution order: Phase 23.1 (negative memory invariant), then Phase 21
-(safety classifier upgrade, issue #125, incl. 21.4 domain-routing
-corrections), then Phase 22 (persistent agent daemon), then Phase 19
+Execution order: Phase 22 (persistent agent daemon), then Phase 19
 (multilingual).
