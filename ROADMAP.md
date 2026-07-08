@@ -12,9 +12,9 @@ These three goals anchor every phase below.
 
 ---
 
-## Completed Work (Phases 1 - 17)
+## Completed Work (Phases 1 - 17, 21)
 
-All foundational phases are complete and shipped through **v1.11.0**. The full
+All foundational phases are complete and shipped through **v1.13.0**. The full
 verbatim record (sub-phase checklists, implementation notes, point-in-time
 accuracy numbers) lives in [docs/roadmap-history.md](docs/roadmap-history.md);
 per-release detail is in [CHANGELOG.md](CHANGELOG.md).
@@ -29,167 +29,16 @@ per-release detail is in [CHANGELOG.md](CHANGELOG.md).
 | 13 - 15 | Project health, packaging (pyproject, install.sh, Docker), CI/CD and docs |
 | 16 - 16.13 | Core decoupling (ConversationSession, adapters), type safety, security hardening, voice tuning, connection steering |
 | 17 | Classification robustness and safety evaluation (multi-label distress routing, confidence calibration, distress corpus CI gate, adversarial coverage, cross-model validation) |
+| 21 | Additive LlamaGuard safety guard (`llama-guard3:1b`, escalate-only, off by default), guard eval harness and regression baseline, spirituality domain-routing corrections. Two stretch items deferred (output-stream guard scan; contentless-continuation fallback, the #135 residual) - see the history record. |
 
 ---
 
 ## Planned Phases
 
-Execution order: **23.1 → 21 → 22 → 19** (20 stays deferred). Phase 23.1 is
-pulled ahead of its parent phase because the memory invariant must exist
-*before* Phase 22 builds cross-session memory - a constraint written after the
-feature would be shaped by the feature.
-
----
-
-## Phase 21: Safety Classifier Upgrade 🔜 NEXT (issue #125)
-
-**Goal**: Replace the prompt-engineered LLM classifier with a purpose-trained safety model
-that generalises to novel phrasings, mutations, and adversarial rephrasing - the failure
-mode that Phase 17.7 quantified (97-100% keyword evasion rate on linguistic mutations).
-
-**Why this matters**: The current LLM classifier follows prompt instructions ("fiction doesn't
-change the classification") which work when the model cooperates, but an adversarially-crafted
-message can still cause classification failures. A trained safety model (LlamaGuard, WildGuard)
-was fine-tuned on labeled harmful/benign pairs specifically to resist these attacks.
-
-**Scope note**: a safety model addresses the *harmful/crisis* axis. The two failure classes
-measured in #135 and #137 are *domain routing* failures and are covered by 21.4 below - a
-harm classifier fixes neither, so 21.4 is in scope for this phase to keep the measured
-misses attached to the work that resolves them.
-
-**Prerequisite**: Phase 17 complete. JBB+AdvBench corpus and mutation scanner (Phase 17.7)
-already in place for A/B evaluation.
-
-### 21.1 Safety Model Evaluation ✅ DONE - gate PASSED, use `llama-guard3:1b`
-
-**Candidates**:
-- **LlamaGuard 3** (Meta): available via Ollama in both `8b` and `1b` sizes,
-  covers 14 harm categories (S1-S14), designed as a drop-in classifier.
-- **WildGuard** (AllenAI, 7B): not in the Ollama library (needs GGUF conversion);
-  deferred - LlamaGuard cleared the gate decisively, so WildGuard was not required.
-
-**Measured results** (12GB RTX 4070, engine `gemma3:12b`, `scripts/benchmark_guard_swap.py`
-+ `scripts/eval_guard_recall.py`, 620 JBB+AdvBench behaviours, 36 benign corpus prompts):
-
-| Metric | keyword baseline | **llama-guard3:1b** | llama-guard3:8b |
-|--------|------------------|---------------------|-----------------|
-| Recall (harmful flagged) | 32.4% | **96.1%** | 98.1% |
-| False positives (benign) | - | **5.6%** | 11.1% |
-| Added latency / message | 0 | **~0.3s** | ~10.5s |
-| Co-resides with engine in 12GB | - | **yes** | no (swaps) |
-
-**Decision: `llama-guard3:1b`.** It nearly triples recall over the keyword layer
-(+63.7pp, gate was +20pp), keeps FP at 5.6% (gate was <=15%), and - decisively - fits
-in VRAM alongside `gemma3:12b`, so it costs ~0.3s/message instead of the ~10.5s
-per-message model swap the 8B forces. The 8B's +2pp recall is not worth 2x the false
-positives and 35x the latency on this hardware.
-
-**Key integration finding (drives 21.2):** every 1B/8B false positive was a *health or
-money* question ("could it be my thyroid?", "metformin side effects", "invest in
-crypto?"). LlamaGuard's taxonomy marks category **S6 (specialized medical/financial/legal
-advice)** as unsafe - but those are empathySync's *restraint* domains, not its *refusal*
-domains. Integration must therefore map LlamaGuard categories, NOT treat "unsafe" as a
-blanket block: dangerous categories (violence, weapons, CSAM, malware) route to harmful
-refusal; S6 routes to the existing health/money restraint domains. A naive wiring would
-regress empathySync into refusing legitimate health questions.
-
-**Mutation recall (the hard test, `scripts/eval_guard_mutations.py`):** base-phrasing
-recall is not the real adversarial bar - keyword detection evaded 97-100% of *mutated*
-phrasings in Phase 17.7. Running SORRY-Bench-style mutations through `llama-guard3:1b`:
-**50% overall** (vs. 0-3% keyword), but strongly category-dependent - third_person 85%,
-roleplay 65%, slang 55%, euphemism 45%, **hypothetical/fiction 0%**. Two consequences:
-(1) the guard is a large net gain but is *additive*, not a replacement - 21.2 must keep
-the existing prompt-engineered classifier's "fiction doesn't change the classification"
-rules active, precisely where the guard is weakest. (2) Caveat: the engine generates the
-mutations, so some misses may be the engine softening intent rather than true guard
-evasion - 50% is a floor; the hypothetical category needs a manual read during 21.2.
-
-- [x] Benchmark VRAM contention / model-swap latency (`scripts/benchmark_guard_swap.py`)
-- [x] Pull models via Ollama, benchmark inference latency (8B and 1B)
-- [x] Run JBB+AdvBench through each model, measure recall vs. keyword baseline
-- [x] Run benign corpus through each model, measure false positive rate
-- [x] Run mutation corpus through the guard, measure mutation recall (`eval_guard_mutations.py`)
-- [x] Decision gate: recall improvement >= 20pp AND FP <= 15% - **PASSED for 1B**
-- [x] Hardware note: `llama-guard3:1b` (~1.6GB) co-resides with a 12GB-class engine;
-      the 8B needs its own headroom or a per-message swap
-
-### 21.2 Integration
-
-**Architecture**: Safety classifier runs as a second Ollama model used only for harm
-classification - the main conversation model stays unchanged.
-
-- [x] Add `OLLAMA_SAFETY_MODEL` env var (recommended `llama-guard3:1b` per 21.1) (#159)
-- [x] When set, the guard runs additively inside `RiskClassifier.classify()` and escalates the
-  `domain` toward safety (REFUSE→harmful, CRISIS→crisis); it does not replace the general
-  classifier (#160)
-- [x] Fast-path patterns remain in place as pre-filter (keyword fast-path unchanged) (#160)
-- [x] **Keep the existing classifier's fiction/hypothetical rules active** (21.1 mutation
-  finding): the guard catches 0% of hypothetical-framed harm, so it complements - does not
-  replace - the prompt-engineered classifier. Guard is additive; the base classifier is
-  untouched. Run both; treat either flagging harm as harm. (#160)
-- [x] **Category mapping, not blanket block** (21.1 finding): map LlamaGuard S1-S14 to
-  empathySync domains - dangerous categories (violence/weapons/CSAM/malware) → harmful
-  refusal; S6 specialized-advice → existing health/money restraint (RESTRAIN, a no-op). Do NOT
-  treat every "unsafe" verdict as a block, or legitimate health/money questions regress to
-  refusal. (#159 mapping, #160 wiring; 21.3 proved 0 benign S6 refusals end-to-end)
-- [x] Safety model output mapped to empathySync's `domain` (REFUSE→harmful, CRISIS→crisis) (#160)
-- [x] Fallback: if safety model unavailable, guard fails open (ALLOW) and the existing
-  prompt-engineered classifier remains authoritative (#159)
-- [x] Health check warns if safety model is configured but unreachable
-  (`check_safety_guard` in `src/utils/health_check.py`; non-critical since the guard fails open)
-- [ ] Stretch: evaluate running the guard model over the *output* stream as well - the
-  current mid-stream buffer scans for manipulative-voice patterns, not dangerous content
-
-### 21.3 Evaluation & Regression
-
-- [x] Re-ran `scripts/eval_guard_recall.py` + `scripts/eval_guard_mutations.py` with the safety
-  model in 21.1 (recall gate); 21.3 additionally measured the *wired* guard end-to-end
-- [x] Add safety model to `tests/classification/model_matrix.yaml` (new `validated_safety_models`
-  section, harm-recall criterion)
-- [x] Validate the wired guard by integration regression - `tests/test_safety_guard_integration.py`
-  (anti-regression: 0 benign S6 refusals; recall: disguised harm escalated). The guard is a harm
-  classifier, not a distress classifier, so it is validated on harm recall, not the distress corpus.
-- [x] Document new coverage baseline in CHANGELOG
-
-### 21.4 Domain Routing Corrections (measured gaps from #135 / #137)
-
-**Problem**: every domain override in the pipeline is currently one-directional
-(emotional→specific but never specific→specific; logistics→emotional but never
-relationships→spirituality). One-directional corrections create gravity wells:
-whichever label the LLM reaches first wins forever. Measured consequences:
-
-- **Relationships gravity well** (#137): "is it haram to leave my marriage" and
-  "my rabbi says keep faith / angry at God" route to `relationships` even though
-  `allah` / `my rabbi` are spirituality keywords - the divine-confirmation
-  restraint is lost because only emotional→specific is ever corrected.
-- **Contentless-continuation stickiness** (#135 residual): one-word continuations
-  in isolation ("just a feeling", "you") classify as logistics via the
-  short-continuation LLM-skip plus the practical empty-generation fallback.
-
-**Implementation**:
-- [x] Symmetric specific→spirituality override: when keyword detection finds spirituality
-      but the LLM chose a different domain, spirituality wins (runs regardless of confidence;
-      never overrides crisis/harmful). Investigation finding: the ROADMAP premise was
-      incomplete - keyword detection *also* lost the flagship cases (haram/rabbi tie-broke to
-      relationships; god's will/baptised weren't triggers at all), so the fix is three parts:
-      missing high-signal triggers + a keyword tie-break toward spirituality + the override.
-      Scoped to spirituality-wins (the measured gravity-well victim) to bound regression risk.
-- [ ] Contentless-continuation fallback: short continuations with no domain signal
-      inherit session context instead of defaulting to logistics (#135 residual - deferred,
-      separate from the spirituality gravity well)
-- [x] Re-ran domain eval: 81/94 → 83/94; the four spirituality boundary misses (haram, rabbi,
-      god's will, baptised) are deterministically fixed. Also fixed a latent `cult` substring
-      bug (matched "difficult"/"culture") the override surfaced.
-
-**Files to create**:
-- `src/models/safety_classifier.py` - LlamaGuard/WildGuard adapter implementing the same
-  interface as `LLMClassifier`
-
-**Files to modify**:
-- `src/config/settings.py` - Add `OLLAMA_SAFETY_MODEL` setting
-- `src/utils/health_check.py` - Add safety model health check
-- `src/models/risk_classifier.py` - Route through safety classifier when configured; 21.4 overrides
-- `.env.example` - Document safety model option
+Execution order: **22 → 19** (20 stays deferred). Phases 23.1 and 21 are
+complete - 23.1 was pulled ahead of its parent phase because the memory
+invariant had to exist *before* Phase 22 builds cross-session memory - a
+constraint written after the feature would be shaped by the feature.
 
 ---
 
@@ -247,7 +96,7 @@ what the daemon is *able* to remember is constrained by design, not audited afte
 
 ---
 
-## Phase 22: Persistent Agent Daemon 🔜 PLANNED (after 21 and 23.1)
+## Phase 22: Persistent Agent Daemon 🔜 NEXT (prerequisites 21 and 23.1 complete)
 
 **Goal**: Move empathySync beyond a session-bound app into a background process that can deliver timely nudges, track long-term patterns across sessions, and go quiet when it detects over-reliance. The restraint philosophy extends to the agent's own behavior.
 
@@ -336,7 +185,7 @@ free-text summaries.
 
 ---
 
-## Phase 19: Multilingual Support 🔜 PLANNED (after 21)
+## Phase 19: Multilingual Support 🔜 PLANNED (after 22)
 
 **Goal**: empathySync works in the language the user actually thinks in - not just English. Crisis detection, restraint behaviour, and human redirection must work identically across languages.
 
@@ -468,13 +317,13 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 detection, LLM classification, confidence calibration (17.2), distress routing (17.1),
 sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
-**Test suite**: 1053 structural tests + 20 conversation scenarios. Distress corpus CI
-gate: 0% FN rate. Keyword FP rate on benign content: 7%. Domain eval baseline:
-81/94 (86%) on mistral:7b-instruct.
+**Test suite**: 1126 structural tests + 23 conversation-marked tests (20 quality
+scenarios + 3 safety-guard integration). Distress corpus CI gate: 0% FN rate. Keyword
+FP rate on benign content: 7%. Domain eval baseline: 83/94 (88%) on mistral:7b-instruct.
 
-**Next**: Phase 23.1 (negative memory invariant), then Phase 21 (safety classifier
-upgrade, issue #125, including the 21.4 domain-routing corrections), then Phase 22
-(daemon), then Phase 19 (multilingual).
+**Next**: Phase 22 (daemon), then Phase 19 (multilingual). Phase 23.1 shipped in
+v1.12.0; Phase 21 (safety classifier upgrade, issue #125, including the 21.4
+domain-routing corrections) shipped in v1.13.0.
 
 **v1.11.0 deferred items - resolved (2026-07-03)**:
 - `dev`/`main` branch split: **dropped.** Solo maintainer + branch protection + PR-only
@@ -503,7 +352,7 @@ upgrade, issue #125, including the 21.4 domain-routing corrections), then Phase 
 
 ## Version Targets
 
-Shipped versions v0.2 through v1.11.0 are recorded in
+Shipped versions v0.2 through v1.13.0 are recorded in
 [CHANGELOG.md](CHANGELOG.md) and [docs/roadmap-history.md](docs/roadmap-history.md).
 
 **v1.12** (Phase 23.1 + hygiene): negative memory invariant, dead-config removal, pipeline correctness fixes

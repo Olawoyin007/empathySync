@@ -2,7 +2,7 @@
 
 All notable changes to empathySync are documented here.
 
-## [Unreleased]
+## v1.13.0 (2026-07-08) - Safety Guard Integration
 
 ### Added
 - Additive LlamaGuard safety classifier (Phase 21.2): `SafetyClassifier`
