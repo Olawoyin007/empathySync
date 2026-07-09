@@ -6,6 +6,7 @@ Usage:
     empathysync --mode web   # Same as above
     empathysync --mode cli   # Direct terminal interface (no browser needed)
     empathysync --maintenance  # Run maintenance tasks and exit
+    empathysync --health     # Run startup health checks and exit
     empathysync --version    # Print version and exit
 """
 
@@ -65,7 +66,11 @@ def list_domains(json_output=False):
     domains = loader.get_all_domains()
 
     # Sort by risk weight (descending) for better readability
-    sorted_domains = sorted(domains.items(), key=lambda x: x[1].get("risk_weight", 0), reverse=True)
+    sorted_domains = sorted(
+        domains.items(),
+        key=lambda x: x[1].get("risk_weight", 0),
+        reverse=True,
+    )
 
     if json_output:
         output = [
@@ -82,12 +87,13 @@ def list_domains(json_output=False):
         for domain_name, config in sorted_domains:
             risk_weight = config.get("risk_weight", 0)
             description = config.get("description", "")
-            # Format: domain (padded to 14 chars) risk weight (padded to 14 chars) - description
-            print(f"  {domain_name:<14} risk weight: {risk_weight:<5} - {description}")
+            # Format: domain, risk weight, and description in aligned columns.
+            prefix = f"  {domain_name:<14} risk weight: {risk_weight:<5}"
+            print(f"{prefix} - {description}")
 
 
 def run_maintenance():
-    """Run maintenance tasks: prune old data, validate integrity, print summary."""
+    """Run maintenance tasks and print a summary."""
     sys.path.append(str(Path(__file__).parent))
 
     from config.settings import settings
@@ -145,10 +151,33 @@ def run_maintenance():
     print(f"  Model: {settings.OLLAMA_MODEL or '(not set)'}")
     print(f"  Host: {settings.OLLAMA_HOST or '(not set)'}")
     print(f"  Storage: {'SQLite' if settings.USE_SQLITE else 'JSON'}")
-    print(f"  Retention: {retention} days" if retention > 0 else "  Retention: disabled")
+    retention_status = "  Retention: disabled"
+    if retention > 0:
+        retention_status = f"  Retention: {retention} days"
+    print(retention_status)
 
     print("\n" + "=" * 40)
     print("Maintenance complete")
+
+
+def run_health():
+    """Run startup health checks and return an exit code."""
+    sys.path.append(str(Path(__file__).parent))
+
+    from utils.health_check import has_critical_failures, run_health_checks
+
+    checks = run_health_checks()
+    for check in checks:
+        if check.ok:
+            marker = "[ok]"
+        elif check.critical:
+            marker = "[FAIL]"
+        else:
+            marker = "[warn]"
+
+        print(f"{marker:<6} {check.name:<18} {check.message}")
+
+    return 1 if has_critical_failures(checks) else 0
 
 
 def main():
@@ -156,7 +185,8 @@ def main():
     sys.path.append(str(Path(__file__).parent))
     from config.settings import settings
 
-    parser = argparse.ArgumentParser(description="empathySync - Help that knows when to stop")
+    parser_description = "empathySync - Help that knows when to stop"
+    parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument(
         "--mode",
         choices=["web", "cli"],
@@ -180,6 +210,11 @@ def main():
         help="Run maintenance tasks (prune data, check integrity) and exit",
     )
     parser.add_argument(
+        "--health",
+        action="store_true",
+        help="Run startup health checks and exit",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"{settings.APP_NAME} v{settings.APP_VERSION}",
@@ -201,6 +236,8 @@ def main():
         list_domains(json_output=args.json)
     elif args.maintenance:
         run_maintenance()
+    elif args.health:
+        sys.exit(run_health())
     elif args.mode == "cli":
         run_cli()
     else:
