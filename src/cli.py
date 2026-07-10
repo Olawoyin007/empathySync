@@ -6,6 +6,7 @@ Usage:
     empathysync --mode web   # Same as above
     empathysync --mode cli   # Direct terminal interface (no browser needed)
     empathysync --maintenance  # Run maintenance tasks and exit
+    empathysync --health     # Run startup health checks and exit
     empathysync --version    # Print version and exit
 """
 
@@ -151,6 +152,26 @@ def run_maintenance():
     print("Maintenance complete")
 
 
+def run_health():
+    """Run startup health checks and return an exit code."""
+    sys.path.append(str(Path(__file__).parent))
+
+    from utils.health_check import has_critical_failures, run_health_checks
+
+    checks = run_health_checks()
+    for check in checks:
+        if check.ok:
+            marker = "[ok]"
+        elif check.critical:
+            marker = "[FAIL]"
+        else:
+            marker = "[warn]"
+
+        print(f"{marker:<6} {check.name:<18} {check.message}")
+
+    return 1 if has_critical_failures(checks) else 0
+
+
 def main():
     """Main entry point with mode selection."""
     sys.path.append(str(Path(__file__).parent))
@@ -180,6 +201,11 @@ def main():
         help="Run maintenance tasks (prune data, check integrity) and exit",
     )
     parser.add_argument(
+        "--health",
+        action="store_true",
+        help="Run startup health checks and exit",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"{settings.APP_NAME} v{settings.APP_VERSION}",
@@ -201,6 +227,8 @@ def main():
         list_domains(json_output=args.json)
     elif args.maintenance:
         run_maintenance()
+    elif args.health:
+        sys.exit(run_health())
     elif args.mode == "cli":
         run_cli()
     else:

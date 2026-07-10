@@ -27,6 +27,7 @@ empathysync --version                    # Print version and exit
 empathysync --list-domains               # List supported classification domains
 empathysync --list-domains --json        # Same, machine-readable JSON
 empathysync --maintenance                # Prune old data, check integrity, exit
+empathysync --health                     # Run startup health checks, exit
 empathysync --log-level DEBUG            # Override log verbosity
 
 # Docker (app + Ollama together)

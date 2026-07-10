@@ -91,6 +91,73 @@ class TestCLIArguments:
                 main()
         assert exc_info.value.code != 0
 
+    def test_health_flag_runs_checks_and_exits_zero(self, capsys):
+        """--health runs startup checks and exits cleanly."""
+        import pytest
+        from utils.health_check import HealthStatus
+
+        checks = [
+            HealthStatus(name="Ollama Server", ok=True, message="Connected"),
+            HealthStatus(
+                name="Safety Guard",
+                ok=False,
+                message="Disabled",
+                critical=False,
+            ),
+        ]
+
+        with patch(
+            "utils.health_check.run_health_checks",
+            return_value=checks,
+        ) as mock_run:
+            with patch("sys.argv", ["empathysync", "--health"]):
+                from src.cli import main
+
+                with pytest.raises(SystemExit) as exc_info:
+                    main()
+
+        assert exc_info.value.code == 0
+        mock_run.assert_called_once()
+
+        output = capsys.readouterr().out
+        assert "[ok]" in output
+        assert "Ollama Server" in output
+        assert "Connected" in output
+        assert "[warn]" in output
+        assert "Safety Guard" in output
+        assert "Disabled" in output
+
+    def test_health_flag_exits_one_for_critical_failures(self, capsys):
+        """Critical health-check failures produce exit code 1."""
+        import pytest
+        from utils.health_check import HealthStatus
+
+        checks = [
+            HealthStatus(
+                name="Data Directory",
+                ok=False,
+                message="No write permission",
+                critical=True,
+            )
+        ]
+
+        with patch(
+            "utils.health_check.run_health_checks",
+            return_value=checks,
+        ):
+            with patch("sys.argv", ["empathysync", "--health"]):
+                from src.cli import main
+
+                with pytest.raises(SystemExit) as exc_info:
+                    main()
+
+        assert exc_info.value.code == 1
+
+        output = capsys.readouterr().out
+        assert "[FAIL]" in output
+        assert "Data Directory" in output
+        assert "No write permission" in output
+
 
 class TestListDomains:
     def test_list_domains_prints_all_domains(self, capsys):
@@ -172,8 +239,16 @@ class TestListDomains:
         data = json.loads(output)
 
         domain_names = [item["domain"] for item in data]
-        for expected in ["crisis", "harmful", "health", "money", "emotional",
-                         "relationships", "spirituality", "logistics"]:
+        for expected in [
+            "crisis",
+            "harmful",
+            "health",
+            "money",
+            "emotional",
+            "relationships",
+            "spirituality",
+            "logistics",
+        ]:
             assert expected in domain_names
 
     def test_list_domains_plain_text_unchanged_when_no_json_flag(self, capsys):
