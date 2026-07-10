@@ -66,11 +66,7 @@ def list_domains(json_output=False):
     domains = loader.get_all_domains()
 
     # Sort by risk weight (descending) for better readability
-    sorted_domains = sorted(
-        domains.items(),
-        key=lambda x: x[1].get("risk_weight", 0),
-        reverse=True,
-    )
+    sorted_domains = sorted(domains.items(), key=lambda x: x[1].get("risk_weight", 0), reverse=True)
 
     if json_output:
         output = [
@@ -87,13 +83,12 @@ def list_domains(json_output=False):
         for domain_name, config in sorted_domains:
             risk_weight = config.get("risk_weight", 0)
             description = config.get("description", "")
-            # Format: domain, risk weight, and description in aligned columns.
-            prefix = f"  {domain_name:<14} risk weight: {risk_weight:<5}"
-            print(f"{prefix} - {description}")
+            # Format: domain (padded to 14 chars) risk weight (padded to 14 chars) - description
+            print(f"  {domain_name:<14} risk weight: {risk_weight:<5} - {description}")
 
 
 def run_maintenance():
-    """Run maintenance tasks and print a summary."""
+    """Run maintenance tasks: prune old data, validate integrity, print summary."""
     sys.path.append(str(Path(__file__).parent))
 
     from config.settings import settings
@@ -151,10 +146,7 @@ def run_maintenance():
     print(f"  Model: {settings.OLLAMA_MODEL or '(not set)'}")
     print(f"  Host: {settings.OLLAMA_HOST or '(not set)'}")
     print(f"  Storage: {'SQLite' if settings.USE_SQLITE else 'JSON'}")
-    retention_status = "  Retention: disabled"
-    if retention > 0:
-        retention_status = f"  Retention: {retention} days"
-    print(retention_status)
+    print(f"  Retention: {retention} days" if retention > 0 else "  Retention: disabled")
 
     print("\n" + "=" * 40)
     print("Maintenance complete")
@@ -185,8 +177,7 @@ def main():
     sys.path.append(str(Path(__file__).parent))
     from config.settings import settings
 
-    parser_description = "empathySync - Help that knows when to stop"
-    parser = argparse.ArgumentParser(description=parser_description)
+    parser = argparse.ArgumentParser(description="empathySync - Help that knows when to stop")
     parser.add_argument(
         "--mode",
         choices=["web", "cli"],

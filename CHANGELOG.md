@@ -2,6 +2,15 @@
 
 All notable changes to empathySync are documented here.
 
+## [Unreleased]
+
+### Added
+- `empathysync --health` CLI flag (#165, contributed by @paranoa233): runs the
+  existing startup health checks (`src/utils/health_check.py`) on demand and
+  exits 0/1, so Ollama connectivity, data-directory permissions, and the
+  optional safety guard can be verified from scripts or a shell without
+  launching the UI.
+
 ## v1.13.0 (2026-07-08) - Safety Guard Integration
 
 ### Added

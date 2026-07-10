@@ -44,10 +44,7 @@ class TestCLIArguments:
         original = root.level
         try:
             with patch("src.cli.run_streamlit"):
-                with patch(
-                    "sys.argv",
-                    ["empathysync", "--log-level", "DEBUG"],
-                ):
+                with patch("sys.argv", ["empathysync", "--log-level", "DEBUG"]):
                     from src.cli import main
 
                     main()
@@ -61,10 +58,7 @@ class TestCLIArguments:
         original = root.level
         try:
             with patch("src.cli.run_streamlit"):
-                with patch(
-                    "sys.argv",
-                    ["empathysync", "--log-level", "WARNING"],
-                ):
+                with patch("sys.argv", ["empathysync", "--log-level", "WARNING"]):
                     from src.cli import main
 
                     main()
@@ -87,7 +81,7 @@ class TestCLIArguments:
             root.setLevel(logging.WARNING)
 
     def test_log_level_invalid_choice_exits_nonzero(self):
-        """An invalid --log-level value exits non-zero."""
+        """An unrecognised --log-level value causes argparse to exit non-zero."""
         import pytest
 
         with patch("sys.argv", ["empathysync", "--log-level", "VERBOSE"]):
@@ -167,7 +161,7 @@ class TestCLIArguments:
 
 class TestListDomains:
     def test_list_domains_prints_all_domains(self, capsys):
-        """list_domains prints all 8 domains with their risk weights."""
+        """Test that list_domains prints all 8 domains with their risk weights."""
         from src.cli import list_domains
 
         list_domains()

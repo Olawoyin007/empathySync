@@ -130,6 +130,7 @@ empathysync --mode cli     # Direct terminal mode
 empathysync --version      # Show version and exit
 empathysync --list-domains # List all supported classification domains
 empathysync --maintenance  # Prune old data, check integrity, and exit
+empathysync --health       # Run startup health checks and exit
 empathysync --log-level DEBUG  # Set log verbosity (DEBUG, INFO, WARNING, ERROR)
 ```
 
