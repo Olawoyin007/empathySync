@@ -40,6 +40,31 @@ complete - 23.1 was pulled ahead of its parent phase because the memory
 invariant had to exist *before* Phase 22 builds cross-session memory - a
 constraint written after the feature would be shaped by the feature.
 
+### Execution contract (read before starting any phase)
+
+Written so any implementing agent - regardless of capability - can execute a
+phase without guessing:
+
+1. Read `CLAUDE.md`, then `docs/architecture.md`, before touching
+   `src/models/`, `src/utils/`, or pipeline step ordering. Read
+   `MERGE_CHECKLIST.md` before every PR and complete the row for your change type.
+2. One sub-phase = one PR, branched from `main` (branch protection blocks
+   direct pushes). Merge before starting the next sub-phase.
+3. Any newly persisted field or column MUST be added to `restraint_memory`
+   in `scenarios/config/system_defaults.yaml` in the same PR, or
+   `tests/test_restraint_memory.py` fails the build. That gate is intentional -
+   never weaken the test to get past it. Conversation content and
+   preference/persona data are never persistable, in any encoding.
+4. Verify before declaring done: `pytest tests/ -m "not conversation"` (all
+   ~1128 must pass) plus the sub-phase's own **Verify** line. Run
+   `python tests/classification/run_domain_eval.py` only when classification
+   code or scenario YAML changed (baseline: 83/94 on mistral:7b-instruct).
+5. When a step is ambiguous, take the smallest interpretation that satisfies
+   the **Done when** line and record the choice in the PR body.
+
+Each sub-phase below carries **Done when / Verify / Pitfalls** lines - treat
+them as the acceptance test, not as suggestions.
+
 ---
 
 ## Phase 23: Restraint Memory - Memory as Guardrail, Not Rapport 🔜 PLANNED (23.1 pulled ahead of Phase 22)
@@ -72,10 +97,20 @@ what the daemon is *able* to remember is constrained by design, not audited afte
 - [ ] Decay is visible, not silent: "Your reliance signal for {domain} has reset - you haven't needed it in a month."
 - [ ] Never decay handoff *availability* (trusted contacts persist); only decay the *risk* signals
 
+**Files**: `src/utils/wellness_tracker.py` (decay on load), `scenarios/config/system_defaults.yaml` (quiet-period config + allowlist for any new timestamp field), new tests in `tests/test_cross_session_decay.py`.
+**Done when**: a store seeded with a sensitive-domain timestamp older than the quiet period loads with that domain's risk signals at baseline, a `policy_events` record documents the reset, and trusted contacts / handoff availability are byte-identical before and after.
+**Verify**: unit tests with injected timestamps (never `sleep`); full suite passes.
+**Pitfalls**: decay runs on read - there is no daemon yet, do not add a background thread. All storage access via `get_storage_backend()`, never the db module directly. Any new persisted field goes on the allowlist first.
+
 ### 23.3 "What empathySync Remembers" - one consolidated view
 - [ ] Single sidebar view that renders ALL persisted safety state in plain language (consolidates the Phase 6 transparency, Phase 7 dashboard, and Phase 11 persistence into one honest surface)
 - [ ] One-click "Forget this" per item and "Forget everything" global (reuses Phase 7 delete + Phase 11 store)
 - [ ] Show the allowlist itself: "Here is everything I am even *able* to remember" - the negative space is the reassurance
+
+**Files**: `src/app.py` (sidebar view), `src/utils/wellness_tracker.py` (assemble the view's data).
+**Done when**: the view renders every field the store actually holds (walk the persisted state - do not hardcode a field list), each with a plain-language label; "Forget this" / "Forget everything" delete through existing `StorageBackend` deletion paths and the item is verifiably gone from the store file; the allowlist section is read from `system_defaults.yaml` at render time, not duplicated in Python.
+**Verify**: full suite; then `streamlit run src/app.py`, delete one item and confirm removal in the data file.
+**Pitfalls**: deletes must pass the write gate (UI flag → `write_gate.py` → storage checks - all three). The view itself must not create any new persistence.
 
 ### 23.4 The Measurement Framework (the evaluation spine)
 **Problem**: "How do you measure whether a cooldown / turn-limit / handoff actually works?" is the question every reviewer asks. Answer it in three honest levels, each wired to existing telemetry.
@@ -83,6 +118,11 @@ what the daemon is *able* to remember is constrained by design, not audited afte
 - [ ] **Level 2 - Behavioral outcome (local, user's own trend):** the Phase 7 signals reframed as the success definition - sensitive-domain frequency down, reach-out rate up, did-it-myself up, late-night sensitive sessions down. Never compared across users.
 - [ ] **Level 3 - The honest confound (stated, not hidden):** declining sensitive-domain frequency cannot distinguish healthy disengagement from migration to a less-restricted tool (AISB paper section 6). Document this as a known boundary; clinical validation against a validated attachment instrument is the defined next step, not a current claim.
 - [ ] Produce `docs/measurement.md` capturing the three levels - doubles as the answer for the AISB oral and reviewer Q&A
+
+**Files**: `docs/measurement.md` (new); no source changes expected.
+**Done when**: every Level-1 claim in the doc points at a concrete existing test or `policy_events` record that proves it; Level 3 names the confound explicitly.
+**Verify**: docs-only PR - full suite green, no new persisted fields.
+**Pitfalls**: this phase adds no telemetry. If a claim cannot be backed by an existing test, write the test first or drop the claim.
 
 **Files (planned)**:
 - `tests/test_restraint_memory.py` - the negative-invariant property test (23.1)
@@ -117,6 +157,10 @@ what the daemon is *able* to remember is constrained by design, not audited afte
 - [ ] Resource-conscious: sleep when idle, wake on schedule or IPC signal
 - [ ] Daemon uses `ConversationSession` from Phase 16 (no Streamlit dependency)
 
+**Done when**: `python -m src.daemon.agent` starts, writes a PID file, answers a ping on its local socket, and exits cleanly on SIGTERM; the systemd unit survives `systemctl --user start/stop`; importing anything under `src/daemon/` never imports Streamlit.
+**Verify**: new `tests/test_daemon.py` covering start/stop/PID/socket with fakes (no real service install in tests), plus a test asserting `"streamlit" not in sys.modules` after importing the daemon package; full suite passes.
+**Pitfalls**: "local socket" means a Unix domain socket, not TCP/HTTP (local-first). If daemon logic needs something currently living in `src/app.py`, move that logic down into `src/models/` or `src/utils/` - never import from the UI layer.
+
 ### 22.2 Cross-Session Memory 🔜 PLANNED (rescoped under the 23.1 invariant)
 **Problem**: Each session starts fresh. The agent can't remember "you said you'd talk to your sister about this."
 
@@ -136,6 +180,10 @@ free-text summaries.
 - [ ] User can view and delete any stored records (the 23.3 view)
 - [ ] The 23.1 property test covers this table from the first migration
 
+**Done when**: schema version is bumped with a `v_n → v_n+1` migration function (MERGE_CHECKLIST storage-change row); every new column is listed in `restraint_memory.allowed_columns`; context injection is built only from structured fields; `tests/test_restraint_memory.py` passes **unmodified**.
+**Verify**: a migration test that upgrades a copy of a current-version store; the invariant test; full suite.
+**Pitfalls**: no free-text columns of any kind - an LLM-generated summary of what the user said is derived message content and is forbidden by 23.1. If a field feels useful but is not safety-relevant, it does not get stored.
+
 ### 22.3 Scheduled Nudges 🔜 PLANNED
 **Problem**: The trusted network feature tracks reach-outs but can't proactively remind users to maintain connections.
 
@@ -147,6 +195,10 @@ free-text summaries.
 - [ ] Delivery via system notification (desktop notification API)
 - [ ] Nudge frequency caps (max 2/week, respect quiet hours)
 - [ ] Snooze and permanently dismiss options
+
+**Done when**: nudges fire only through the scheduler with caps enforced; every nudge is logged in allowlisted fields; snooze/dismiss persist across daemon restarts; every nudge body points toward a human or toward exit - never solely back into the app.
+**Verify**: scheduler unit tests with an injected clock (test the cap boundary: 2nd nudge in a week fires, 3rd does not; quiet-hours edge minute); full suite.
+**Pitfalls**: desktop notification APIs differ per OS - wrap them behind one small interface with a logging no-op fallback so tests never need a display server.
 
 ### 22.4 Self-Restriction Engine 🔜 PLANNED
 **Problem**: A persistent agent has more surface area for creating dependency. The agent needs to actively govern its own footprint.
@@ -165,11 +217,19 @@ free-text summaries.
 - [ ] Tier transitions logged in policy events (transparency)
 - [ ] User can override tiers, but the agent explains why it went quiet
 
+**Done when**: the influence score is computed from persisted nudge history only; the four tiers transition at thresholds defined in YAML config (not Python constants); every transition emits a `policy_events` record; the override path exists and the agent states its reason for going quiet.
+**Verify**: unit tests driving each tier boundary in both directions (escalate and de-escalate); full suite.
+**Pitfalls**: the sign convention matters - nudge engagement correlating with MORE app sessions must push the tier DOWN toward quiet (see Philosophical Safeguards #2). Getting this backwards turns the safety feature into an engagement loop.
+
 ### 22.5 Inactivity as Success Metric 🔜 PLANNED
 - [ ] Track periods of non-use (especially for sensitive topics)
 - [ ] Celebrate milestones: "You haven't needed me for emotional support in 30 days. That's real growth."
 - [ ] Distinguish: practical usage staying steady = fine; sensitive usage declining = success
 - [ ] Surface in "My Patterns" dashboard when user returns
+
+**Done when**: milestones are computed from timestamps the store already holds (no new tracking fields unless allowlisted); sensitive and practical usage are distinguished; the milestone shows once on the next user-initiated session and never as a push notification.
+**Verify**: unit tests with injected clock; full suite.
+**Pitfalls**: celebrating absence must not become a re-engagement hook - one showing, then quiet.
 
 **Files to create**:
 - `src/daemon/agent.py` - Background agent event loop
@@ -206,11 +266,20 @@ and silently leave the other half English-only.
 - [ ] Move every user-language-dependent string list from `.py` files into `scenarios/` YAML
 - [ ] This also restores the "tune without touching Python" claim for contributors (HELP-SHAPE-THIS.md)
 
+**Files**: `src/models/ai_wellness_guide.py`, `src/models/risk_classifier.py`, `src/models/conversation_session.py` → new YAML under `scenarios/` (follow existing file shapes; see `scenarios/README.md`).
+**Done when**: none of the pattern lists named above remain as Python literals in those three files, and behaviour is byte-identical - the full suite passes **without modifying any test expectations**.
+**Verify**: `pytest tests/ -m "not conversation"`; `python tests/classification/run_domain_eval.py` (these strings feed classification - must not regress from the 83/94 baseline).
+**Pitfalls**: load through the `get_scenario_loader()` singleton (it holds the cache - never instantiate the loader directly); update `scenarios/README.md` per the MERGE_CHECKLIST YAML row; do not rename existing YAML keys or files in the same PR.
+
 ### 19.1 Locale Detection 🔜 PLANNED
 - [ ] Auto-detect input language via the LLM classifier (add `detected_language` field to `LLMClassification` dataclass)
 - [ ] User-settable locale override in `.env` (`LOCALE=fr`, `LOCALE=es`, etc.) and sidebar preference
 - [ ] Fall back to `en` if detection is uncertain or LLM is unavailable
 - [ ] Language detection runs as part of the existing classification step - no extra Ollama call
+
+**Done when**: `LLMClassification` carries `detected_language`; the value comes from the same single classification call; anything uncertain resolves to `en`; the sidebar override wins over detection.
+**Verify**: mocked-httpx tests alongside the existing ones in `tests/test_llm_classifier.py`; `tests/test_data_contracts.py` updated deliberately for the new field; full suite.
+**Pitfalls**: the classifier prompt wraps user input in `<user_message>` tags (prompt-injection boundary) - keep that intact when extending the prompt.
 
 ### 19.2 Localised YAML Scenarios 🔜 PLANNED
 - [ ] Extend `ScenarioLoader` to support locale-scoped loading: `scenarios/domains/crisis.en.yaml`, `crisis.fr.yaml`, etc.
@@ -218,7 +287,11 @@ and silently leave the other half English-only.
 - [ ] Priority languages for first translation pass: Spanish (`es`), French (`fr`), Portuguese (`pt`), Arabic (`ar`), Hindi (`hi`)
 - [ ] Translation contributors follow `scenarios/TRANSLATING.md` (plain text, no code required)
 - [ ] Existing files become `*.en.yaml` - no breaking change to current behaviour
-- [ ] Unshelve the completed README translations (7 languages, prepared 2026)
+- [ ] Unshelve the completed README translations (7 languages, prepared at `~/shelved/readme-translations/`)
+
+**Done when**: `ScenarioLoader` resolves `<name>.<locale>.yaml` with automatic `.en.yaml` fallback; renaming the existing files changes nothing observable (full suite passes unmodified); `scenarios/TRANSLATING.md` exists.
+**Verify**: loader unit tests for locale resolution + fallback; full suite; domain eval unchanged.
+**Pitfalls**: the singleton's cache must be keyed by locale or a locale switch mid-process serves stale files; each translated domain file goes through the MERGE_CHECKLIST "new YAML domain file" row (corpus examples included).
 
 ### 19.3 Crisis Detection in All Supported Languages 🔜 PLANNED
 **Critical requirement**: A missed crisis signal in any language is a safety failure. This sub-phase cannot be skipped.
@@ -227,6 +300,10 @@ and silently leave the other half English-only.
 - [ ] Crisis response resources localised: country-specific hotlines, not just English-language ones
 - [ ] Test suite: `tests/test_multilingual_crisis.py` - golden crisis phrases in each supported language must always trigger crisis domain
 - [ ] Audit: native speaker review required for each language before shipping
+
+**Done when**: every golden crisis phrase in every shipped language routes to the crisis domain with zero misses (this is a 0% false-negative gate, same standard as the English distress corpus); hotline resources exist per country; the native-speaker sign-off is recorded in the PR.
+**Verify**: `pytest tests/test_multilingual_crisis.py` plus the full suite; run the conversation-tier crisis scenarios against a multilingual model if available.
+**Pitfalls**: do not translate keywords word-for-word - source idioms from native speakers ("I can't go on" has non-literal equivalents). A language without native-speaker review does not ship, even if tests pass.
 
 ### 19.4 RTL Layout Support 🔜 PLANNED
 - [ ] Detect RTL languages (`ar`, `he`, `fa`, `ur`) from locale setting
@@ -237,6 +314,10 @@ and silently leave the other half English-only.
 - [ ] Health check warns if selected model has known weak multilingual support
 - [ ] Startup warning if `LOCALE != en` and model is not in recommended multilingual list
 - [ ] README documents recommended models per language family
+
+**Done when**: `empathysync --health` (checks live in `src/utils/health_check.py`) shows a `[warn]` when `LOCALE != en` and the configured model is not on the recommended multilingual list; the warning is non-critical (exit code stays 0).
+**Verify**: mocked tests alongside the existing health-check tests; full suite.
+**Pitfalls**: the recommended-model list belongs in YAML config, not hardcoded in the health check.
 
 ---
 
@@ -309,15 +390,16 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 
 ---
 
-## Current Status (2026-07-03)
+## Current Status (2026-07-10)
 
-**Released**: v1.11.0 (2026-07-02, "Operational Hardening"). Phases 1-17 complete.
+**Released**: v1.13.0 (2026-07-08, "Safety Guard Integration"). Phases 1-17, 21,
+and 23.1 complete.
 
 **Safety pipeline depth**: 7 independent layers - post-crisis check, cooldown, keyword
 detection, LLM classification, confidence calibration (17.2), distress routing (17.1),
 sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
-**Test suite**: 1126 structural tests + 23 conversation-marked tests (20 quality
+**Test suite**: 1128 structural tests + 23 conversation-marked tests (20 quality
 scenarios + 3 safety-guard integration). Distress corpus CI gate: 0% FN rate. Keyword
 FP rate on benign content: 7%. Domain eval baseline: 83/94 (88%) on mistral:7b-instruct.
 

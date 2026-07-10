@@ -4,6 +4,13 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Changed
+- ROADMAP.md planned phases (22, 19, 23.2-23.4) now carry an execution
+  contract and per-sub-phase "Done when / Verify / Pitfalls" acceptance
+  blocks, so any implementing agent can execute a phase without rediscovering
+  the repo's gates (restraint-memory allowlist, write gate, singletons,
+  MERGE_CHECKLIST rows). Stale status block (v1.11.0-era) refreshed.
+
 ### Added
 - `empathysync --health` CLI flag (#165, contributed by @paranoa233): runs the
   existing startup health checks (`src/utils/health_check.py`) on demand and
