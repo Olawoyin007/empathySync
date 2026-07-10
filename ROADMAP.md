@@ -410,7 +410,7 @@ domain-routing corrections) shipped in v1.13.0.
 **v1.11.0 deferred items - resolved (2026-07-03)**:
 - `dev`/`main` branch split: **dropped.** Solo maintainer + branch protection + PR-only
   merges already provide curation; a second long-lived branch doubles the sync surface
-  (including the GitHub/Gitea dual-push) for no benefit at current contributor volume.
+  for no benefit at current contributor volume.
 - Optional encryption at rest: **dropped** in favour of the documented answer. On a
   single-user local app, a key stored beside the data adds no real confidentiality, and
   a passphrase prompt on every launch fights the accessibility goal. `THREAT_MODEL.md`
