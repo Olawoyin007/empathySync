@@ -46,9 +46,13 @@ fi
 # 2. Create virtual environment
 echo ""
 echo "Setting up virtual environment..."
-if [ -d "venv" ]; then
+if [ -x "venv/bin/pip" ]; then
     ok "Virtual environment already exists"
 else
+    if [ -d "venv" ]; then
+        warn "Incomplete virtual environment found (a previous run failed) - recreating"
+        rm -rf venv
+    fi
     python3 -m venv venv
     ok "Virtual environment created"
 fi
@@ -78,19 +82,20 @@ ok "Data directory ready"
 # 6. Check Ollama
 echo ""
 echo "Checking Ollama..."
+
+# Determine which model is configured (.env was created in step 4)
+CONFIGURED_MODEL=""
+if [ -f ".env" ]; then
+    CONFIGURED_MODEL=$(grep -E '^OLLAMA_MODEL=' .env | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs)
+fi
+CONFIGURED_MODEL="${CONFIGURED_MODEL:-llama3.2}"
+
 if command -v ollama &> /dev/null; then
     ok "Ollama installed"
 
     # Check if Ollama is running
     if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
         ok "Ollama server running"
-
-        # Determine which model is configured
-        CONFIGURED_MODEL=""
-        if [ -f ".env" ]; then
-            CONFIGURED_MODEL=$(grep -E '^OLLAMA_MODEL=' .env | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs)
-        fi
-        CONFIGURED_MODEL="${CONFIGURED_MODEL:-llama3.2}"
 
         # Check for models
         MODEL_COUNT=$(curl -s http://localhost:11434/api/tags | python3 -c "import json,sys; print(len(json.load(sys.stdin).get('models',[])))" 2>/dev/null || echo "0")
@@ -133,7 +138,7 @@ else
     warn "Ollama not installed"
     echo "  Install: curl -fsSL https://ollama.com/install.sh | sh"
     echo "  Then: ollama serve"
-    echo "  Then: ollama pull llama2"
+    echo "  Then: ollama pull $CONFIGURED_MODEL"
 fi
 
 # Done

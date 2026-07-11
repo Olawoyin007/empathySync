@@ -4,6 +4,16 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- `install.sh` no longer gets stuck after a failed first run: a venv creation
+  failure (typically Ubuntu without `python3-venv`) used to leave a partial
+  `venv/` directory that made every retry fail with `venv/bin/pip: No such
+  file or directory`. The installer now checks for a working `venv/bin/pip`
+  instead of the directory and recreates incomplete venvs. Found by the
+  clean-machine install test (Ubuntu 24.04 container).
+- `install.sh` Ollama-missing hint now suggests pulling the configured
+  `OLLAMA_MODEL` from `.env` instead of the long-stale `llama2`.
+
 ### Changed
 - ROADMAP.md planned phases (22, 19, 23.2-23.4) now carry an execution
   contract and per-sub-phase "Done when / Verify / Pitfalls" acceptance
