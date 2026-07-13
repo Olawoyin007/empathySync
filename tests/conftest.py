@@ -27,3 +27,23 @@ def deterministic_ollama():
     settings.OLLAMA_SEED = 42
     yield
     settings.OLLAMA_SEED = original
+
+
+@pytest.fixture(autouse=True, scope="session")
+def safety_guard_off_by_default():
+    """Pin the safety guard off for the whole suite, regardless of local .env.
+
+    config/settings.py calls load_dotenv() at import, so a developer who has
+    opted into OLLAMA_SAFETY_MODEL in their .env would otherwise run every
+    unit test with the guard active - breaking tests that mock the guard-less
+    pipeline (e.g. TestStreaming in test_wellness_guide.py). Tests that
+    exercise the guard opt in explicitly via SafetyClassifier(model=...) or
+    monkeypatch.setattr on the settings singleton, both of which override
+    this pin.
+    """
+    from config.settings import settings
+
+    original = settings.OLLAMA_SAFETY_MODEL
+    settings.OLLAMA_SAFETY_MODEL = ""
+    yield
+    settings.OLLAMA_SAFETY_MODEL = original
