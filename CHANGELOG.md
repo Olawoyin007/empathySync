@@ -13,6 +13,12 @@ All notable changes to empathySync are documented here.
   clean-machine install test (Ubuntu 24.04 container).
 - `install.sh` Ollama-missing hint now suggests pulling the configured
   `OLLAMA_MODEL` from `.env` instead of the long-stale `llama2`.
+- Test suite is now hermetic against the local `.env` safety-guard opt-in:
+  `config/settings.py` loads `.env` at import, so a developer with
+  `OLLAMA_SAFETY_MODEL` set would run every unit test with the guard active,
+  breaking 4 streaming tests that mock the guard-less pipeline. A
+  session-scoped conftest fixture now pins the guard off by default;
+  guard-specific tests keep opting in explicitly.
 
 ### Changed
 - ROADMAP.md planned phases (22, 19, 23.2-23.4) now carry an execution
