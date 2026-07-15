@@ -4,6 +4,13 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Documentation
+- `docs/model-benchmark.md`: added a 2026-07-13 spot-check (Spark/GB10 hardware,
+  full 94-example domain set, 11 models). `qwen2.5:7b-instruct` is the new
+  best-in-class classifier at 90%, overtaking `mistral:7b-instruct` at the same
+  8 GB tier. Domain-accuracy only; distress recall and FP rate not re-measured,
+  so the engine scenario-pass table and recommended classifier are unchanged.
+
 ### Fixed
 - `install.sh` no longer gets stuck after a failed first run: a venv creation
   failure (typically Ubuntu without `python3-venv`) used to leave a partial
