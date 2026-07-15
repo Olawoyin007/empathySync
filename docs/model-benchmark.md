@@ -4,6 +4,30 @@ Performance of Ollama models on empathySync's stress test corpus (20 scenarios) 
 
 _Last run: 2026-04-26 15:20 UTC_
 
+> **2026-07-13 spot-check (Spark/GB10 hardware, full 94-example domain set; distress
+> recall not re-measured this run).**
+>
+> | Model | Min VRAM | Domain Acc | Avg Latency |
+> |-------|:--------:|:----------:|:-----------:|
+> | `qwen2.5:7b-instruct` | 8 GB | 90% (85/94) | 1.87s |
+> | `phi4:latest` | 12 GB | 88% (83/94) | 9.61s |
+> | `mistral:7b-instruct` | 8 GB | 88% (83/94) | 1.94s |
+> | `gemma3:12b` | 12 GB | 87% (82/94) | 3.49s |
+> | `qwen2.5:14b-instruct-q4_K_M` | 12 GB | 85% (80/94) | 3.20s |
+> | `gemma3:4b` | 4 GB | 84% (79/94) | 2.00s |
+> | `llama3.1:8b` | 8 GB | 84% (79/94) | 2.27s |
+> | `gemma2:9b` | 10 GB | 82% (77/94) | 2.60s |
+> | `llama3.2:latest` | 4 GB | 78% (73/94) | 1.07s |
+> | `qwen2.5:3b-instruct` | 4 GB | 78% (73/94) | 1.11s |
+> | `llama3.2:1b` | CPU / Any | 54% (51/94) | 0.88s |
+>
+> `qwen2.5:7b-instruct` is the new best-in-class, overtaking `mistral:7b-instruct`
+> at the same VRAM tier and similar latency. Anomaly: `phi4:latest` latency is ~3x
+> slower than similarly-sized `gemma3:12b`/`qwen2.5:14b` despite comparable accuracy -
+> unconfirmed cause, worth a rerun before trusting that number. Distress recall and
+> FP rate columns from the table below were not re-measured; treat this as
+> domain-accuracy-only until a follow-up covers distress.
+
 ---
 
 ## Classifier
