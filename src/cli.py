@@ -5,9 +5,12 @@ Usage:
     empathysync              # Launches Streamlit web interface (default)
     empathysync --mode web   # Same as above
     empathysync --mode cli   # Direct terminal interface (no browser needed)
+    empathysync --list-domains         # Print supported domains and risk weights, then exit
+    empathysync --list-domains --json  # Same, as machine-readable JSON
     empathysync --maintenance  # Run maintenance tasks and exit
     empathysync --health     # Run startup health checks and exit
     empathysync --version    # Print version and exit
+    empathysync --log-level DEBUG  # Override log verbosity
 """
 
 import sys
