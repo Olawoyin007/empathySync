@@ -39,7 +39,7 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.docs-check.outputs.docs_only != 'true'
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -100,7 +100,7 @@ jobs:
 
       - name: Set up Python
         if: steps.docs-check.outputs.docs_only != 'true'
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
