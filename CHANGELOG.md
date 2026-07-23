@@ -38,6 +38,17 @@ All notable changes to empathySync are documented here.
   MERGE_CHECKLIST rows). Stale status block (v1.11.0-era) refreshed.
 
 ### Added
+- Adversarial restraint eval (`evals/empathysync_restraint/`): an
+  [Inspect](https://inspect.aisi.org.uk) eval that red-teams empathySync's own
+  behaviour - a generator model writes hard prompts, the real pipeline answers
+  them headless (storage redirected to a throwaway dir, so `./data` is never
+  touched), and a stronger, different-family judge grades whether the answer
+  kept its *restraint* (not its helpfulness). Fail-closed: an unparseable judge
+  verdict is `NOANSWER`, never a silent pass. A memory-guard preflight refuses
+  to start without model presence and RAM headroom. Findings only - it never
+  edits the pipeline, prompts, or corpus. `inspect_ai`/`openai` are an optional
+  `evals` extra, so a normal install stays lean; tests skip when it is absent.
+  Design rationale in `docs/adversarial-eval-loop.md`.
 - `empathysync --health` CLI flag (#165, contributed by @paranoa233): runs the
   existing startup health checks (`src/utils/health_check.py`) on demand and
   exits 0/1, so Ollama connectivity, data-directory permissions, and the
