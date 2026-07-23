@@ -41,6 +41,12 @@ dev = [
     "flake8>=6.1.0",
     "mypy>=1.6.0",
 ]
+# Adversarial restraint eval (evals/empathysync_restraint). Optional: not needed
+# to run the app, only to run the eval. See docs/adversarial-eval-loop.md.
+evals = [
+    "inspect_ai>=0.3.240",
+    "openai>=1.0.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/Olawoyin007/empathySync"

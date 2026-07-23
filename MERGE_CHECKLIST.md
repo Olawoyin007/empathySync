@@ -71,6 +71,15 @@ Find your change type below. Check every item in that row.
 - [ ] `TESTING_CHECKLIST.md` — update the Automated Tests section
 - [ ] `CLAUDE.md` — update test count if it has changed significantly
 
+### New eval under `evals/`
+
+- [ ] The eval's own `README.md` documents how to run it (commands, flags)
+- [ ] `docs/` — a design/rationale doc if the eval encodes non-obvious decisions
+- [ ] `pyproject.toml` — eval-only dependencies go in an optional extra, never
+      in core `dependencies`; tests `importorskip` that extra so CI stays green
+      without it
+- [ ] Findings-only: the eval must not edit the pipeline, prompts, or corpus
+
 ### Dependency change (`pyproject.toml` — new or removed package)
 
 - [ ] `install.sh` — verify setup still works end-to-end
