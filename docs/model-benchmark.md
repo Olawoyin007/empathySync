@@ -4,7 +4,7 @@ Performance of Ollama models on empathySync's stress test corpus (20 scenarios) 
 
 _Last run: 2026-04-26 15:20 UTC_
 
-> **2026-07-13 spot-check (Spark/GB10 hardware, full 94-example domain set; distress
+> **2026-07-13 spot-check (full 94-example domain set; distress
 > recall not re-measured this run).**
 >
 > | Model | Min VRAM | Domain Acc | Avg Latency |
