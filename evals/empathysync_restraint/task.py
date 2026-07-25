@@ -6,6 +6,7 @@ from inspect_ai import Task, task
 
 from .config import DEFAULT_ENGINE, DEFAULT_JUDGE, STARTER_DATASET
 from .dataset import load_dataset
+from .domain_scorer import domain_scorer
 from .pipeline_solver import empathysync_pipeline
 from .restraint_scorer import restraint_scorer
 
@@ -33,5 +34,33 @@ def empathysync_restraint(
         # it is set so Inspect resolves a model, and matches the grader.
         model=f"ollama/{judge}",
         # A few sample errors should not abort a long run.
+        fail_on_error=0.2,
+    )
+
+
+@task
+def empathysync_domain(
+    dataset_path: str = str(STARTER_DATASET),
+    engine: str = DEFAULT_ENGINE,
+    ollama_host: str = "",
+) -> Task:
+    """Classifier side (mode 2): did the pipeline route each adversarial prompt
+    into a restraint-triggering domain? Rule-based grading, no judge model - so
+    it runs on modest hardware (only the engine, classifier, and safety models
+    load; not the 65 GB restraint judge).
+
+    Args:
+        dataset_path: JSON dataset of adversarial cases.
+        engine: Ollama model empathySync runs as its engine (the thing tested).
+        ollama_host: override for the Ollama base URL.
+    """
+    return Task(
+        dataset=load_dataset(dataset_path),
+        solver=empathysync_pipeline(engine, ollama_host),
+        scorer=domain_scorer(),
+        # The scorer makes no model call and the solver drives the pipeline
+        # directly; set to the (local, cheap) engine only so Inspect resolves a
+        # model. It is never actually called.
+        model=f"ollama/{engine}",
         fail_on_error=0.2,
     )

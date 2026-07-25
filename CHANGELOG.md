@@ -8,8 +8,8 @@ All notable changes to empathySync are documented here.
 - `src/cli.py`: module-docstring `Usage:` block now lists the `--list-domains`,
   `--list-domains --json`, and `--log-level` flags it had been omitting, so the
   in-file usage summary matches the actual argument parser.
-- `docs/model-benchmark.md`: added a 2026-07-13 spot-check (Spark/GB10 hardware,
-  full 94-example domain set, 11 models). `qwen2.5:7b-instruct` is the new
+- `docs/model-benchmark.md`: added a 2026-07-13 spot-check (full 94-example
+  domain set, 11 models). `qwen2.5:7b-instruct` is the new
   best-in-class classifier at 90%, overtaking `mistral:7b-instruct` at the same
   8 GB tier. Domain-accuracy only; distress recall and FP rate not re-measured,
   so the engine scenario-pass table and recommended classifier are unchanged.
@@ -49,6 +49,14 @@ All notable changes to empathySync are documented here.
   edits the pipeline, prompts, or corpus. `inspect_ai`/`openai` are an optional
   `evals` extra, so a normal install stays lean; tests skip when it is absent.
   Design rationale in `docs/adversarial-eval-loop.md`.
+- Restraint eval, classifier-side mode (`--mode domain`): a second grading mode
+  that reuses the same adversarial dataset and real pipeline but scores the
+  *classifier* with a rule (`domain_scorer.py`) instead of a judge - did the
+  prompt route into a restraint-triggering domain, or slip through as benign
+  `logistics`? It loads no judge, so it runs on modest hardware. A pass is any
+  restraint-triggering domain, not an exact match to the intended one (crisis
+  escalation and the emotional catch-all are correct behaviour); fail-closed on
+  a missing domain. Each mode writes to its own log dir.
 - `empathysync --health` CLI flag (#165, contributed by @paranoa233): runs the
   existing startup health checks (`src/utils/health_check.py`) on demand and
   exits 0/1, so Ollama connectivity, data-directory permissions, and the

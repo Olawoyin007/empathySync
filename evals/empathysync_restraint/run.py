@@ -1,10 +1,18 @@
 """Run the restraint eval: preflight, then a memory-safe, resumable eval_set.
 
 Usage:
-    python -m evals.empathysync_restraint.run                 # starter dataset
+    python -m evals.empathysync_restraint.run                 # restraint side (judge)
+    python -m evals.empathysync_restraint.run --mode domain   # classifier side (no judge)
     python -m evals.empathysync_restraint.run --limit 20
     python -m evals.empathysync_restraint.run --judge qwen2.5:14b-instruct-q4_K_M
     python -m evals.empathysync_restraint.run --no-preflight  # skip the guard
+
+Two modes of the one eval:
+  restraint (default) - a judge grades whether the *response* held restraint.
+                        Loads the big judge; needs real RAM headroom.
+  domain              - rule-based check that the *classifier* routed the prompt
+                        into a restraint-triggering domain. No judge, so it runs
+                        on modest hardware.
 
 Pause with Ctrl-C. Re-run the SAME command to resume - eval_set reuses the log
 dir and finishes only the samples that did not complete. Robustness (retry,
@@ -32,21 +40,41 @@ from .preflight import preflight
 
 def main() -> int:
     parser = argparse.ArgumentParser(prog="empathysync-restraint-eval")
+    parser.add_argument(
+        "--mode",
+        choices=["restraint", "domain"],
+        default="restraint",
+        help="restraint = judge grades the response; domain = rule-based classifier check (no judge)",
+    )
     parser.add_argument("--dataset", default=str(STARTER_DATASET))
     parser.add_argument("--engine", default=DEFAULT_ENGINE, help="model under test")
-    parser.add_argument("--judge", default=DEFAULT_JUDGE, help="restraint grader")
+    parser.add_argument(
+        "--judge", default=DEFAULT_JUDGE, help="restraint grader (restraint mode only)"
+    )
     parser.add_argument("--host", default=os.getenv("OLLAMA_HOST") or DEFAULT_OLLAMA_HOST)
-    parser.add_argument("--log-dir", default=str(DEFAULT_LOG_DIR))
+    parser.add_argument(
+        "--log-dir",
+        default=None,
+        help="default: logs/restraint (restraint mode) or logs/domain (domain mode)",
+    )
     parser.add_argument("--limit", type=int, default=None, help="cap number of samples")
     parser.add_argument("--headroom", type=float, default=8.0, help="GB of RAM headroom")
     parser.add_argument("--max-connections", type=int, default=1)
     parser.add_argument("--no-preflight", action="store_true")
     args = parser.parse_args()
 
-    if not args.no_preflight:
-        fatals, warnings = preflight(
-            args.host, [args.engine, args.judge], headroom_gb=args.headroom
+    # Each mode is a different task; keep their logs apart so eval_set resume
+    # never crosses them. Restraint mode keeps its existing logs/restraint path.
+    if args.log_dir is None:
+        args.log_dir = str(
+            DEFAULT_LOG_DIR if args.mode == "restraint" else DEFAULT_LOG_DIR.parent / "domain"
         )
+
+    # Domain mode never loads the judge, so it does not need judge headroom.
+    needed_models = [args.engine] if args.mode == "domain" else [args.engine, args.judge]
+
+    if not args.no_preflight:
+        fatals, warnings = preflight(args.host, needed_models, headroom_gb=args.headroom)
         for w in warnings:
             print(f"WARNING: {w}")
         if fatals:
@@ -58,23 +86,30 @@ def main() -> int:
     # Import Inspect lazily so --help and preflight failures stay fast.
     from inspect_ai import eval_set
 
-    from .task import empathysync_restraint
+    from .task import empathysync_domain, empathysync_restraint
+
+    if args.mode == "domain":
+        the_task = empathysync_domain(
+            dataset_path=args.dataset, engine=args.engine, ollama_host=args.host
+        )
+        grader = "rule-based (no judge)"
+    else:
+        the_task = empathysync_restraint(
+            dataset_path=args.dataset,
+            engine=args.engine,
+            judge=args.judge,
+            ollama_host=args.host,
+        )
+        grader = args.judge
 
     print(
-        f"engine={args.engine}  judge={args.judge}  host={args.host}\n"
+        f"mode={args.mode}  engine={args.engine}  grader={grader}  host={args.host}\n"
         f"dataset={args.dataset}\nlog_dir={args.log_dir}  "
         f"(Ctrl-C is safe; re-run the same command to resume)"
     )
 
     success, logs = eval_set(
-        tasks=[
-            empathysync_restraint(
-                dataset_path=args.dataset,
-                engine=args.engine,
-                judge=args.judge,
-                ollama_host=args.host,
-            )
-        ],
+        tasks=[the_task],
         log_dir=args.log_dir,
         max_connections=args.max_connections,
         max_samples=1,

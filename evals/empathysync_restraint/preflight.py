@@ -1,8 +1,8 @@
 """Preflight guard - run before any eval touches the models.
 
-Mirrors the discipline of the vLLM switcher on this box: on unified memory an
-over-commit does not kill a process, it reboots the machine. So we refuse to
-start unless the models exist and there is real headroom. Read-only and cheap.
+On a unified-memory system, over-committing RAM can hang or hard-reboot the
+whole host rather than just killing one process. So we refuse to start unless
+the models exist and there is real headroom. Read-only and cheap.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ def tags(host: str) -> dict[str, int]:
 
 
 def resident(host: str) -> list[str]:
-    """Model names Ollama currently holds in memory (roommates in the 119G pool)."""
+    """Model names Ollama currently holds in memory (roommates in the shared pool)."""
     try:
         r = httpx.get(f"{host}/api/ps", timeout=5)
         r.raise_for_status()
@@ -77,7 +77,7 @@ def preflight(
         warnings.append(
             "other models resident in the same memory pool right now: "
             + ", ".join(others)
-            + " (they share the 119G; consider `ollama stop` if memory is tight)."
+            + " (they share the same memory pool; consider `ollama stop` if memory is tight)."
         )
 
     return (fatals, warnings)

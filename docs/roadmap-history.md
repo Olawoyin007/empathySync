@@ -2157,7 +2157,7 @@ already in place for A/B evaluation.
 - **WildGuard** (AllenAI, 7B): not in the Ollama library (needs GGUF conversion);
   deferred - LlamaGuard cleared the gate decisively, so WildGuard was not required.
 
-**Measured results** (12GB RTX 4070, engine `gemma3:12b`, `scripts/benchmark_guard_swap.py`
+**Measured results** (12GB VRAM, engine `gemma3:12b`, `scripts/benchmark_guard_swap.py`
 + `scripts/eval_guard_recall.py`, 620 JBB+AdvBench behaviours, 36 benign corpus prompts):
 
 | Metric | keyword baseline | **llama-guard3:1b** | llama-guard3:8b |
