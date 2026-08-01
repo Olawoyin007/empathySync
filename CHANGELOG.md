@@ -4,6 +4,8 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+## v1.14.0 (2026-08-01) - Adversarial Restraint Eval
+
 ### Documentation
 - `src/cli.py`: module-docstring `Usage:` block now lists the `--list-domains`,
   `--list-domains --json`, and `--log-level` flags it had been omitting, so the
