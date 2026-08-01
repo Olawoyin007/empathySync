@@ -390,16 +390,19 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 
 ---
 
-## Current Status (2026-07-10)
+## Current Status (2026-08-01)
 
-**Released**: v1.13.0 (2026-07-08, "Safety Guard Integration"). Phases 1-17, 21,
-and 23.1 complete.
+**Released**: v1.14.0 (2026-08-01, "Adversarial Restraint Eval"): self
+red-teaming Inspect eval, classifier-side domain scorer, `--health` CLI flag,
+plus install/test-hermeticity fixes. No pipeline or corpus changes. Prior:
+v1.13.0 (2026-07-08, "Safety Guard Integration"). Phases 1-17, 21, and 23.1
+complete.
 
 **Safety pipeline depth**: 7 independent layers - post-crisis check, cooldown, keyword
 detection, LLM classification, confidence calibration (17.2), distress routing (17.1),
 sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
-**Test suite**: 1128 structural tests + 23 conversation-marked tests (20 quality
+**Test suite**: 1150 structural tests + 23 conversation-marked tests (20 quality
 scenarios + 3 safety-guard integration). Distress corpus CI gate: 0% FN rate. Keyword
 FP rate on benign content: 7%. Domain eval baseline: 83/94 (88%) on mistral:7b-instruct.
 
@@ -434,11 +437,12 @@ domain-routing corrections) shipped in v1.13.0.
 
 ## Version Targets
 
-Shipped versions v0.2 through v1.13.0 are recorded in
+Shipped versions v0.2 through v1.14.0 are recorded in
 [CHANGELOG.md](CHANGELOG.md) and [docs/roadmap-history.md](docs/roadmap-history.md).
 
 **v1.12** (Phase 23.1 + hygiene): negative memory invariant, dead-config removal, pipeline correctness fixes
 **v1.13** (Phase 21): purpose-trained safety classifier + domain routing corrections
+**v1.14** (tooling): adversarial restraint eval (Inspect) + classifier-side domain scorer + `--health` CLI flag
 **v2.0** (Phase 22): persistent agent daemon with self-restriction
 **v2.1** (Phase 19): multilingual support
 **v2.2** (Phase 23.2-23.4): cross-session decay, "What empathySync Remembers", measurement framework
