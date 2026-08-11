@@ -1,3 +1,7 @@
 # MANIFESTO.md is protected — changes require owner review.
 # The CI also blocks PRs that modify this file.
 MANIFESTO.md @Olawoyin007
+
+# The crisis domain is the safety floor (co_design_boundary: locked).
+# It is never clinician-editable via the co-design form; changes require owner review.
+scenarios/domains/crisis.yaml @Olawoyin007
