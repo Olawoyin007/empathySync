@@ -205,3 +205,22 @@ restraint_memory:
     reach_outs: [id, person_id, method, notes, outcome, created_at]
   legacy_deny_named_columns:
     self_reports: [content]         # holds the user's self-report answer; rename deferred to a future migration
+
+# ---------------------------------------------------------------------------
+# Co-design boundary (decided 2026-08-11; see issue #182 and ~/decisions).
+# ---------------------------------------------------------------------------
+# When clinicians shape safety responses through a guided form (form -> reviewed
+# PR), the form may edit ONLY the field-level keys under `form_editable`.
+# Everything under `locked` stays in the maintainer-reviewed core and never
+# flows through the form. The line: therapists shape the LANGUAGE; the
+# maintainer keeps the NUMBERS and the FLOOR. This block is the single source of
+# truth a future form/guard reads; crisis.yaml is additionally CODEOWNERS-locked.
+co_design_boundary:
+  form_editable:          # per-domain language a clinician may shape (add triggers freely; removals need review)
+    - triggers            # keyword list that flags a domain
+    - response_rules      # plain-language "how to behave when this domain is active"
+    - redirects           # pre-written response text
+  locked:                 # numbers and the floor - maintainer core only, never via the form
+    - risk_weight         # 0-10 domain severity score (all domains)
+    - thresholds          # restraint timing and turn limits (this file)
+    - crisis_domain       # the entire crisis.yaml domain: hard-stop, triggers, escalation markers

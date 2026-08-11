@@ -350,6 +350,28 @@ and silently leave the other half English-only.
 
 ---
 
+## Phase 24: Clinician Co-Design Tooling (Guided Form → Reviewed PR) 🔜 PLANNED
+
+Lets non-coding clinicians shape safety-response **language** through a guided
+form that opens a reviewed pull request, never a private local edit - so the
+public review gate stays intact and no one gets a private safety dial.
+Delivers on paper section 5.3 (participatory co-design). See issue #182.
+
+The editable/locked boundary is **decided** (2026-08-11) and enforced now as
+`co_design_boundary` in `scenarios/config/system_defaults.yaml` plus a
+CODEOWNERS lock on `crisis.yaml`: therapists shape the language (triggers,
+response text, response rules); the maintainer keeps the numbers and the floor
+(risk weight, thresholds, crisis hard-stop). Still to design: the form itself
+(fields, hosting, who may open it), the reviewer UX, the add-vs-remove trigger
+guardrail, and - only if it widens past a single trusted reviewer - the
+reviewer-pool governance.
+
+**Locked-field snapshot test** (blocks non-crisis `risk_weight` drift) is
+deferred until the form exists; until then the only changes come through
+maintainer-reviewed PRs.
+
+---
+
 ## Messaging Integration (retired as a phase)
 
 The former Phase 18 (WhatsApp/Signal/Slack adapters) is retired: WhatsApp and Slack
