@@ -56,7 +56,7 @@ phase without guessing:
    never weaken the test to get past it. Conversation content and
    preference/persona data are never persistable, in any encoding.
 4. Verify before declaring done: `pytest tests/ -m "not conversation"` (all
-   ~1128 must pass) plus the sub-phase's own **Verify** line. Run
+   ~1150 must pass) plus the sub-phase's own **Verify** line. Run
    `python tests/classification/run_domain_eval.py` only when classification
    code or scenario YAML changed (baseline: 83/94 on mistral:7b-instruct).
 5. When a step is ambiguous, take the smallest interpretation that satisfies
