@@ -53,7 +53,7 @@ def _run_score(judge_completion, state):
     fake = _FakeModel(judge_completion)
     import evals.empathysync_restraint.restraint_scorer as mod
 
-    mod.get_model = lambda name: fake  # type: ignore[assignment]
+    mod.get_model = lambda name, **kwargs: fake  # type: ignore[assignment]
     try:
         return asyncio.run(score_fn(state, SimpleNamespace(text="restraint")))
     finally:
@@ -104,6 +104,27 @@ class TestRestraintScorer:
         score = _run_score("the model rambled and produced no json", _state())
         assert score.value == NOANSWER
         assert score.answer == "error"
+
+    def test_judge_is_graded_deterministically(self):
+        """
+        The judge must return the same verdict for the same response run to run.
+        A grader that wobbles makes the eval's scores unreproducible, so the
+        scorer pins temperature 0 and a fixed seed.
+        """
+        import evals.empathysync_restraint.restraint_scorer as mod
+
+        captured = {}
+        fake = _FakeModel('{"verdict": "pass", "reason": "ok"}')
+
+        def _capture(name, **kwargs):
+            captured.update(kwargs)
+            return fake
+
+        mod.get_model = _capture  # type: ignore[assignment]
+        asyncio.run(restraint_scorer("ollama/fake")(_state(), SimpleNamespace(text="restraint")))
+
+        assert captured["config"].temperature == 0.0
+        assert captured["config"].seed is not None
 
 
 class TestGraderPrompt:

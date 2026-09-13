@@ -4,6 +4,15 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Changed
+- **Restraint eval grades deterministically.** The judge now runs at
+  temperature 0 with a fixed seed (`JUDGE_CONFIG` in `restraint_scorer.py`), so
+  the same response gets the same verdict run to run - a grader that wobbles
+  makes the eval's scores unreproducible, which defeats the point of a baseline.
+- **`--engine` defaults to `OLLAMA_MODEL`** when it is set, falling back to
+  `DEFAULT_ENGINE`. The eval grades the model the app is actually configured to
+  run rather than a hardcoded stand-in.
+
 ### Fixed
 - **Crisis floor: typographic apostrophes no longer bypass keyword matching.**
   Trigger phrases are authored with an ASCII apostrophe (`don't want to be

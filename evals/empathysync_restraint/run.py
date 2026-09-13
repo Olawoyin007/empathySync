@@ -47,7 +47,9 @@ def main() -> int:
         help="restraint = judge grades the response; domain = rule-based classifier check (no judge)",
     )
     parser.add_argument("--dataset", default=str(STARTER_DATASET))
-    parser.add_argument("--engine", default=DEFAULT_ENGINE, help="model under test")
+    parser.add_argument(
+        "--engine", default=os.getenv("OLLAMA_MODEL") or DEFAULT_ENGINE, help="model under test"
+    )
     parser.add_argument(
         "--judge", default=DEFAULT_JUDGE, help="restraint grader (restraint mode only)"
     )
