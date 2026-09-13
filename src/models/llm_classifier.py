@@ -28,6 +28,7 @@ _RE_JSON_PERMISSIVE = re.compile(r'\{.*?"domain".*?\}', re.DOTALL)
 from models.enums import Domain
 
 from config.settings import settings
+from utils.helpers import normalize_for_matching
 
 logger = logging.getLogger(__name__)
 
@@ -93,8 +94,12 @@ class LLMClassifier:
         self.model = settings.OLLAMA_CLASSIFIER_MODEL or settings.OLLAMA_MODEL
 
         # Pre-compile fast-path patterns for efficiency
-        self._fast_path_crisis = [p.lower() for p in self.config.get("fast_path_crisis", [])]
-        self._fast_path_harmful = [p.lower() for p in self.config.get("fast_path_harmful", [])]
+        self._fast_path_crisis = [
+            normalize_for_matching(p) for p in self.config.get("fast_path_crisis", [])
+        ]
+        self._fast_path_harmful = [
+            normalize_for_matching(p) for p in self.config.get("fast_path_harmful", [])
+        ]
 
         # Timing instrumentation - duration of last _call_ollama() invocation
         self.last_call_duration: float = 0.0
@@ -132,8 +137,12 @@ class LLMClassifier:
     def reload_config(self):
         """Reload configuration from disk"""
         self.config = self._load_config()
-        self._fast_path_crisis = [p.lower() for p in self.config.get("fast_path_crisis", [])]
-        self._fast_path_harmful = [p.lower() for p in self.config.get("fast_path_harmful", [])]
+        self._fast_path_crisis = [
+            normalize_for_matching(p) for p in self.config.get("fast_path_crisis", [])
+        ]
+        self._fast_path_harmful = [
+            normalize_for_matching(p) for p in self.config.get("fast_path_harmful", [])
+        ]
         self.cache.clear()
         logger.info("LLM classifier config reloaded")
 
@@ -148,7 +157,7 @@ class LLMClassifier:
 
         Returns classification dict if fast-path triggered, None otherwise.
         """
-        message_lower = message.lower()
+        message_lower = normalize_for_matching(message)
 
         # Check crisis patterns
         for pattern in self._fast_path_crisis:

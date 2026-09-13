@@ -8,6 +8,8 @@ and response templates without code changes.
 
 import os
 import yaml
+
+from utils.helpers import normalize_for_matching
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from functools import lru_cache
@@ -1388,7 +1390,7 @@ class ScenarioLoader:
             words = triggers.get(domain, [])
             for word in words:
                 # Only add if not already present (higher-priority domain wins)
-                word_lower = word.lower()
+                word_lower = normalize_for_matching(word)
                 if word_lower not in flat:
                     flat[word_lower] = domain
         return flat

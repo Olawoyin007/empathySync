@@ -11,6 +11,7 @@ from typing import List, Dict, Optional, Tuple
 import logging
 from utils.scenario_loader import get_scenario_loader, ScenarioLoader
 from config.settings import settings
+from utils.helpers import normalize_for_matching
 from models.enums import Domain, Intent, EmotionalWeight, ClassificationMethod
 from models.emotional_weight_assessor import EmotionalWeightAssessor
 from models.safety_classifier import SafetyClassifier, SafetyAction
@@ -477,7 +478,7 @@ class RiskClassifier:
         multiple trigger matches to override it. This prevents single-keyword
         false positives like "nervous" triggering health during interview prep.
         """
-        t = text.lower()
+        t = normalize_for_matching(text)
         triggers = self._get_triggers()
 
         # Count matches per domain

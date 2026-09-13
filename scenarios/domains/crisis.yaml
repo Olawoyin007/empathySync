@@ -86,6 +86,20 @@ triggers:
   - wrote a note
   - written a note
   - left a note
+  # Oblique ideation without an explicit keyword (2026-09-13).
+  # Added from the adversarial triage probe in docs/crisis-triage-finding.md.
+  # Each phrase was measured against 23 intense-but-not-suicidal messages
+  # (tests/classification/crisis_triage_corpus.yaml) before being added.
+  # Word-order variants of phrases already listed above - the keyword matcher
+  # is plain substring, so "giving my things away" did not match
+  # "giving away my things".
+  - giving my things away
+  - so tired of being here
+  # True paraphrases with no existing marker phrase. Deliberately narrow:
+  # "no future where this gets better" alone escalates business talk.
+  - if i wasn't in it
+  - no future where this gets better for me
+  - noise to stop for good
   # Exhaustion-as-exit framing
   - want everything to stop
   - want it all to stop
