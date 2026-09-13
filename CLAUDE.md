@@ -34,7 +34,7 @@ empathysync --log-level DEBUG            # Override log verbosity
 docker compose up
 
 # Tests
-pytest tests/                            # Full suite (1150 unit + 23 conversation)
+pytest tests/                            # Full suite (1180 unit + 23 conversation)
 pytest tests/ --cov=src                  # With coverage
 pytest tests/ -m "not conversation"      # Skip Ollama-dependent tests
 python tests/classification/run_domain_eval.py          # Domain accuracy eval
@@ -108,10 +108,12 @@ tests/
 ├── test_restraint_memory.py        # Negative invariant: persisted fields ⊆ allowlist
 └── classification/
     ├── domain_corpus.yaml          # 94 labeled examples for accuracy eval
+    ├── crisis_triage_corpus.yaml   # Oblique ideation vs intense-benign
+    ├── test_crisis_triage.py       # Crisis hard-stop routing (keyword floor)
     └── run_domain_eval.py          # Per-domain accuracy report
 ```
 
-Current counts: ~1150 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
+Current counts: ~1180 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
 
 Pre-existing known failure: `stress_test_001` conversation tier is
 non-deterministic (LLM output varies); the structural tier always passes.

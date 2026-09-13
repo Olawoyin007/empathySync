@@ -4,6 +4,36 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- **Crisis floor: typographic apostrophes no longer bypass keyword matching.**
+  Trigger phrases are authored with an ASCII apostrophe (`don't want to be
+  here`), but phone keyboards and word processors emit U+2019. The two
+  substring layers (`risk_classifier._detect_domain`,
+  `llm_classifier._check_fast_path`) compared raw `.lower()` text, so
+  "I can't do this anymore" typed on a phone routed to `logistics` instead of
+  `crisis`. 19 crisis and 11 harmful triggers contain an apostrophe. Both sides
+  of every match now go through `utils.helpers.normalize_for_matching`. The LLM
+  layer would often still have caught these; what was broken is the
+  deterministic floor that exists for when the LLM is wrong, disabled, or
+  unreachable.
+
+### Added
+- **Oblique-ideation triggers in `scenarios/domains/crisis.yaml`** (5 phrases),
+  closing the under-triage recorded in `docs/crisis-triage-finding.md`: real
+  suicidal ideation phrased without an explicit keyword reached `emotional`
+  support but never the hotline hard-stop. Three of the five were word-order
+  variants of phrases already listed (the matcher is literal substring); two
+  were true paraphrases. Each phrase was measured before inclusion - the set
+  catches 5/5 of the probe's missed messages with 1 false escalation in 23
+  intense-but-not-suicidal messages, and that one already escalated before this
+  change under the existing `giving away my things` trigger.
+- **`tests/classification/crisis_triage_corpus.yaml` + `test_crisis_triage.py`**
+  (30 tests). The distress corpus proves distress is *detected*; this one proves
+  it is *routed to the crisis hard-stop*, which is a different failure. Includes
+  the deliberate traps that shaped each phrase's wording, and records the one
+  accepted false positive rather than hiding it.
+
+
 ## v1.14.0 (2026-08-01) - Adversarial Restraint Eval
 
 ### Documentation

@@ -64,3 +64,18 @@ def create_progress_summary(conversation_count: int, days_active: int) -> str:
     summary += "Thank you for prioritizing your digital wellness!"
 
     return summary
+
+
+_APOSTROPHE_FOLD = str.maketrans({"‘": "'", "’": "'", "ʼ": "'", "′": "'"})
+
+
+def normalize_for_matching(text: str) -> str:
+    """
+    Lowercase text and fold typographic apostrophes to the ASCII form.
+
+    Trigger phrases are authored with a straight apostrophe ("don't want to
+    be here"), but phone keyboards and word processors emit U+2019. Without
+    this fold, a curly apostrophe silently drops a message off the crisis
+    keyword floor. Applied to both sides of every substring match.
+    """
+    return text.lower().translate(_APOSTROPHE_FOLD)

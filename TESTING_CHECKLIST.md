@@ -22,6 +22,9 @@ pytest tests/test_conversation_quality.py -m "not conversation" -v
 # Restraint-memory negative invariant (persisted fields ⊆ allowlist)
 pytest tests/test_restraint_memory.py -v
 
+# Crisis triage floor (oblique ideation reaches the hard-stop, benign does not)
+pytest tests/classification/test_crisis_triage.py -v
+
 # Adversarial restraint eval logic (skips unless the `evals` extra is installed)
 pytest tests/test_restraint_eval.py -v
 

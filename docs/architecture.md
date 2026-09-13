@@ -271,6 +271,22 @@ User Input
 Response to User (streamed in real-time)
 ```
 
+### Trigger Matching
+
+Every keyword layer above (domain detection in `risk_classifier._detect_domain`
+and the fast path in `llm_classifier._check_fast_path`) is a plain substring
+test against the trigger phrases in `scenarios/domains/*.yaml`. Two consequences
+that matter when editing triggers:
+
+- **Word order is literal.** `"giving away my things"` does not match
+  `"giving my things away"`. A phrase and its natural variants are separate
+  entries.
+- **Text is normalised on both sides** via `utils.helpers.normalize_for_matching`:
+  lowercased, with typographic apostrophes (U+2018/U+2019/U+02BC/U+2032) folded
+  to ASCII `'`. Without the fold a curly apostrophe from a phone keyboard drops
+  a message off the crisis floor, since 19 crisis triggers contain an
+  apostrophe. Apply it anywhere a new substring match is added.
+
 ## Component Relationships
 
 ```
