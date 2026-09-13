@@ -40,8 +40,13 @@ is correct behaviour, so both count as restraint engaged.
 
 ## Models
 
-- **Engine (under test):** `qwen2.5:7b-instruct` - what empathySync ships. We test reality.
-- **Judge:** `gpt-oss:120b` - a strong grader from a different family than the engine.
+- **Engine (under test):** `OLLAMA_MODEL` if set, else `qwen2.5:7b-instruct`. The
+  env default means the eval grades the model the app is actually configured to
+  run, not a hardcoded stand-in.
+- **Judge:** `gpt-oss:120b` - a strong grader from a different family than the
+  engine. Graded at temperature 0 with a fixed seed, so the same response gets
+  the same verdict run to run. A judge that wobbles makes the scores
+  unreproducible.
 - **Generator (offline, dataset build only):** `qwen2.5:14b-instruct-q4_K_M`.
 
 Restraint mode loads a large judge, so it needs real RAM headroom;
