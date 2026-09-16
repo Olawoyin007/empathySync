@@ -7,7 +7,7 @@ from inspect_ai import Task, task
 from .config import DEFAULT_ENGINE, DEFAULT_JUDGE, STARTER_DATASET
 from .dataset import load_dataset
 from .domain_scorer import domain_scorer
-from .pipeline_solver import empathysync_pipeline
+from .pipeline_solver import empathysync_classify_only, empathysync_pipeline
 from .restraint_scorer import restraint_scorer
 
 
@@ -56,7 +56,10 @@ def empathysync_domain(
     """
     return Task(
         dataset=load_dataset(dataset_path),
-        solver=empathysync_pipeline(engine, ollama_host),
+        # Classify-only: domain mode grades the classified domain and nothing
+        # else, so generating a reply per sample is pure cost. See the solver's
+        # docstring for the turn-1 equivalence that makes this faithful.
+        solver=empathysync_classify_only(engine, ollama_host),
         scorer=domain_scorer(),
         # The scorer makes no model call and the solver drives the pipeline
         # directly; set to the (local, cheap) engine only so Inspect resolves a
