@@ -104,6 +104,13 @@ triggers:
   - want everything to stop
   - want it all to stop
   - need it all to stop
+  # Means inquiry (2026-09-16). The list covered means *acquisition*
+  # ("stockpiling pills") and means *use* ("overdosing") but had no entry for
+  # asking how much it would take - the question that precedes acquisition.
+  # Only this one phrase survived measurement. "lethal dose" escalates
+  # veterinary and journalism queries; "how many pills" escalates prescription
+  # adherence. Both are in the corpus as traps so the next person sees why.
+  - enough pills to
   # Immediate danger (self)
   - overdosing
   - I overdosed
