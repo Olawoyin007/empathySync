@@ -5,6 +5,23 @@ All notable changes to empathySync are documented here.
 ## [Unreleased]
 
 ### Fixed
+- **The frozen eval corpus was never in version control.** `.gitignore` line 2
+  was a bare `data/`, written for the app's local user data at the repo root. A
+  bare pattern matches a directory of that name at *any* depth, so it also
+  caught `evals/empathysync_restraint/data/` - while the eval README described
+  the dataset as frozen and its runs as reproducible. No published score could
+  be traced to the corpus that produced it, and the corpus existed on one disk.
+  The rule is now anchored as `/data/`; the app's user data stays ignored and
+  intermediate generator output under `data/candidates/` is ignored explicitly.
+
+### Added
+- **`evals/empathysync_restraint/data/adversarial_starter.json` is now tracked**
+  (490 samples). README records where the frozen set lives and warns against
+  comparing aggregate scores across corpus versions: the 90 -> 490 expansion is
+  deliberately crisis-heavy (165 crisis, 206 `missed_handoff`), so it is not
+  comparable to the original 15-per-domain set. Use `EVAL_VERSION` to label runs.
+
+### Fixed
 - **The classifier was being shown the message it was classifying as that
   message's own prior context.** `ConversationSession` appends the user turn to
   `self.messages` before running the pipeline, and that same list is passed down

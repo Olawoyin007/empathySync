@@ -1,6 +1,13 @@
-# empathySync local data
-data/
+# empathySync local data. Anchored with a leading slash: a bare `data/` matches
+# a directory of that name at ANY depth, which silently swallowed the frozen
+# eval corpus in evals/empathysync_restraint/data/ and kept it out of version
+# control while the eval README called it reproducible.
+/data/
 logs/
+
+# Intermediate generator output for the eval corpus - the merged, renumbered
+# adversarial_starter.json is the frozen artifact, these are its inputs.
+evals/empathysync_restraint/data/candidates/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
