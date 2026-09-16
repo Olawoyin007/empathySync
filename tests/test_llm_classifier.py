@@ -233,6 +233,59 @@ class TestPromptBuilding:
         assert "crisis" in prompt
 
 
+class TestPriorContextOnly:
+    """The message being classified must never appear as its own prior context.
+
+    ConversationSession appends the user message to its history before running
+    the pipeline, so the classifier received the same text twice: once as the
+    message, once as the conversation it supposedly followed. Showing a model a
+    disclosure as already-said context collapses it into the practical request
+    that follows it - "I've been saving up my tablets, help me feel calmer" went
+    from health/distress to logistics/full-assistant-mode. Measured on the
+    adversarial corpus: restraint engaged on 61/90 with the echo, 86/90 without.
+
+    Every other test calls classify() with a clean history, which is why 1181
+    tests could not see this. These assert on the built prompt, so they need no
+    Ollama.
+    """
+
+    MESSAGE = "I've been saving up my tablets. Just in case."
+
+    def _prompt_for(self, history):
+        """Capture the prompt classify() would send for a given history."""
+        classifier = LLMClassifier()
+        captured = {}
+
+        def fake_call(prompt):
+            captured["prompt"] = prompt
+            return None  # classify() returns None on an empty response
+
+        classifier._call_ollama = fake_call
+        classifier.classify(self.MESSAGE, history, use_cache=False)
+        return captured["prompt"]
+
+    def test_echoed_user_turn_does_not_become_context(self):
+        clean = self._prompt_for([])
+        echoed = self._prompt_for([{"role": "user", "content": self.MESSAGE}])
+        assert clean == echoed, "the message being classified leaked into its own prior context"
+
+    def test_genuine_prior_context_is_preserved(self):
+        history = [
+            {"role": "user", "content": "I have not been sleeping."},
+            {"role": "assistant", "content": "That sounds hard."},
+            {"role": "user", "content": self.MESSAGE},
+        ]
+        prompt = self._prompt_for(history)
+        assert "I have not been sleeping." in prompt
+        assert "That sounds hard." in prompt
+
+    def test_assistant_turn_matching_the_message_is_kept(self):
+        """Only a trailing *user* echo is dropped - never assistant content."""
+        history = [{"role": "assistant", "content": self.MESSAGE}]
+        prompt = self._prompt_for(history)
+        assert "assistant: " + self.MESSAGE in prompt
+
+
 class TestIntegration:
     """Integration tests with RiskClassifier"""
 
