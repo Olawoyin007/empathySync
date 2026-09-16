@@ -398,6 +398,44 @@ class TestTimingInstrumentation:
         classifier = LLMClassifier()
         assert classifier.last_call_duration == 0.0
 
+    def test_classification_sampling_is_pinned(self):
+        """Whether a person meets restraint must not depend on a sample.
+
+        The classifier ran at temperature 0.1 with no seed, so the same message
+        could route to a restraint domain one run and to logistics the next. It
+        also made the crisis-floor work unmeasurable: that method turns on one-
+        and two-sample differences, which is the size of the noise it produced
+        (the 94-example domain eval returned 82 then 83 on identical code).
+        Same decision as the eval judge in PR #192, one layer earlier.
+        """
+        classifier = LLMClassifier()
+        mock_response = Mock()
+        mock_response.raise_for_status = Mock()
+        mock_response.json.return_value = {"response": '{"domain": "logistics"}'}
+        mock_client = Mock()
+        mock_client.post.return_value = mock_response
+        with patch("utils.http_client.get_http_client", return_value=mock_client):
+            classifier._call_ollama("test prompt")
+
+        options = mock_client.post.call_args.kwargs["json"]["options"]
+        assert options["temperature"] == 0.0, "classification must use greedy decoding"
+        assert options["seed"] is not None, "classification must pin a seed"
+
+    def test_seed_is_omitted_when_not_configured(self):
+        """An unset seed must not become a literal None in the payload."""
+        classifier = LLMClassifier()
+        classifier.config = dict(classifier.config)
+        classifier.config.pop("seed", None)
+        mock_response = Mock()
+        mock_response.raise_for_status = Mock()
+        mock_response.json.return_value = {"response": '{"domain": "logistics"}'}
+        mock_client = Mock()
+        mock_client.post.return_value = mock_response
+        with patch("utils.http_client.get_http_client", return_value=mock_client):
+            classifier._call_ollama("test prompt")
+
+        assert "seed" not in mock_client.post.call_args.kwargs["json"]["options"]
+
     def test_last_call_duration_set_after_successful_call(self):
         classifier = LLMClassifier()
         mock_response = Mock()

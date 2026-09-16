@@ -34,7 +34,7 @@ empathysync --log-level DEBUG            # Override log verbosity
 docker compose up
 
 # Tests
-pytest tests/                            # Full suite (1184 unit + 23 conversation)
+pytest tests/                            # Full suite (1189 unit + 23 conversation)
 pytest tests/ --cov=src                  # With coverage
 pytest tests/ -m "not conversation"      # Skip Ollama-dependent tests
 python tests/classification/run_domain_eval.py          # Domain accuracy eval
@@ -113,7 +113,7 @@ tests/
     └── run_domain_eval.py          # Per-domain accuracy report
 ```
 
-Current counts: ~1184 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
+Current counts: ~1189 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
 
 Pre-existing known failure: `stress_test_001` conversation tier is
 non-deterministic (LLM output varies); the structural tier always passes.
@@ -158,6 +158,13 @@ LLM classifies a message as `emotional` (catch-all) but the keyword detector
 finds a more specific sensitive domain (money, health, spirituality,
 relationships), the specific domain wins. Emotional is the gravity well — the
 keyword is more precise.
+
+**Deterministic classification** (`scenarios/classification/llm_classifier.yaml`):
+the classifier runs at `temperature: 0.0` with a pinned `seed`. This is a safety
+property, not a tuning choice - at temperature 0.1 the same message could reach
+restraint on one run and `logistics` (full assistant mode) on the next. Raising
+the temperature to make classification "smarter" reintroduces that coin flip and
+makes every phrase-level safety measurement unreliable.
 
 **Singleton loaders**: `ScenarioLoader` via `get_scenario_loader()`,
 `StorageBackend` via `get_storage_backend()`. Do not instantiate directly —

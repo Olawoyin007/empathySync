@@ -351,14 +351,21 @@ class LLMClassifier:
     def _call_ollama(self, prompt: str) -> Optional[str]:
         """Call Ollama API for classification"""
         timeout_ms = self.config.get("timeout_ms", 10000)
-        temperature = self.config.get("temperature", 0.1)
+        temperature = self.config.get("temperature", 0.0)
         max_tokens = self.config.get("max_tokens", 200)
+
+        options = {"temperature": temperature, "top_p": 0.9, "num_predict": max_tokens}
+        # Pinned so the same message yields the same classification run to run.
+        # Moot at temperature 0 (greedy), load-bearing if anyone raises it.
+        seed = self.config.get("seed")
+        if seed is not None:
+            options["seed"] = seed
 
         payload = {
             "model": self.model,
             "prompt": prompt,
             "stream": False,
-            "options": {"temperature": temperature, "top_p": 0.9, "num_predict": max_tokens},
+            "options": options,
         }
 
         try:

@@ -10,8 +10,15 @@ enabled: true
 # classification waits in the queue. 45s gives enough room for queuing.
 timeout_ms: 45000
 
-# Temperature for classification (low = deterministic)
-temperature: 0.1
+# Sampling for classification. Greedy decoding plus a fixed seed, so the same
+# message gets the same domain every time. This is a safety decision, not a
+# quality one: whether a person meets restraint must not depend on a sample.
+# It also makes measurement possible - the phrase-level crisis-floor work turns
+# on one- and two-sample differences, which is the size of the noise that
+# temperature 0.1 was producing (the 94-example domain eval returned 82 then 83
+# on identical code). Same reasoning as the eval judge in PR #192.
+temperature: 0.0
+seed: 42
 
 # Maximum tokens for classification response
 max_tokens: 200
