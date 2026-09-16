@@ -1,0 +1,11 @@
+# Judge variant for the restraint eval: identical weights to gpt-oss:120b, with the
+# context pinned small. The stock 128k context makes Ollama reserve ~the whole box,
+# so the 65GB judge evicts the 3 pipeline models (mistral / llama-guard3 / qwen) and
+# gets reloaded (~110s) on EVERY sample. 8k is ample for a grading prompt and lets all
+# four models stay resident - ~5x faster (~24s/sample vs ~113s).
+#
+# Recreate:  ollama create gpt-oss:120b-eval -f gpt-oss-120b-eval.Modelfile
+# Also set OLLAMA_MAX_LOADED_MODELS>=4 on the ollama service (default is 3, but the
+# eval needs 4 models resident: the judge plus the three pipeline models).
+FROM gpt-oss:120b
+PARAMETER num_ctx 8192

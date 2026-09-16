@@ -38,6 +38,76 @@ from .config import (
 from .preflight import preflight
 
 
+def _write_verdict(logs, path: str, mode: str, dataset: str) -> None:
+    """Best-effort structured verdict from Inspect's returned logs, in the SAME
+    result.json shape intentKeeper writes, so the nightly DAG surfaces both evals
+    identically. Runs after the eval and only reads its logs, so it cannot change
+    the eval result. Callers wrap it in try/except - a failure here is a warning,
+    never a failed eval.
+
+    INCORRECT samples become failed_checks; NOANSWER (a fail-closed judge/pipeline
+    error) is counted separately, never treated as a pass or a violation.
+    """
+    import hashlib
+    import json
+    from pathlib import Path
+
+    from inspect_ai.log import read_eval_log
+    from inspect_ai.scorer import CORRECT, INCORRECT, NOANSWER
+
+    log = logs[0]
+    if log.samples is None and getattr(log, "location", None):
+        log = read_eval_log(log.location)  # returned logs can be header-only
+    res = log.results
+    samples = log.samples or []
+    total = (res.completed_samples if res else None) or len(samples)
+
+    # Headline number = Inspect's own accuracy metric (what `inspect view` shows).
+    score_pct = 0.0
+    if res and res.scores:
+        metrics = res.scores[0].metrics
+        m = metrics.get("accuracy") or next(iter(metrics.values()), None)
+        if m is not None:
+            score_pct = round(m.value * 100, 1)
+
+    correct = errors = 0
+    failed = []
+    for s in samples:
+        sc = next(iter((s.scores or {}).values()), None)
+        val = sc.value if sc else None
+        if val == CORRECT:
+            correct += 1
+        elif val == NOANSWER:
+            errors += 1
+        elif val == INCORRECT:
+            md = (sc.metadata if sc else {}) or {}
+            failed.append(
+                {
+                    "expected": "pass" if mode == "restraint" else "restraint domain",
+                    "got": str(sc.answer) if sc and sc.answer is not None else str(val),
+                    "confidence": float(md.get("confidence") or 0.0),
+                    "content": (
+                        str(s.input)[:120]
+                        + (f" | {sc.explanation[:140]}" if sc and sc.explanation else "")
+                    ),
+                }
+            )
+
+    result = {
+        "eval": f"empathysync-{mode}",
+        "eval_version": os.environ.get("EVAL_VERSION", "dev"),
+        "dataset": dataset,
+        "dataset_hash": hashlib.sha256(Path(dataset).read_bytes()).hexdigest()[:12],
+        "score_pct": score_pct,
+        "correct": correct,
+        "total": total,
+        "errors": errors,
+        "failed_checks": failed,
+    }
+    Path(path).write_text(json.dumps(result, indent=2))
+    print(f"wrote verdict: {path}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="empathysync-restraint-eval")
     parser.add_argument(
@@ -63,6 +133,11 @@ def main() -> int:
     parser.add_argument("--headroom", type=float, default=8.0, help="GB of RAM headroom")
     parser.add_argument("--max-connections", type=int, default=1)
     parser.add_argument("--no-preflight", action="store_true")
+    parser.add_argument(
+        "--result-json",
+        default=None,
+        help="also write a structured verdict (same shape as intentKeeper) here",
+    )
     args = parser.parse_args()
 
     # Each mode is a different task; keep their logs apart so eval_set resume
@@ -122,6 +197,13 @@ def main() -> int:
     print(
         f"\nDone. success={success}. Browse results with:\n  inspect view --log-dir {args.log_dir}"
     )
+
+    if args.result_json:
+        try:
+            _write_verdict(logs, args.result_json, args.mode, args.dataset)
+        except Exception as e:  # a verdict-file problem must never fail the eval
+            print(f"WARNING: could not write verdict json: {e}")
+
     return 0 if success else 1
 
 
