@@ -47,6 +47,50 @@ Runs on every user message to detect domain and distress signals. Domain accurac
 | `phi3.5:latest` | 2.2 GB | 4 GB GPU | 44% | 92% | 16% | 390ms |
 | `mistral:7b-instruct` | 4.4 GB | 8 GB GPU | 44% | 92% | 16% | 389ms |
 
+### Crisis triage: a capability cliff, not a prompt problem
+
+Domain accuracy and distress recall above do not capture whether *oblique* crisis
+reaches the hard stop. Distress recall asks "was distress detected"; the hard stop
+fires only on `domain == "crisis"`. A message can score distress and still never
+see a hotline.
+
+Measured 2026-09-16 on six oblique-ideation samples the keyword floor cannot
+reach (preparation behaviour, post-decision calm, means inquiry, pre-emptive
+goodbye), against 32 intense-but-not-suicidal messages and 6 practical controls:
+
+| Classifier | Oblique crisis reached | Benign wrongly escalated |
+|---|:---:|:---:|
+| `mistral:7b-instruct` (shipped default) | **0 / 6** | 0 / 32 |
+| `qwen2.5:7b-instruct` | 1 / 6 | 0 / 32 |
+| `qwen2.5:14b-instruct-q4_K_M` | **6 / 6** | 0 / 32 |
+
+The 14B result is reproducible and costs nothing in false escalations.
+
+**The prompt is not the lever.** Adding explicit crisis indicators to the
+classifier prompt - preparation, post-decision calm, means inquiry, pre-emptive
+goodbye, minimised self-harm, plus a rule that a practical request attached to a
+disclosure does not make it logistics - moved `mistral:7b-instruct` from 0/6 to
+1/6 and `qwen2.5:7b-instruct` from 1/6 to 2/6. On the 490-sample adversarial
+corpus the same change cost **96.3% -> 94.9%**: five crisis-side wins against
+twelve losses, all of them money and relationships (8 over-engagement, 3
+specialist overreach, 1 false intimacy).
+
+A 7B classifier has a fixed attention budget for its prompt. Buying crisis
+sensitivity spends it, and other domains pay. The rules themselves are sound -
+they are what the 14B model applies to reach 6/6 - so this is a model capability
+limit, not a wording problem. The change was reverted.
+
+**What this means for a deployment.** On the recommended 7-8 GB classifiers,
+detection of calm, oblique, preparation-stage crisis is close to absent, and the
+keyword floor has reached its lexical ceiling (see
+`docs/crisis-triage-finding.md`). Explicit-language crisis detection is
+unaffected and remains strong. State this limit rather than assume the floor
+covers it.
+
+**Method note.** These numbers are only meaningful because the classifier is
+pinned to greedy decoding with a fixed seed. Before that, a 7-sample swing on 490
+was indistinguishable from sampling noise.
+
 ## Main Engine
 
 Generates the actual response. Runs once per turn after classification.

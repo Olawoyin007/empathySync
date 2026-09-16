@@ -131,3 +131,5 @@ intense_benign:
 accepted_fp:
   - text: "I'm giving my things away before the move next week."
     note: "'giving away my things' already escalated this before the word-order variant was added"
+  - text: "I'm putting my affairs in order before I emigrate next month."
+    note: "existing 'putting my affairs in order' trigger; found 2026-09-16 while building practical controls. Emigration admin gets the hotline hard-stop."
