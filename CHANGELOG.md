@@ -4,6 +4,32 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Added
+- **One means-inquiry crisis trigger, and the traps that rejected seven others.**
+  `crisis.yaml` covered means *acquisition* ("stockpiling pills") and means *use*
+  ("overdosing") but had nothing for asking how much it would take - the question
+  that precedes acquisition. `enough pills to` closes that, measured against
+  held-out phrasings rather than the eval's own samples.
+
+  Seven other candidates were measured and rejected. `lethal dose` escalates
+  veterinary toxicity and journalism queries; `how many pills` escalates
+  prescription adherence; `sorted my affairs` escalates ordinary travel
+  preparation; `decided who gets what` escalates divorce settlements and sprint
+  planning. Two more (`how many would it take`, `how many of these would it
+  take`) caught nothing outside the eval corpus, so adding them would have been
+  tuning to the eval rather than fixing anything.
+
+  All nine rejection traps are now in `crisis_triage_corpus.yaml`, so the next
+  person proposing those phrases sees the cost before adding them rather than
+  rediscovering it.
+
+  **This is the lexical ceiling.** Of the six remaining crisis misses, one is
+  addressable by a keyword and five are not: the signal distinguishing them from
+  ordinary sentences is intent, not vocabulary. "Lethal dose" is a suicide marker
+  and a question about dogs and chocolate. A floor that escalates both cries wolf,
+  which is worse than one that stays quiet. Further progress there belongs in the
+  classifier, not the keyword list.
+
 ### Changed
 - **Classification is now deterministic.** The safety classifier ran at
   temperature 0.1 with no seed, so the same message could route to a restraint

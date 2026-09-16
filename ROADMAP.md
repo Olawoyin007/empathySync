@@ -56,7 +56,7 @@ phase without guessing:
    never weaken the test to get past it. Conversation content and
    preference/persona data are never persistable, in any encoding.
 4. Verify before declaring done: `pytest tests/ -m "not conversation"` (all
-   ~1189 must pass) plus the sub-phase's own **Verify** line. Run
+   ~1199 must pass) plus the sub-phase's own **Verify** line. Run
    `python tests/classification/run_domain_eval.py` only when classification
    code or scenario YAML changed (baseline: 83/94 on mistral:7b-instruct).
 5. When a step is ambiguous, take the smallest interpretation that satisfies
@@ -424,7 +424,7 @@ complete.
 detection, LLM classification, confidence calibration (17.2), distress routing (17.1),
 sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
-**Test suite**: 1189 structural tests + 23 conversation-marked tests (20 quality
+**Test suite**: 1199 structural tests + 23 conversation-marked tests (20 quality
 scenarios + 3 safety-guard integration). Distress corpus CI gate: 0% FN rate. Keyword
 FP rate on benign content: 7%. Domain eval baseline: 83/94 (88%) on mistral:7b-instruct.
 
