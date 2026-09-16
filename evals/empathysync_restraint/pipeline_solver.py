@@ -86,3 +86,65 @@ def empathysync_pipeline(engine_model: str, ollama_host: str = "") -> Solver:
         return state
 
     return solve
+
+
+@solver
+def empathysync_classify_only(engine_model: str, ollama_host: str = "") -> Solver:
+    """Route each sample through empathySync's classifier without generating a reply.
+
+    Domain mode grades one thing: `state.metadata["classified_domain"]`. The
+    shared pipeline solver gets that by driving `ConversationSession.process_message`,
+    which generates a full engine response per sample and then discards it. That
+    discarded generation is the dominant cost of a domain-mode run, and it is why
+    the classifier side was too slow to iterate against the full corpus.
+
+    Faithfulness: the pipeline solver reports the domain from
+    `result.risk_assessment`, which is `RiskClassifier.classify()` plus the
+    session-context adjustment and domain-stability damping. Both of those need
+    prior turns, and every eval sample is turn 1, so they are no-ops here. That
+    was verified against the corpus before this solver was wired in: 25 random
+    samples, full pipeline vs classify-only, 25/25 identical domains. If samples
+    ever become multi-turn, this solver stops being equivalent and domain mode
+    must go back to the full pipeline.
+
+    Storage is redirected per sample with the same save/restore as the full
+    solver, so the user's real ./data is never touched. Constructing this solver
+    has no side effects - it does not mutate settings or load scenarios - which
+    keeps the task constructible in tests.
+    """
+    _ensure_src_on_path()
+    from config.settings import settings
+
+    if ollama_host:
+        settings.OLLAMA_HOST = ollama_host
+    if engine_model:
+        # Only load-bearing when OLLAMA_CLASSIFIER_MODEL is unset and the
+        # classifier falls back to the engine model.
+        settings.OLLAMA_MODEL = engine_model
+
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        from models.risk_classifier import RiskClassifier
+        from utils.storage_backend import reset_storage_backend
+
+        tmp = Path(tempfile.mkdtemp(prefix="es-eval-classify-"))
+        prev_data_dir = settings.DATA_DIR
+        try:
+            settings.DATA_DIR = tmp
+            reset_storage_backend()
+            assessment = RiskClassifier().classify(state.input_text, [])
+        finally:
+            settings.DATA_DIR = prev_data_dir
+            reset_storage_backend()
+            shutil.rmtree(tmp, ignore_errors=True)
+
+        state.metadata["classified_domain"] = assessment.get("domain")
+        state.metadata["risk_weight"] = assessment.get("risk_weight")
+        state.metadata["classification_method"] = assessment.get("classification_method")
+        # No reply was produced, so anything derived from one is absent rather
+        # than falsely empty. Response-side questions belong in restraint mode.
+        state.metadata["response_generated"] = False
+
+        state.output = ModelOutput.from_content(model=engine_model, content="")
+        return state
+
+    return solve

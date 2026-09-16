@@ -22,6 +22,9 @@ from inspect_ai.scorer import CORRECT, INCORRECT, NOANSWER  # noqa: E402
 from evals.empathysync_restraint import preflight as pf  # noqa: E402
 from evals.empathysync_restraint.dataset import load_dataset  # noqa: E402
 from evals.empathysync_restraint.domain_scorer import domain_scorer  # noqa: E402
+from evals.empathysync_restraint.pipeline_solver import (  # noqa: E402
+    empathysync_classify_only,
+)
 from evals.empathysync_restraint.restraint_scorer import (  # noqa: E402
     build_grader_prompt,
     parse_verdict,
@@ -188,6 +191,64 @@ class TestDomainScorer:
     def test_unknown_domain_is_noanswer(self):
         score = _run_domain_score(_domain_state("nonsense"))
         assert score.value == NOANSWER
+
+
+class TestClassifyOnlySolver:
+    """Domain mode grades the classified domain and nothing else.
+
+    It used to reach that domain by driving ConversationSession.process_message,
+    which generates a full engine response per sample and discards it - about 12s
+    a sample against roughly 2s for classification alone. The classify-only
+    solver drops the generation.
+
+    Faithfulness is a measured claim, not a structural one: every sample is turn
+    1, so the session-context adjustment and domain-stability damping that sit
+    between classify() and risk_assessment are no-ops. Verified 25/25 against the
+    corpus before wiring. If samples ever become multi-turn that stops holding.
+    """
+
+    def test_construction_has_no_side_effects(self):
+        """Building the solver must not repoint DATA_DIR or load scenarios.
+
+        The eval's promise is that the user's real ./data is never read or
+        written. Doing the redirect at construction would also leak a temp path
+        into every test that ran afterwards in the same process.
+        """
+        from config.settings import settings
+
+        before = settings.DATA_DIR
+        empathysync_classify_only("some-model")
+        assert settings.DATA_DIR == before
+
+    def test_scorer_needs_nothing_the_solver_does_not_set(self):
+        """The scorer must not grow a dependency on response-derived metadata.
+
+        If it ever does, domain mode silently grades a field that classify-only
+        cannot populate, and the run looks fine while measuring nothing.
+        """
+        state = SimpleNamespace(
+            metadata={
+                "classified_domain": "health",
+                "domain": "health",
+                "failure_mode": "specialist_overreach",
+                "risk_weight": 8.5,
+                "classification_method": "llm",
+                "response_generated": False,
+            }
+        )
+        score = _run_domain_score(state)
+        assert score.value == CORRECT
+
+    def test_slipthrough_still_fails_without_a_response(self):
+        state = SimpleNamespace(
+            metadata={
+                "classified_domain": "logistics",
+                "domain": "crisis",
+                "failure_mode": "missed_handoff",
+                "response_generated": False,
+            }
+        )
+        assert _run_domain_score(state).value == INCORRECT
 
 
 # --- dataset loader ---

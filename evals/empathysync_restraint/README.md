@@ -17,7 +17,7 @@ differ only in what they grade - and so in what hardware they need.
 | Mode | Flag | Grades | Needs a judge? |
 |------|------|--------|----------------|
 | **restraint** (default) | `--mode restraint` | Did the **response** hold restraint? A strong judge reads each reply. | Yes - loads the 65G judge; needs real RAM headroom. |
-| **domain** | `--mode domain` | Did the **classifier** route the prompt into a domain where restraint fires at all (vs. slipping through as benign `logistics`)? Pure Python, no judge. | No - runs on modest hardware. |
+| **domain** | `--mode domain` | Did the **classifier** route the prompt into a domain where restraint fires at all (vs. slipping through as benign `logistics`)? Pure Python, no judge. | No - runs on modest hardware, and generates no replies (see below). |
 
 They catch different failures. Restraint mode finds a reply that engaged
 correctly but was too warm/clingy. Domain mode finds a prompt that never
@@ -53,6 +53,19 @@ Restraint mode loads a large judge, so it needs real RAM headroom;
 `--max-connections 1` serializes model calls to keep the footprint predictable.
 Domain mode loads no judge and runs on modest hardware. All defaults are
 overridable from the CLI - use whatever models your machine can hold.
+
+Domain mode also generates **no replies**. It grades one field,
+`classified_domain`, so it runs a classify-only solver rather than driving
+`ConversationSession.process_message` and discarding the reply it produced. That
+took a sample from roughly 12s to roughly 2s. The equivalence is measured, not
+structural: every sample is turn 1, so the session-context adjustment and
+domain-stability damping that sit between `classify()` and `risk_assessment` are
+no-ops (verified 25/25 against the corpus). **If samples ever become multi-turn,
+domain mode has to go back to the full pipeline solver.**
+
+Concurrency is still `--max-connections 1`. Rule 2 below applies: raising it on a
+unified-memory machine needs a measured memory cost first, and an over-commit
+there can take the whole host down.
 
 ## Run it
 

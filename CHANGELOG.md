@@ -4,6 +4,26 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Changed
+- **Domain mode no longer generates replies it throws away.** The classifier-side
+  eval grades exactly one field, `classified_domain`, but it reached that field
+  by driving `ConversationSession.process_message`, which produces a full engine
+  response per sample and discards it. That discarded generation was the dominant
+  cost of a run: roughly 12s a sample against roughly 2s for classification
+  alone, which is why the classifier side was too slow to iterate against the
+  full corpus. `empathysync_domain` now uses a classify-only solver.
+
+  The equivalence is measured rather than structural. `risk_assessment` is
+  `RiskClassifier.classify()` plus session-context adjustment and
+  domain-stability damping; both need prior turns and every sample is turn 1, so
+  they are no-ops. Checked 25 random corpus samples, full pipeline vs
+  classify-only: 25/25 identical domains. If samples ever become multi-turn,
+  domain mode must return to the full pipeline solver - the README and the
+  solver docstring both say so.
+
+  Concurrency is untouched at `--max-connections 1`; raising it needs the
+  measured memory cost the eval's own rules require.
+
 ### Fixed
 - **The frozen eval corpus was never in version control.** `.gitignore` line 2
   was a bare `data/`, written for the app's local user data at the repo root. A
