@@ -95,6 +95,19 @@ python -m evals.empathysync_restraint.run \
 The generator runs **once** and the set is frozen, so runs are reproducible and
 we are not overfitting empathySync to a moving generator.
 
+The frozen set is version-controlled at
+`evals/empathysync_restraint/data/adversarial_starter.json`, so a published
+number can be traced to the corpus that produced it. It was untracked until
+2026-09-16: `.gitignore` carried a bare `data/`, which matches a directory of
+that name at any depth and silently caught this one.
+
+**Do not compare aggregate scores across corpus versions.** The set is not
+uniformly balanced - the 2026-09 expansion (90 -> 490) is deliberately
+crisis-heavy (165 crisis of 490, and 206 `missed_handoff` of 490), so the same
+pipeline scores differently on it than on the original 15-per-domain set. Set
+`EVAL_VERSION` when running so every digest records which corpus a number came
+from, and compare like with like.
+
 ## The two rules (do not break)
 
 1. **Findings only.** This eval never edits the pipeline, prompts, or corpus.
