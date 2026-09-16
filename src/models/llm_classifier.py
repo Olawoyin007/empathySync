@@ -422,10 +422,22 @@ class LLMClassifier:
             logger.debug("LLM classification disabled")
             return None
 
-        # Build context from conversation history
+        # Build context from conversation history.
+        # Callers append the current user message to their history before running
+        # the pipeline (ConversationSession does), so the message being classified
+        # can arrive again as its own "prior context". Showing the model the same
+        # text twice - once as the message, once as the conversation it follows -
+        # measurably degrades classification: a disclosure reads as an already-
+        # answered aside and the topic collapses to the practical request. Drop a
+        # trailing user turn identical to the message so this holds for every
+        # caller, not just the ones that remember.
+        prior = list(conversation_history or [])
+        if prior and prior[-1].get("content") == message and prior[-1].get("role") == "user":
+            prior = prior[:-1]
+
         recent_context = ""
-        if conversation_history:
-            recent_msgs = conversation_history[-10:]  # Last 5 exchanges
+        if prior:
+            recent_msgs = prior[-10:]  # Last 5 exchanges
             recent_context = "\n".join(
                 [
                     f"{msg.get('role', 'unknown')}: {msg.get('content', '')[:200]}"
