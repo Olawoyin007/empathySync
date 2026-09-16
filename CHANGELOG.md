@@ -4,6 +4,38 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Documentation
+- **Crisis triage on small classifiers is a capability cliff, and the prompt is
+  not the lever.** Recorded in `docs/model-benchmark.md` as a negative result
+  with the numbers behind it.
+
+  Six oblique-ideation samples the keyword floor cannot reach, measured against
+  32 intense-but-not-suicidal messages and 6 practical controls:
+  `mistral:7b-instruct` 0/6, `qwen2.5:7b-instruct` 1/6,
+  `qwen2.5:14b-instruct-q4_K_M` **6/6** - the last with no false escalations,
+  reproducibly.
+
+  Adding explicit crisis indicators to the classifier prompt (preparation
+  behaviour, post-decision calm, means inquiry, pre-emptive goodbye, and a rule
+  that a practical request attached to a disclosure does not make it logistics)
+  moved the 7B models by one sample each and cost **96.3% -> 94.9%** on the
+  490-sample corpus: five crisis-side wins against twelve losses, all money and
+  relationships. A 7B classifier has a fixed attention budget for its prompt;
+  buying crisis sensitivity spends it and other domains pay. The rules are sound
+  - they are what the 14B model applies to reach 6/6 - so this is model
+  capability, not wording. **The prompt change was reverted; nothing functional
+  ships.**
+
+  These numbers are only readable because the classifier is pinned to greedy
+  decoding with a fixed seed. Before that, a 7-sample swing on 490 was
+  indistinguishable from noise.
+
+- `crisis_triage_corpus.yaml` records a second accepted false positive found
+  while building the practical controls: "I'm putting my affairs in order before
+  I emigrate next month" gets the hotline hard-stop from the existing
+  `putting my affairs in order` trigger. Pre-existing, not introduced here, and
+  the reason the affairs family was not expanded in the previous change.
+
 ### Added
 - **One means-inquiry crisis trigger, and the traps that rejected seven others.**
   `crisis.yaml` covered means *acquisition* ("stockpiling pills") and means *use*
