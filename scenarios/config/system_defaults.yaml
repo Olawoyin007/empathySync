@@ -186,10 +186,10 @@ restraint_memory:
     handoffs: [context, date, datetime, domain, follow_up_shown, id,
                outcome, person_name, status]
   # SQLite column allowlist (column names diverge from the JSON field names).
-  # Structural/bookkeeping columns carry no user data. Legacy exceptions are
-  # deny-named columns that predate the invariant. Schema v3 dropped the dormant
-  # session_intents.user_input column; renaming self_reports.content to response
-  # remains deferred (touches both backends and unversioned JSON data).
+  # Structural/bookkeeping columns carry no user data. Schema v3 dropped the
+  # dormant session_intents.user_input column; schema v4 renamed
+  # self_reports.content to response (#187), which cleared the last legacy
+  # exception. No column now carries a deny-listed name.
   allowed_columns:
     schema_info: [version, migrated_at, description]
     check_ins: [id, feeling_score, notes, created_at]
@@ -200,12 +200,15 @@ restraint_memory:
     session_intents: [id, session_id, intent, created_at]
     independence_records: [id, task_category, milestone, notes, created_at]
     handoff_events: [id, handoff_type, domain, person_name, completed, notes, created_at]
-    self_reports: [id, report_type, content, score, created_at]
+    self_reports: [id, report_type, response, score, created_at]
     task_patterns: [id, pattern_type, count, last_seen, metadata, created_at]
     trusted_people: [id, name, relationship, contact, notes, domains, added_at, last_contact]
     reach_outs: [id, person_id, method, notes, outcome, created_at]
-  legacy_deny_named_columns:
-    self_reports: [content]         # holds the user's self-report answer; rename deferred to a future migration
+  # Deny-named columns that predate the invariant. Empty since schema v4 (#187)
+  # renamed the last one. Keep the key: the invariant test reads it, and any
+  # future exception must be added here deliberately rather than by loosening
+  # the test.
+  legacy_deny_named_columns: {}
 
 # ---------------------------------------------------------------------------
 # Co-design boundary (decided 2026-08-11; see issue #182 and ~/decisions).

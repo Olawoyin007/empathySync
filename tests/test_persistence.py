@@ -147,8 +147,71 @@ class TestDatabaseModule:
             assert row[0] == "practical"
             assert row[1] == "2026-01-01T00:00:00"
 
+            # Track the constant, not a literal. This was pinned to 3 and went
+            # stale the moment a v4 existed - the same trap as the trusted-network
+            # test in #186.
             version = conn.execute("SELECT MAX(version) FROM schema_info").fetchone()[0]
-            assert version == 3
+            assert version == db_module.SCHEMA_VERSION
+
+            db_module.close_db()
+
+    def test_migration_v3_to_v4_renames_self_report_content(self, temp_data_dir):
+        """A v3 database is migrated to v4: self_reports.content becomes response.
+
+        `content` is on the restraint-memory deny-list and was the only column in
+        the store carrying one of those names (#187). The rename removes the last
+        legacy exception; the user's answers must survive it.
+        """
+        import sqlite3
+
+        import utils.database as db_module
+
+        db_module._connection = None
+        db_module._db_path = None
+        db_path = temp_data_dir / "empathySync.db"
+
+        raw = sqlite3.connect(db_path)
+        raw.executescript(
+            """
+            CREATE TABLE schema_info (
+                version INTEGER PRIMARY KEY,
+                migrated_at TEXT NOT NULL,
+                description TEXT
+            );
+            CREATE TABLE self_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                report_type TEXT NOT NULL,
+                content TEXT,
+                score INTEGER,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            INSERT INTO self_reports (report_type, content, score, created_at)
+            VALUES ('weekly_clarity', 'it helped a bit', 4, '2026-01-01T00:00:00');
+            INSERT INTO schema_info (version, migrated_at, description)
+            VALUES (3, datetime('now'), 'test seed v3');
+        """
+        )
+        raw.commit()
+        raw.close()
+
+        with patch("utils.database.settings") as mock_settings:
+            mock_settings.DATA_DIR = temp_data_dir
+
+            conn = db_module.get_db()  # triggers migrations
+
+            columns = [r[1] for r in conn.execute("PRAGMA table_info(self_reports)")]
+            assert "content" not in columns
+            assert "response" in columns
+
+            # get_db() sets a sqlite3.Row factory, so index the row rather than
+            # comparing it to a tuple.
+            row = conn.execute("SELECT report_type, response, score FROM self_reports").fetchone()
+            assert row[0] == "weekly_clarity"
+            assert row[1] == "it helped a bit"
+            assert row[2] == 4
+
+            version = conn.execute("SELECT MAX(version) FROM schema_info").fetchone()[0]
+            assert version == db_module.SCHEMA_VERSION
 
             db_module.close_db()
 

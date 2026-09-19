@@ -30,7 +30,7 @@ from config.settings import settings
 logger = logging.getLogger(__name__)
 
 # Current schema version - increment when schema changes
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 # Thread-local storage for connections
 _local = threading.local()
@@ -293,7 +293,7 @@ def _create_schema(conn: sqlite3.Connection):
         CREATE TABLE IF NOT EXISTS self_reports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             report_type TEXT NOT NULL,
-            content TEXT,
+            response TEXT,
             score INTEGER,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
@@ -364,6 +364,8 @@ def _run_migrations(conn: sqlite3.Connection):
         _migrate_v1_to_v2(conn)
     if current_version < 3:
         _migrate_v2_to_v3(conn)
+    if current_version < 4:
+        _migrate_v3_to_v4(conn)
 
     # Future migrations would go here
 
@@ -452,6 +454,48 @@ def _migrate_v2_to_v3(conn: sqlite3.Connection):
         VALUES (3, datetime('now'), 'Dropped dormant session_intents.user_input column');
     """
     )
+
+
+def _migrate_v3_to_v4(conn: sqlite3.Connection):
+    """
+    Rename self_reports.content to self_reports.response.
+
+    `content` is on the restraint-memory deny-list
+    (`forbidden_field_names`), and this column was the single place in the store
+    that literally carried one of those names. It survived as a documented legacy
+    exception; renaming it removes the exception and makes the "we do not store
+    content" property true without an asterisk (#187).
+
+    A rename rather than a table recreate: ALTER TABLE ... RENAME COLUMN needs
+    SQLite 3.25 (2018), comfortably below anything the supported Pythons ship,
+    and it preserves rows, indexes and constraints without copying.
+    """
+    logger.info("Running migration v3 -> v4: Renaming self_reports.content to response")
+
+    # Conditional, not unconditional. A migration that assumes a table exists
+    # breaks on any database that predates it or was built partially - which is
+    # not hypothetical: the v2 fixture in tests/test_persistence.py has no
+    # self_reports table at all. Renaming only when there is something to rename
+    # also makes this safe to re-run.
+    table_exists = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='self_reports'"
+    ).fetchone()
+
+    if table_exists:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(self_reports)")}
+        if "content" in columns and "response" not in columns:
+            conn.execute("ALTER TABLE self_reports RENAME COLUMN content TO response")
+        else:
+            logger.info("v3 -> v4: self_reports.content not present, nothing to rename")
+    else:
+        logger.info("v3 -> v4: no self_reports table, nothing to rename")
+
+    # The version is recorded either way, so the migration does not re-run.
+    conn.execute(
+        "INSERT INTO schema_info (version, migrated_at, description) "
+        "VALUES (4, datetime('now'), 'Renamed self_reports.content to response')"
+    )
+    conn.commit()
 
     conn.commit()
     logger.info("Migration v2 -> v3 completed")
@@ -628,10 +672,12 @@ def migrate_from_json(wellness_json_path: Path, network_json_path: Path) -> bool
                 # Self-reports
                 for report in wellness.get("self_reports", []):
                     db.execute(
-                        "INSERT INTO self_reports (report_type, content, score, created_at) VALUES (?, ?, ?, ?)",
+                        "INSERT INTO self_reports (report_type, response, score, created_at) VALUES (?, ?, ?, ?)",
                         (
                             report.get("type", report.get("report_type", "")),
-                            report.get("content", ""),
+                            # accept either key: JSON files written before the v4
+                            # rename carry "content", newer ones carry "response"
+                            report.get("response", report.get("content", "")),
                             report.get("score"),
                             report.get(
                                 "timestamp", report.get("created_at", datetime.now().isoformat())

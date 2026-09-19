@@ -206,7 +206,7 @@ class StorageBackend(ABC):
     # ==================== SELF-REPORTS ====================
 
     @abstractmethod
-    def add_self_report(self, report_type: str, content: str = "", score: int = None) -> Dict:
+    def add_self_report(self, report_type: str, response: str = "", score: int = None) -> Dict:
         """Add a self-report entry."""
         pass
 
@@ -658,7 +658,7 @@ class JSONBackend(StorageBackend):
 
     # ==================== SELF-REPORTS ====================
 
-    def add_self_report(self, report_type: str, content: str = "", score: int = None) -> Dict:
+    def add_self_report(self, report_type: str, response: str = "", score: int = None) -> Dict:
         self._ensure_write_allowed()
         data = self._load_wellness()
         report = {
@@ -666,7 +666,7 @@ class JSONBackend(StorageBackend):
             "date": date.today().isoformat(),
             "datetime": datetime.now().isoformat(),
             "report_type": report_type,
-            "content": content,
+            "response": response,
             "score": score,
         }
         if "self_reports" not in data:
@@ -1298,11 +1298,11 @@ class SQLiteBackend(StorageBackend):
 
     # ==================== SELF-REPORTS ====================
 
-    def add_self_report(self, report_type: str, content: str = "", score: int = None) -> Dict:
+    def add_self_report(self, report_type: str, response: str = "", score: int = None) -> Dict:
         self._ensure_write_allowed()
         cursor = self.db.execute(
-            "INSERT INTO self_reports (report_type, content, score) VALUES (?, ?, ?)",
-            (report_type, content, score),
+            "INSERT INTO self_reports (report_type, response, score) VALUES (?, ?, ?)",
+            (report_type, response, score),
         )
         self.db.commit()
 
@@ -1311,7 +1311,7 @@ class SQLiteBackend(StorageBackend):
             "date": date.today().isoformat(),
             "datetime": datetime.now().isoformat(),
             "report_type": report_type,
-            "content": content,
+            "response": response,
             "score": score,
         }
 
