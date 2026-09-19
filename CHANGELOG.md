@@ -4,6 +4,29 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Changed
+- **Roadmap reordered.** Execution order is now
+  `open issues -> 25 -> 24 -> 23.2-23.4 -> 22 -> 19`. Phase 22 (daemon) was next.
+
+  **New Phase 25: Concrete Handoff in Every Sensitive Reply.** The 2026-09-18
+  nightly put the response side at 46.9% (230/490, eval set 2026.09-r2), and 88%
+  of the 260 flagged replies were flagged for one reason: no concrete referral.
+  Classification is at 96.3% after #199-#203, so the gap has moved from detection
+  to what gets said. The crisis hard-stop already carries a twelve-country
+  resource block; nothing below it carries anything. A sensitive reply currently
+  reads "I won't be able to reassure you about that" and stops - a correct
+  refusal with no route, which is indistinguishable from abandonment. Four
+  sub-phases: referrals per domain, a placeholder-leak guard, OS handoff links,
+  and avoidance detection.
+
+  **Phase 24 (clinician co-design) moved ahead of 23 and 22.** Every number here
+  is measured against corpora written by the maintainer and graded against labels
+  set by the maintainer. Phase 24 is the only planned work that opens that loop.
+
+  Phase 22 moved behind both: a daemon's purpose is to start more sensitive
+  conversations, so pointing a new surface at a reply layer that fails more than
+  half of them is the wrong order.
+
 ### Documentation
 - **Crisis triage on small classifiers is a capability cliff, and the prompt is
   not the lever.** Recorded in `docs/model-benchmark.md` as a negative result

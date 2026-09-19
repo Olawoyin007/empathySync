@@ -189,5 +189,8 @@ full record; `ROADMAP.md` holds only planned work.
 Current version: check `pyproject.toml` (source of truth).
 Run `python scripts/check_version.py` to verify all files are in sync.
 
-Execution order: Phase 22 (persistent agent daemon), then Phase 19
-(multilingual).
+Execution order (reordered 2026-09-19): open issues, then Phase 25
+(concrete handoff in every sensitive reply), Phase 24 (clinician co-design),
+Phase 23.2-23.4, Phase 22 (daemon), Phase 19 (multilingual). Phase 25 moved
+ahead of 22 because the response side scores 46.9% while classification is at
+96.3% - a daemon starts more sensitive conversations, so the replies come first.
