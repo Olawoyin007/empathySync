@@ -200,7 +200,7 @@ restraint_memory:
     session_intents: [id, session_id, intent, created_at]
     independence_records: [id, task_category, milestone, notes, created_at]
     handoff_events: [id, handoff_type, domain, person_name, completed, notes, created_at]
-    self_reports: [id, report_type, response, score, created_at]
+    self_reports: [id, report_type, response, details, score, created_at]
     task_patterns: [id, pattern_type, count, last_seen, metadata, created_at]
     trusted_people: [id, name, relationship, contact, notes, domains, added_at, last_contact]
     reach_outs: [id, person_id, method, notes, outcome, created_at]

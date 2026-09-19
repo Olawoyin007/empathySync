@@ -1649,8 +1649,7 @@ class WellnessTracker:
         """
         # Use storage backend if SQLite is enabled
         if self._backend is not None and settings.USE_SQLITE:
-            content = json.dumps({"response": response, "details": details})
-            return self._backend.add_self_report(report_type, content)
+            return self._backend.add_self_report(report_type, response, details)
 
         # JSON backend
         data = self._load_data()

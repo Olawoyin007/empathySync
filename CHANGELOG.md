@@ -4,6 +4,36 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- **Self-reports had two different shapes depending on the backend, and it was
+  breaking a frequency limit.** `WellnessTracker._load_data` presents backend
+  results as "the dict format expected by existing code", but the SQLite backend
+  returned raw rows: `{id, report_type, response, score, created_at}` against the
+  JSON store's `{date, datetime, type, response, details}`.
+
+  Two live consequences, both reproduced before fixing:
+
+  - `should_show_self_report` reads `last_report.get("date")`. SQLite rows had no
+    `date` key, so the documented "max 1 per week, min 5 days between" limit
+    silently never fired on that backend.
+  - The backend query ordered `created_at DESC` while callers read `[-1]` as the
+    most recent, because the JSON store appends. Seeded with two rows, `[-1]`
+    returned `OLDEST`.
+
+  `get_recent_self_reports` now returns the JSON shape, oldest first, and both
+  backends write identical fields.
+
+### Changed
+- **Schema v4 -> v5: `self_reports.details` is its own column.** SQLite packed
+  `json.dumps({response, details})` into the `response` column, so after the #187
+  rename `response` still held response *and* details. The migration adds the
+  column and splits existing packed rows; plain-text rows are left untouched.
+- `JSONStorageBackend.add_self_report` now writes exactly the shape
+  `restraint_memory.allowed_fields` permits (`date`, `datetime`, `type`,
+  `response`, `details`). It previously wrote `id`, `report_type` and `score`,
+  none of which are allowlisted - it would have failed the invariant had anything
+  reached it. The `score` parameter is gone from the signature; nothing passed it.
+
 ### Changed
 - **`self_reports.content` renamed to `response`; the last deny-named column is
   gone (#187).** `content` is on `restraint_memory.forbidden_field_names`, and

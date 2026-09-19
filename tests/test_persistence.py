@@ -215,6 +215,127 @@ class TestDatabaseModule:
 
             db_module.close_db()
 
+    def test_migration_v4_to_v5_splits_response_and_details(self, temp_data_dir):
+        """A v4 database is migrated to v5: the packed response blob is split.
+
+        Until v5 the SQLite backend stored json.dumps({"response", "details"}) in
+        one column while the JSON backend stored them separately - the same
+        logical record in two shapes.
+        """
+        import json as json_mod
+        import sqlite3
+
+        import utils.database as db_module
+
+        db_module._connection = None
+        db_module._db_path = None
+        db_path = temp_data_dir / "empathySync.db"
+
+        raw = sqlite3.connect(db_path)
+        raw.executescript(
+            """
+            CREATE TABLE schema_info (
+                version INTEGER PRIMARY KEY,
+                migrated_at TEXT NOT NULL,
+                description TEXT
+            );
+            CREATE TABLE self_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                report_type TEXT NOT NULL,
+                response TEXT,
+                score INTEGER,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+            INSERT INTO schema_info (version, migrated_at, description)
+            VALUES (4, datetime('now'), 'test seed v4');
+        """
+        )
+        raw.execute(
+            "INSERT INTO self_reports (report_type, response, created_at) VALUES (?, ?, ?)",
+            (
+                "weekly_clarity",
+                json_mod.dumps({"response": "it helped a bit", "details": {"turns": 3}}),
+                "2026-01-01T00:00:00",
+            ),
+        )
+        # a plain-text row must be left exactly as it is
+        raw.execute(
+            "INSERT INTO self_reports (report_type, response, created_at) VALUES (?, ?, ?)",
+            ("weekly_clarity", "plain answer", "2026-02-01T00:00:00"),
+        )
+        raw.commit()
+        raw.close()
+
+        with patch("utils.database.settings") as mock_settings:
+            mock_settings.DATA_DIR = temp_data_dir
+
+            conn = db_module.get_db()
+
+            columns = [r[1] for r in conn.execute("PRAGMA table_info(self_reports)")]
+            assert "details" in columns
+
+            rows = conn.execute(
+                "SELECT response, details FROM self_reports ORDER BY created_at"
+            ).fetchall()
+            assert rows[0][0] == "it helped a bit"
+            assert json_mod.loads(rows[0][1]) == {"turns": 3}
+            assert rows[1][0] == "plain answer"
+            assert rows[1][1] is None
+
+            version = conn.execute("SELECT MAX(version) FROM schema_info").fetchone()[0]
+            assert version == db_module.SCHEMA_VERSION
+
+            db_module.close_db()
+
+    def test_self_reports_read_oldest_first(self, temp_data_dir):
+        """Callers read `[-1]` as the most recent, so the backend must not use DESC.
+
+        `should_show_self_report` takes `self_reports[-1]` as the last report. The
+        JSON store appends, so `[-1]` is newest there; a DESC query made `[-1]`
+        the oldest of the window, and the five-day frequency limit compared
+        against the wrong record.
+        """
+        import sqlite3
+
+        import utils.database as db_module
+        from utils.storage_backend import get_storage_backend, reset_storage_backend
+
+        db_module._connection = None
+        db_module._db_path = None
+
+        with patch("utils.database.settings") as mock_db_settings:
+            mock_db_settings.DATA_DIR = temp_data_dir
+            db_module.get_db()
+            db_module.close_db()
+            db_module._connection = None
+            db_module._db_path = None
+
+            raw = sqlite3.connect(temp_data_dir / "empathySync.db")
+            raw.execute(
+                "INSERT INTO self_reports (report_type, response, created_at) VALUES (?,?,?)",
+                ("t", "OLDEST", "2026-01-01T00:00:00"),
+            )
+            raw.execute(
+                "INSERT INTO self_reports (report_type, response, created_at) VALUES (?,?,?)",
+                ("t", "NEWEST", "2026-09-01T00:00:00"),
+            )
+            raw.commit()
+            raw.close()
+
+            with patch("utils.storage_backend.settings") as mock_settings:
+                mock_settings.DATA_DIR = temp_data_dir
+                mock_settings.USE_SQLITE = True
+                reset_storage_backend()
+                reports = get_storage_backend().get_recent_self_reports(limit=10)
+
+            assert [r["response"] for r in reports] == ["OLDEST", "NEWEST"]
+            assert reports[-1]["response"] == "NEWEST"
+            # the key should_show_self_report actually reads
+            assert reports[-1]["date"] == "2026-09-01"
+
+            reset_storage_backend()
+            db_module.close_db()
+
     def test_checkpoint_for_sync(self, temp_data_dir):
         """Test that checkpoint consolidates WAL."""
         import utils.database as db_module

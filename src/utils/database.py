@@ -17,6 +17,7 @@ Usage:
     close_db()
 """
 
+import json
 import sqlite3
 import logging
 import threading
@@ -30,7 +31,7 @@ from config.settings import settings
 logger = logging.getLogger(__name__)
 
 # Current schema version - increment when schema changes
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 # Thread-local storage for connections
 _local = threading.local()
@@ -294,6 +295,7 @@ def _create_schema(conn: sqlite3.Connection):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             report_type TEXT NOT NULL,
             response TEXT,
+            details TEXT,
             score INTEGER,
             created_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
@@ -366,6 +368,8 @@ def _run_migrations(conn: sqlite3.Connection):
         _migrate_v2_to_v3(conn)
     if current_version < 4:
         _migrate_v3_to_v4(conn)
+    if current_version < 5:
+        _migrate_v4_to_v5(conn)
 
     # Future migrations would go here
 
@@ -494,6 +498,61 @@ def _migrate_v3_to_v4(conn: sqlite3.Connection):
     conn.execute(
         "INSERT INTO schema_info (version, migrated_at, description) "
         "VALUES (4, datetime('now'), 'Renamed self_reports.content to response')"
+    )
+    conn.commit()
+
+
+def _migrate_v4_to_v5(conn: sqlite3.Connection):
+    """
+    Give self_reports its own `details` column and split the packed value.
+
+    Until v5 the SQLite backend stored json.dumps({"response": ..., "details":
+    ...}) inside the single `response` column, while the JSON backend stored the
+    two as separate fields. The same logical record had two shapes depending on
+    the backend, which is how `should_show_self_report` ended up reading a `date`
+    key that only one of them produced.
+
+    Conditional and re-runnable, for the reason documented in
+    docs/persistence.md: a fresh database is stamped v1 and replays every
+    migration on its second open, so each one meets tables that already look
+    finished.
+    """
+    logger.info("Running migration v4 -> v5: Splitting self_reports.response into response/details")
+
+    table_exists = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='self_reports'"
+    ).fetchone()
+
+    if table_exists:
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(self_reports)")}
+        if "details" not in columns:
+            conn.execute("ALTER TABLE self_reports ADD COLUMN details TEXT")
+
+        # Unpack any rows still holding the combined blob. Rows written as plain
+        # text are left exactly as they are.
+        rows = conn.execute("SELECT id, response FROM self_reports").fetchall()
+        for row_id, packed in rows:
+            if not packed:
+                continue
+            try:
+                parsed = json.loads(packed)
+            except (ValueError, TypeError):
+                continue
+            if isinstance(parsed, dict) and "response" in parsed:
+                conn.execute(
+                    "UPDATE self_reports SET response = ?, details = ? WHERE id = ?",
+                    (
+                        parsed.get("response"),
+                        json.dumps(parsed.get("details")) if parsed.get("details") else None,
+                        row_id,
+                    ),
+                )
+    else:
+        logger.info("v4 -> v5: no self_reports table, nothing to split")
+
+    conn.execute(
+        "INSERT INTO schema_info (version, migrated_at, description) "
+        "VALUES (5, datetime('now'), 'Split self_reports.response into response/details')"
     )
     conn.commit()
 
