@@ -501,6 +501,57 @@ class TestWellnessGuide:
         # Should truncate to 200 chars
         assert len(context) < len(long_message) + 50
 
+    # --- the current turn must not appear as its own prior context (#198) ---
+    #
+    # ConversationSession appends the user message before the pipeline runs, and
+    # the prompt already carries it separately as "User: {user_input}". Untrimmed,
+    # turn 1 rendered the same message twice in a row - once under "Previous
+    # conversation", once as the live turn. Same defect as the classifier context
+    # echo fixed in #199, in the second consumer of that over-full history.
+
+    def test_build_context_drops_the_echoed_current_turn(self, guide):
+        message = "I've had this lump for a few weeks and I'm terrified."
+        context = guide._build_context([{"role": "user", "content": message}], message)
+        assert "start of a new conversation" in context.lower()
+        assert message not in context
+
+    def test_build_context_keeps_genuine_prior_turns(self, guide):
+        message = "And now I can't sleep."
+        history = [
+            {"role": "user", "content": "I've had this lump for weeks."},
+            {"role": "assistant", "content": "That sounds frightening."},
+            {"role": "user", "content": message},
+        ]
+        context = guide._build_context(history, message)
+        assert "I've had this lump for weeks." in context
+        assert "That sounds frightening." in context
+        assert message not in context
+
+    def test_build_context_only_drops_a_trailing_user_echo(self, guide):
+        """An assistant turn with identical text is real history, not an echo."""
+        message = "Tell me about the lump."
+        history = [{"role": "assistant", "content": message}]
+        context = guide._build_context(history, message)
+        assert f"Assistant: {message}" in context
+
+    def test_build_context_without_current_input_is_unchanged(self, guide):
+        """Callers that pass no current_input keep the old behaviour."""
+        history = [{"role": "user", "content": "Hello"}]
+        assert "User: Hello" in guide._build_context(history)
+
+    def test_prompt_carries_the_user_message_exactly_once(self, guide):
+        """End to end: the assembled prompt must not say the message twice.
+
+        Keyword-only classification, so this needs no Ollama.
+        """
+        guide.risk_classifier.set_llm_classification(False)
+        message = "I've had this lump for a few weeks and I'm terrified."
+        prepared = guide._prepare_response(
+            message, "Balanced", [{"role": "user", "content": message}]
+        )
+        assert prepared.full_prompt.count(message) == 1
+        assert "Previous conversation" not in prepared.full_prompt
+
     def test_contains_harmful_content_detects_harmful(self, guide):
         assert guide._contains_harmful_content("You should feel bad about this")
         assert guide._contains_harmful_content("You're addicted to AI")

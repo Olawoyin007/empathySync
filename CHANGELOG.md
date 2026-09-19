@@ -4,6 +4,44 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- **The response prompt showed the user's message twice (#198).** Same root
+  cause as the classifier echo in #199, in a second consumer.
+  `ConversationSession` appends the user turn before the pipeline runs, and the
+  prompt already carries it separately as `User: {user_input}` - so
+  `_build_context` rendered it again under "Previous conversation". On turn 1 the
+  model saw the identical message twice in a row, the first labelled as history:
+
+  ```
+  Previous conversation:
+  User: I've had this lump for a few weeks and I'm terrified.
+
+  User: I've had this lump for a few weeks and I'm terrified.
+  ```
+
+  Worse than the issue first described it: not mislabelled framing but genuine
+  duplication, and it meant the `if not conversation_history:` branch - the one
+  that says "This is the start of a new conversation." - was unreachable for any
+  session-driven turn. Only tests, which pass a clean list, ever saw it.
+
+  `_build_context` now takes the current input and drops a trailing identical
+  user turn, so the guarantee holds for any caller. Verified on the assembled
+  prompt, not just the helper: the message appears exactly once and turn 1 reads
+  "start of a new conversation" again.
+
+  Response-side effect is not claimed here. Three sampled replies looked better
+  (two named a medical professional where an earlier sample was a bare refusal),
+  but the engine runs at temperature 0.7 and three samples measure nothing. The
+  nightly restraint eval runs against the same corpus hash and the 46.9%
+  baseline, so it will give the real read.
+
+### Changed
+- `risk_classifier._assess_dependency` now carries a comment recording that
+  including the current turn is **intentional** - the turn someone just took is
+  part of how much they are leaning on the app, which is the opposite of the
+  classifier and response-prompt cases where the same over-full history was a
+  defect. Decided rather than inherited (#198).
+
 ### Changed
 - **Roadmap reordered.** Execution order is now
   `open issues -> 25 -> 24 -> 23.2-23.4 -> 22 -> 19`. Phase 22 (daemon) was next.

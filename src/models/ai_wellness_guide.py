@@ -468,7 +468,7 @@ class WellnessGuide:
             risk_context=risk_assessment,
             connection_steering=connection_steering,
         )
-        conversation_context = self._build_context(conversation_history)
+        conversation_context = self._build_context(conversation_history, user_input)
 
         # Check if this is a practical task
         is_practical_technique = risk_assessment.get("is_practical_technique", False)
@@ -1185,14 +1185,35 @@ class WellnessGuide:
                     return True
         return False
 
-    def _build_context(self, conversation_history: List[Dict]) -> str:
-        """Build conversation context from history"""
+    def _build_context(self, conversation_history: List[Dict], current_input: str = "") -> str:
+        """Build the PRIOR conversation context for the response prompt.
 
-        if not conversation_history:
+        Callers append the current user message to their history before running
+        the pipeline (`ConversationSession._run_pre_llm_steps`), and the prompt
+        already carries it separately as "User: {user_input}". Without trimming,
+        turn 1 renders the same message twice in a row - once under "Previous
+        conversation", once as the live turn - so the model is told the message
+        it has to answer has already been said and answered. Pass the current
+        input and a trailing identical user turn is dropped, so the guarantee
+        holds for every caller rather than only the ones that remember to trim.
+
+        Same defect as the classifier context echo fixed in #199; this is the
+        second consumer of the same over-full history.
+        """
+        prior = list(conversation_history or [])
+        if (
+            current_input
+            and prior
+            and prior[-1].get("role") == "user"
+            and prior[-1].get("content") == current_input
+        ):
+            prior = prior[:-1]
+
+        if not prior:
             return "This is the start of a new conversation."
 
         # Keep last 5 exchanges for context
-        recent_history = conversation_history[-10:]
+        recent_history = prior[-10:]
 
         context = "Previous conversation:\n"
         for msg in recent_history:

@@ -564,6 +564,12 @@ class RiskClassifier:
         repetition_boost_max = calculation.get("repetition_boost", 4.0)
         lookback = calculation.get("lookback_messages", 12)
 
+        # The current turn is included here on purpose. Callers append the user
+        # message before the pipeline runs, so `history` ends with the message
+        # being assessed - and for dependency that is correct: the turn someone
+        # just took is part of how much they are leaning on this. That differs
+        # from the classifier and response-prompt contexts (#199, #198), where
+        # the same over-full history was a defect. Decided, not inherited.
         recent = history[-lookback:]
         user_messages = [m["content"] for m in recent if m.get("role") == "user"]
 
