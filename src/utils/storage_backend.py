@@ -206,7 +206,7 @@ class StorageBackend(ABC):
     # ==================== SELF-REPORTS ====================
 
     @abstractmethod
-    def add_self_report(self, report_type: str, response: str = "", score: int = None) -> Dict:
+    def add_self_report(self, report_type: str, response: str = "", details: Dict = None) -> Dict:
         """Add a self-report entry."""
         pass
 
@@ -658,16 +658,18 @@ class JSONBackend(StorageBackend):
 
     # ==================== SELF-REPORTS ====================
 
-    def add_self_report(self, report_type: str, response: str = "", score: int = None) -> Dict:
+    def add_self_report(self, report_type: str, response: str = "", details: Dict = None) -> Dict:
         self._ensure_write_allowed()
         data = self._load_wellness()
+        # Exactly the shape restraint_memory.allowed_fields permits for
+        # self_reports, and exactly what WellnessTracker's own JSON branch
+        # writes. These used to disagree (#187 follow-up).
         report = {
-            "id": len(data.get("self_reports", [])) + 1,
             "date": date.today().isoformat(),
             "datetime": datetime.now().isoformat(),
-            "report_type": report_type,
+            "type": report_type,
             "response": response,
-            "score": score,
+            "details": details,
         }
         if "self_reports" not in data:
             data["self_reports"] = []
@@ -1298,28 +1300,60 @@ class SQLiteBackend(StorageBackend):
 
     # ==================== SELF-REPORTS ====================
 
-    def add_self_report(self, report_type: str, response: str = "", score: int = None) -> Dict:
+    def add_self_report(self, report_type: str, response: str = "", details: Dict = None) -> Dict:
         self._ensure_write_allowed()
-        cursor = self.db.execute(
-            "INSERT INTO self_reports (report_type, response, score) VALUES (?, ?, ?)",
-            (report_type, response, score),
+        self.db.execute(
+            "INSERT INTO self_reports (report_type, response, details) VALUES (?, ?, ?)",
+            (report_type, response, json.dumps(details) if details else None),
         )
         self.db.commit()
 
         return {
-            "id": cursor.lastrowid,
             "date": date.today().isoformat(),
             "datetime": datetime.now().isoformat(),
-            "report_type": report_type,
+            "type": report_type,
             "response": response,
-            "score": score,
+            "details": details,
         }
 
     def get_recent_self_reports(self, limit: int = 10) -> List[Dict]:
+        """Return the most recent reports, oldest first, in the JSON shape.
+
+        Two things this has to honour, both learned the hard way:
+
+        - **Shape.** `WellnessTracker._load_data` presents backend results as
+          "the dict format expected by existing code". Returning raw rows broke
+          that: `should_show_self_report` reads a `date` key, SQLite rows only
+          had `created_at`, so the five-day frequency limit silently never fired
+          on this backend.
+        - **Order.** The JSON store appends, so callers read `[-1]` as the most
+          recent. A DESC query made `[-1]` the *oldest* of the window.
+        """
         rows = self.db.execute(
-            "SELECT * FROM self_reports ORDER BY created_at DESC LIMIT ?", (limit,)
+            "SELECT report_type, response, details, created_at "
+            "FROM self_reports ORDER BY created_at DESC, id DESC LIMIT ?",
+            (limit,),
         ).fetchall()
-        return [dict(row) for row in rows]
+
+        reports = []
+        for row in reversed(rows):  # oldest first, matching the JSON store
+            created = row["created_at"] or ""
+            details = None
+            if row["details"]:
+                try:
+                    details = json.loads(row["details"])
+                except (ValueError, TypeError):
+                    details = None
+            reports.append(
+                {
+                    "date": created[:10],
+                    "datetime": created,
+                    "type": row["report_type"],
+                    "response": row["response"],
+                    "details": details,
+                }
+            )
+        return reports
 
     # ==================== TRUSTED PEOPLE ====================
 

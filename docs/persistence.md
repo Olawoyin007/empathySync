@@ -226,6 +226,7 @@ CREATE TABLE reach_outs (
 | v2 | Added `ON DELETE CASCADE` to reach_outs foreign key |
 | v3 | Dropped the dormant `session_intents.user_input` column (raw message text must never be persistable; enforced by the restraint-memory invariant) |
 | v4 | Renamed `self_reports.content` to `response` (#187). `content` is on the restraint-memory deny-list and this was the last column carrying one of those names, kept alive by a documented legacy exception. That exception is now empty. |
+| v5 | Added `self_reports.details` and split the packed `response` value into the two columns. SQLite previously stored `json.dumps({response, details})` in one column while the JSON store kept them separate, so the same logical record had two shapes depending on backend. |
 
 Migrations run automatically on startup via `_run_migrations()` in `database.py`. After migration, `PRAGMA foreign_key_check` verifies no FK violations.
 
