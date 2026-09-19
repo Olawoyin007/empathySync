@@ -368,7 +368,6 @@ def display_bring_someone_in(domain: str = "general"):
                 context=context_category,
                 domain=domain,
                 person_name=person_name,
-                message_sent=message,
             )
 
             # Also log in WellnessTracker for metrics

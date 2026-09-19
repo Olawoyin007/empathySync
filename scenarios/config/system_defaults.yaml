@@ -144,10 +144,11 @@ retention:
 #   independence_records.notes - the "I did it myself" note the user types
 #   self_reports.response      - the user's answer to a self-report prompt
 #   people.* / reach_outs.*    - trusted-network contact data the user enters
-#   handoffs.message_preview   - first 100 chars of the outreach message the
-#                                user sent to a trusted person (powers the
-#                                handoff follow-up); outreach text, not
-#                                conversation content
+#
+# Removed 2026-09-19 (#186): handoffs.message_preview held the first 100 chars
+# of a message the user actually sent to a person. It was justified here as
+# powering the handoff follow-up; nothing ever read it. Dropped from the write
+# path and stripped from existing files by trusted-network schema v2.
 # Free-form "details" dicts are additionally scanned against the forbidden
 # key names below.
 restraint_memory:
@@ -183,7 +184,7 @@ restraint_memory:
     people: [added_at, contact, domains, id, last_contact, name, notes, relationship]
     reach_outs: [date, datetime, method, notes, person_name, topic]
     handoffs: [context, date, datetime, domain, follow_up_shown, id,
-               message_preview, outcome, person_name, status]
+               outcome, person_name, status]
   # SQLite column allowlist (column names diverge from the JSON field names).
   # Structural/bookkeeping columns carry no user data. Legacy exceptions are
   # deny-named columns that predate the invariant. Schema v3 dropped the dormant

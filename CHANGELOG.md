@@ -4,6 +4,30 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Removed
+- **`handoffs[].message_preview` is no longer stored (#186).** It held the first
+  100 characters of a message the user actually sent to another person - captured
+  communication content, which the rest of the store deliberately avoids. The
+  allowlist justified it as powering the handoff follow-up; nothing ever read it.
+
+  Removed at every level rather than just the write: the field, the
+  `message_sent` parameter that fed it (the app no longer accepts the outreach
+  text at all), the entry in `restraint_memory.allowed_fields`, and a phantom
+  entry in the SQLite column whitelist for a column that never existed.
+
+  Trusted-network schema v1 -> v2 strips it from files that already have it.
+  That matters because Phase 23.3 renders everything still stored back to the
+  user in plain language: a field removed only from new writes would keep
+  surfacing for anyone with existing data.
+
+### Fixed
+- **Trusted-network migrations never recorded their version.**
+  `_migrate_schema` set `schema_version` inside the `v0 -> v1` branch, so a file
+  already at v1 would migrate on every single load without ever recording it.
+  Harmless while v1 was the only version; it would have silently broken the v2
+  migration. Bumped after all steps now, and `docs/persistence.md` no longer
+  teaches the broken pattern in its example.
+
 ### Fixed
 - **The response prompt showed the user's message twice (#198).** Same root
   cause as the classifier echo in #199, in a second consumer.

@@ -72,17 +72,34 @@ All data files now include a `schema_version` field:
 def _migrate_schema(self, data: Dict) -> Dict:
     current_version = data.get("schema_version", 0)
 
-    if current_version < 1:
-        # v0 -> v1: Add schema_version, ensure all fields exist
-        data["schema_version"] = 1
-        ...
+    if current_version < SCHEMA_VERSION:
+        if current_version < 1:
+            # v0 -> v1: ensure all fields exist
+            ...
 
-    if current_version < 2:
-        # v1 -> v2: Example future migration
-        data = self._migrate_v1_to_v2(data)
+        if current_version < 2:
+            # v1 -> v2: ...
+            ...
+
+        # Bump AFTER every step. Setting the version inside a single step means a
+        # file at that step's version never records its upgrade and re-migrates on
+        # every load - a real bug fixed in the trusted network in #186.
+        data["schema_version"] = SCHEMA_VERSION
+        self._save_data(data)
 
     return data
 ```
+
+**Trusted network schema history** (`src/utils/trusted_network.py`):
+
+| Version | Change |
+|---------|--------|
+| v1 | `schema_version` field added; missing top-level keys backfilled |
+| v2 | `handoffs[].message_preview` stripped (#186). It stored the first 100 characters of a message the user actually sent to another person. Nothing read it. Removed from the write path, the restraint-memory allowlist, and existing files on load. |
+
+Stripping on load matters: Phase 23.3 renders everything still stored back to the
+user in plain language, so a field removed only from new writes would keep
+surfacing for anyone with an existing file.
 
 ### Corruption Recovery
 

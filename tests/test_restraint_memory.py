@@ -115,7 +115,7 @@ def _exercise_all_persistence_apis(tmp_path, use_sqlite):
             domains=["relationships"],
         )
         n.log_reach_out("Sam", method="text", topic="checking in", notes="felt good")
-        n.log_handoff_initiated("Sam", "relationships", message_sent="Hey, got a minute?")
+        n.log_handoff_initiated("Sam", "relationships")
 
     if use_sqlite:
         db_module.close_db()

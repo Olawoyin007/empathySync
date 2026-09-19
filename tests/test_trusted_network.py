@@ -494,8 +494,8 @@ class TestErrorHandling:
             backups = list(tmp_path.glob("trusted_network.corrupted.*.json"))
             assert len(backups) == 1
 
-    def test_schema_migration_v0_to_v1(self, tmp_path, mock_loader):
-        """Data without schema_version should be migrated."""
+    def test_schema_migration_v0_to_current(self, tmp_path, mock_loader):
+        """Data without schema_version should be migrated to the current version."""
         with (
             patch("utils.trusted_network.settings") as mock_settings,
             patch("utils.trusted_network.get_scenario_loader", return_value=mock_loader),
@@ -520,8 +520,72 @@ class TestErrorHandling:
 
             # Data should be migrated
             data = tn._load_data()
-            assert data["schema_version"] == 1
+            # Assert against the constant, not a literal - this test was pinned to
+            # 1 and went stale the moment a v2 existed.
+            from utils.trusted_network import SCHEMA_VERSION
+
+            assert data["schema_version"] == SCHEMA_VERSION
             assert len(data["people"]) == 1
+
+    def test_schema_migration_v1_to_v2_strips_message_preview(self, tmp_path, mock_loader):
+        """A stored outreach message must be removed from existing files (#186).
+
+        message_preview held the first 100 characters of a message the user
+        actually sent to a person. Dropping it from the write path only helps new
+        records; Phase 23.3 will render what is stored back to the user, so files
+        that already contain it have to be cleaned on load too.
+        """
+        with (
+            patch("utils.trusted_network.settings") as mock_settings,
+            patch("utils.trusted_network.get_scenario_loader", return_value=mock_loader),
+        ):
+            mock_settings.DATA_DIR = tmp_path
+            mock_settings.USE_SQLITE = False
+
+            data_file = tmp_path / "trusted_network.json"
+            data_file.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "people": [],
+                        "reach_outs": [],
+                        "handoffs": [
+                            {
+                                "id": 1,
+                                "person_name": "Sam",
+                                "message_preview": "Hey, got a minute? I've had a rough week",
+                                "status": "initiated",
+                            }
+                        ],
+                    }
+                )
+            )
+
+            from utils.trusted_network import SCHEMA_VERSION, TrustedNetwork
+
+            data = TrustedNetwork()._load_data()
+
+            assert "message_preview" not in data["handoffs"][0]
+            assert data["handoffs"][0]["person_name"] == "Sam"
+            assert data["handoffs"][0]["status"] == "initiated"
+            assert data["schema_version"] == SCHEMA_VERSION
+
+            # and it is gone from the file on disk, not just the loaded copy
+            assert "message_preview" not in data_file.read_text()
+
+    def test_new_handoff_stores_no_message_content(self, tmp_path, mock_loader):
+        """The outreach text is not accepted or stored at all (#186)."""
+        with (
+            patch("utils.trusted_network.settings") as mock_settings,
+            patch("utils.trusted_network.get_scenario_loader", return_value=mock_loader),
+        ):
+            mock_settings.DATA_DIR = tmp_path
+            mock_settings.USE_SQLITE = False
+
+            from utils.trusted_network import TrustedNetwork
+
+            handoff = TrustedNetwork().log_handoff_initiated("general", person_name="Sam")
+            assert "message_preview" not in handoff
 
     def test_data_persists_across_reloads(self, tmp_path, mock_loader):
         """Data saved by one instance should be readable by another."""

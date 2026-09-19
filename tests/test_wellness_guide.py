@@ -1217,11 +1217,12 @@ class TestTrustedNetworkHandoff:
             context="after_difficult_task",
             domain="logistics",
             person_name="Mom",
-            message_sent="Hey, I just drafted a hard email...",
         )
         assert handoff["context"] == "after_difficult_task"
         assert handoff["status"] == "initiated"
         assert handoff["person_name"] == "Mom"
+        # The outreach text is never accepted or stored (#186)
+        assert "message_preview" not in handoff
 
     def test_record_handoff_outcome(self, network):
         """Test recording handoff outcome."""
