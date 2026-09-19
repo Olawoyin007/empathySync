@@ -34,7 +34,7 @@ def _get_storage_backend():
 
 
 # Schema version for data migration support
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 class TrustedNetwork:
@@ -95,12 +95,27 @@ class TrustedNetwork:
 
             # v0 -> v1: Add schema_version and ensure all fields exist
             if current_version < 1:
-                data["schema_version"] = SCHEMA_VERSION
                 defaults = self._get_default_data()
                 for key in defaults:
                     if key not in data:
                         data[key] = defaults[key]
 
+            # v1 -> v2: drop message_preview from stored handoffs (#186). It held
+            # the first 100 characters of a message the user actually sent to a
+            # person - captured communication content, which the rest of the store
+            # deliberately avoids. Stripping on load cleans files that already have
+            # it, not just new records: Phase 23.3 renders every remaining field
+            # back to the user, and everything in that view should be something we
+            # are comfortable showing them.
+            if current_version < 2:
+                for handoff in data.get("handoffs") or []:
+                    if isinstance(handoff, dict):
+                        handoff.pop("message_preview", None)
+
+            # Bump after every step has run. This used to live inside the v0
+            # branch, so a v1 file never recorded its upgrade and would migrate
+            # again on every load.
+            data["schema_version"] = SCHEMA_VERSION
             self._save_data(data)
 
         return data
@@ -665,7 +680,7 @@ class TrustedNetwork:
         }
 
     def log_handoff_initiated(
-        self, context: str, domain: str = None, person_name: str = None, message_sent: str = None
+        self, context: str, domain: str = None, person_name: str = None
     ) -> Dict:
         """
         Log when user initiates a handoff.
@@ -674,7 +689,6 @@ class TrustedNetwork:
             context: The handoff context (e.g., 'after_difficult_task')
             domain: Current conversation domain
             person_name: Name of person being reached out to
-            message_sent: The message user is sending
 
         Returns:
             The handoff record
@@ -691,7 +705,8 @@ class TrustedNetwork:
             "context": context,
             "domain": domain,
             "person_name": person_name,
-            "message_preview": message_sent[:100] if message_sent else None,
+            # The outreach text itself is deliberately not accepted or stored
+            # (#186). status/outcome carry everything the follow-up needs.
             "status": "initiated",  # initiated, reached_out, follow_up_pending, completed
             "outcome": None,  # very_helpful, somewhat_helpful, not_helpful
             "follow_up_shown": False,

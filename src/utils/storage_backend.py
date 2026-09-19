@@ -856,7 +856,6 @@ class SQLiteBackend(StorageBackend):
                 "context",
                 "domain",
                 "person_name",
-                "message_preview",
                 "status",
                 "outcome",
                 "reached_out",
