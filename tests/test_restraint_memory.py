@@ -242,6 +242,20 @@ class TestRestraintMemorySQLite:
                         "that is not a documented legacy exception"
                     )
 
+    def test_no_legacy_deny_named_columns_remain(self, restraint_config):
+        """The legacy exception list must stay empty.
+
+        It held `self_reports.content` until the schema v4 rename (#187). With it
+        empty, "no persisted column carries a deny-listed name" is true without an
+        asterisk. Re-adding an entry is allowed, but it has to be a deliberate
+        edit here - not a quiet way to get a new deny-named column past the
+        invariant.
+        """
+        assert restraint_config["legacy_deny_named_columns"] == {}, (
+            "a deny-named column has been re-admitted as a legacy exception; "
+            "that is a conscious, reviewed decision, not a workaround"
+        )
+
     def test_user_input_column_is_gone(self, db_conn):
         """The session_intents.user_input column must not exist.
 

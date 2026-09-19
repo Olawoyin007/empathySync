@@ -225,8 +225,17 @@ CREATE TABLE reach_outs (
 | v1 | Initial schema |
 | v2 | Added `ON DELETE CASCADE` to reach_outs foreign key |
 | v3 | Dropped the dormant `session_intents.user_input` column (raw message text must never be persistable; enforced by the restraint-memory invariant) |
+| v4 | Renamed `self_reports.content` to `response` (#187). `content` is on the restraint-memory deny-list and this was the last column carrying one of those names, kept alive by a documented legacy exception. That exception is now empty. |
 
 Migrations run automatically on startup via `_run_migrations()` in `database.py`. After migration, `PRAGMA foreign_key_check` verifies no FK violations.
+
+**Write migrations defensively.** A new database is created by `_create_schema()`
+with the *current* table definitions but stamped **v1**, and migrations only run
+from its second open onward. So every migration is eventually replayed over
+tables that already look finished, and any that assumes "the old shape is
+present" will crash on a fresh install's second launch. Check before you change:
+does the table exist, is the column still the old one. Record the version either
+way, so the migration does not re-run.
 
 ## Lock File Mechanism (Implemented)
 

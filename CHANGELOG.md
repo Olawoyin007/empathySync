@@ -4,6 +4,37 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Changed
+- **`self_reports.content` renamed to `response`; the last deny-named column is
+  gone (#187).** `content` is on `restraint_memory.forbidden_field_names`, and
+  this was the only place in the store literally carrying one of those names. It
+  survived as a documented legacy exception. `legacy_deny_named_columns` is now
+  empty, so "no persisted column carries a deny-listed name" is true without an
+  asterisk, and a new test keeps it that way.
+
+  The issue said only SQLite carried the name. It was also in the JSON storage
+  backend (`JSONStorageBackend.add_self_report` wrote `"content"`); it is the
+  *tracker's own* JSON branch that writes `response`. Renaming only the column
+  would have left a live path writing a forbidden field name, so both backends
+  and the abstract signature were renamed together.
+
+  Schema v3 -> v4 performs the rename. The JSON import path accepts either key,
+  so files written before the rename still load.
+
+### Fixed
+- **The v4 migration is conditional, and that is load-bearing.** A new database
+  is created by `_create_schema()` with current table definitions but stamped
+  **v1**, so migrations only run from its second open. Every migration is
+  therefore eventually replayed over tables that already look finished - an
+  unconditional `ALTER TABLE ... RENAME COLUMN content` would have crashed every
+  fresh install on its second launch with "no such column". The migration now
+  checks that the table exists and the column is still the old one, and records
+  the version either way. `docs/persistence.md` documents the trap for the next
+  migration.
+- A second test pinned to a literal schema version (`assert version == 3`) went
+  stale the moment a v4 existed. It now tracks `SCHEMA_VERSION`, as the
+  trusted-network test did after #186.
+
 ### Removed
 - **`handoffs[].message_preview` is no longer stored (#186).** It held the first
   100 characters of a message the user actually sent to another person - captured
