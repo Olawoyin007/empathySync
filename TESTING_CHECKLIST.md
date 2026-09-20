@@ -33,7 +33,8 @@ python scripts/check_version.py
 ```
 
 Expected: `pytest` all green, domain eval at or above the 88% baseline
-(83/94 on mistral:7b-instruct, post Phase 21.4), version check passes.
+(96/118 on mistral:7b-instruct, post #171 corpus expansion; not comparable
+to pre-#171 numbers), version check passes.
 
 ---
 

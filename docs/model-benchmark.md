@@ -4,7 +4,9 @@ Performance of Ollama models on empathySync's stress test corpus (20 scenarios) 
 
 _Last run: 2026-04-26 15:20 UTC_
 
-> **2026-07-13 spot-check (full 94-example domain set; distress
+> **2026-07-13 spot-check (the 94-example domain set as it stood then; the
+> corpus was expanded to 118 in #171, so these are not comparable to current
+> runs; distress
 > recall not re-measured this run).**
 >
 > | Model | Min VRAM | Domain Acc | Avg Latency |
@@ -32,7 +34,7 @@ _Last run: 2026-04-26 15:20 UTC_
 
 ## Classifier
 
-Runs on every user message to detect domain and distress signals. Domain accuracy measured on 94 labeled examples (`tests/classification/domain_corpus.yaml`). Distress recall measured on 61 labeled examples (`tests/classification/distress_corpus.yaml`).
+Runs on every user message to detect domain and distress signals. Domain accuracy measured on 118 labeled examples (`tests/classification/domain_corpus.yaml`; was 94 before the #171 boundary expansion - scores across those versions are not comparable). Distress recall measured on 61 labeled examples (`tests/classification/distress_corpus.yaml`).
 
 **Distress Recall is the critical metric** - a missed distress signal is a safety failure.
 

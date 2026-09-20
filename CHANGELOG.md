@@ -4,6 +4,40 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Changed
+- **Domain corpus expanded 94 -> 118 boundary and adversarial cases (#171).**
+  The issue's point was that the corpus "cannot distinguish a genuinely better
+  classifier from one that just happens to fit the current easy examples". +3 per
+  domain, balance kept even (12-20 each).
+
+  Half the additions are **measured**, not invented: real classifier failures
+  graduated from the 490-sample restraint corpus, which is the path the restraint
+  eval's own rule 1 sanctions ("confirmed real misses graduate by hand into a
+  corpus example or a pipeline fix"). The rest cover tensions with no measured
+  example to hand - fiction framing, third-person distancing and euphemism for
+  `harmful`, all three of which the classifier prompt has rules for and the
+  corpus had no examples of.
+
+  The three `logistics` additions are negative controls: sensitive topic,
+  practical request (a condolence card, compound interest, declining a wedding
+  invitation). Without them the corpus rewards a classifier that over-restricts,
+  which is its own failure.
+
+  **New baseline: 96/118 (81%), down from 83/94 (88%).** The drop is difficulty,
+  not regression, and that was verified rather than assumed: all 11 pre-existing
+  misses still miss, no previously-passing entry broke, and all 11 new misses
+  come from the added set. 13 of the 24 new entries pass. **Scores are not
+  comparable across corpus versions** - every doc quoting a baseline now says so.
+
+### Fixed
+- `eval-quality-loop`'s memory (`LOOP_NOTES.md`) had gone stale. Its baseline
+  said 81/94 while `CLAUDE.md` said 83/94, and its standing finding described the
+  one-directional override gap as open Phase 21 evidence. Phase 21.4 fixed that
+  gap **for spirituality only** - which is now the strongest domain at 15/16 -
+  and the same gap now shows on money with a relational surface. Recorded, along
+  with a possible 21.4 over-correction ("How do I meditate?" -> spirituality) and
+  a possible label bug, both left unchanged pending judgement.
+
 ### Fixed
 - **Self-reports had two different shapes depending on the backend, and it was
   breaking a frequency limit.** `WellnessTracker._load_data` presents backend
