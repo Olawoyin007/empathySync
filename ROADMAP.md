@@ -76,7 +76,8 @@ phase without guessing:
 4. Verify before declaring done: `pytest tests/ -m "not conversation"` (all
    ~1210 must pass) plus the sub-phase's own **Verify** line. Run
    `python tests/classification/run_domain_eval.py` only when classification
-   code or scenario YAML changed (baseline: 83/94 on mistral:7b-instruct).
+   code or scenario YAML changed (baseline: 96/118 on mistral:7b-instruct;
+   not comparable to the pre-#171 83/94 - different corpus difficulty).
 5. When a step is ambiguous, take the smallest interpretation that satisfies
    the **Done when** line and record the choice in the PR body.
 
@@ -122,7 +123,7 @@ difference is whether a door is opened on the way out.
 crisis path output is byte-identical; a test fails if a sensitive reply refuses
 without a route.
 **Verify**: restraint eval against the 46.9% baseline (2026.09-r2);
-`run_domain_eval.py` still 83/94; the 490 domain run still 96.3%.
+`run_domain_eval.py` still 96/118; the 490 domain run still 96.3%.
 **Pitfalls**: referrals belong in YAML, not Python - this is exactly the
 language Phase 24 lets a clinician shape. Do not touch the crisis path: it
 already passes, and it is the pattern being copied.
@@ -392,7 +393,7 @@ and silently leave the other half English-only.
 
 **Files**: `src/models/ai_wellness_guide.py`, `src/models/risk_classifier.py`, `src/models/conversation_session.py` → new YAML under `scenarios/` (follow existing file shapes; see `scenarios/README.md`).
 **Done when**: none of the pattern lists named above remain as Python literals in those three files, and behaviour is byte-identical - the full suite passes **without modifying any test expectations**.
-**Verify**: `pytest tests/ -m "not conversation"`; `python tests/classification/run_domain_eval.py` (these strings feed classification - must not regress from the 83/94 baseline).
+**Verify**: `pytest tests/ -m "not conversation"`; `python tests/classification/run_domain_eval.py` (these strings feed classification - must not regress from the 96/118 baseline).
 **Pitfalls**: load through the `get_scenario_loader()` singleton (it holds the cache - never instantiate the loader directly); update `scenarios/README.md` per the MERGE_CHECKLIST YAML row; do not rename existing YAML keys or files in the same PR.
 
 ### 19.1 Locale Detection 🔜 PLANNED
@@ -528,7 +529,9 @@ sanity check (17.4). Each layer is independent; failure of one does not bypass o
 
 **Test suite**: 1210 structural tests + 23 conversation-marked tests (20 quality
 scenarios + 3 safety-guard integration). Distress corpus CI gate: 0% FN rate. Keyword
-FP rate on benign content: 7%. Domain eval baseline: 83/94 (88%) on mistral:7b-instruct.
+FP rate on benign content: 7%. Domain eval baseline: 96/118 (81%) on mistral:7b-instruct
+(the corpus was expanded with boundary cases in #171; the earlier 83/94 measured an
+easier set, not a better classifier).
 
 **Next**: Phase 22 (daemon), then Phase 19 (multilingual). Phase 23.1 shipped in
 v1.12.0; Phase 21 (safety classifier upgrade, issue #125, including the 21.4
