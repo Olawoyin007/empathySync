@@ -9,6 +9,8 @@ Implements the empathySync vision:
 """
 
 import json
+import re
+
 import httpx
 import logging
 from dataclasses import dataclass, field
@@ -385,6 +387,24 @@ class WellnessGuide:
             )
             self.post_harmful_turn = self.session_turn_count
             prepared.early_return = "No. That's not something I'll help with."
+            prepared.risk_assessment = risk_assessment
+            prepared.domain = domain
+            return prepared
+
+        # 3.15) Phase 25 / #214: specialist-authority requests are refused in
+        # every mode. This must run BEFORE the prompt is built, because
+        # `is_practical_technique` otherwise routes a sensitive-domain message
+        # into full assistant mode and the restraint never applies.
+        specialist_response = self._check_specialist_request(user_input, domain)
+        if specialist_response:
+            self._log_policy(
+                "specialist_refusal",
+                domain,
+                risk_assessment["risk_weight"],
+                "Refused a request for clinical/financial authority",
+                wellness_tracker,
+            )
+            prepared.early_return = specialist_response
             prepared.risk_assessment = risk_assessment
             prepared.domain = domain
             return prepared
@@ -781,6 +801,8 @@ class WellnessGuide:
             final_response = self._apply_voice_filter(final_response)
             if prepared.is_practical:
                 final_response = self._strip_trailing_questions(final_response)
+            else:
+                final_response = self._strip_unfilled_placeholders(final_response)
             self._last_streamed_response = prefix + final_response + suffix
 
         except Exception as e:
@@ -905,6 +927,46 @@ class WellnessGuide:
             return (config.get("referrals") or {}).get("line", "").strip()
         except Exception:
             return ""
+
+    def _check_specialist_request(self, user_input: str, domain: str) -> Optional[str]:
+        """Refuse requests that ask the app to BE a clinician or adviser.
+
+        Runs before the prompt is built and returns an early response, so it
+        fires regardless of `is_practical_technique`. That flag flips a
+        sensitive-domain message into full assistant mode, and the health path
+        produced Accutane dosing plus compliance with "what bloods to skip" -
+        for a drug the user said they bought online (#214). Detection was never
+        the problem there: the message was correctly classified `health`.
+
+        Deliberately narrow. "How do I do a proper squat" and "what are some
+        budgeting methods" must still get real help - that is the dual-mode
+        promise. These triggers ask the app to make the call, not explain a
+        thing. Phrases live in `scenarios/domains/<domain>.yaml` under
+        `specialist_requests` so a clinician can extend them (Phase 24).
+        """
+        try:
+            from utils.scenario_loader import get_scenario_loader
+
+            all_domains = get_scenario_loader().get_all_domains() or {}
+        except Exception:
+            return None
+
+        # Scan EVERY domain's block, not just the classified one. The classifier
+        # is not the safety boundary here: "should I sue, and under which labour
+        # law" classified as `logistics`, so a domain-scoped check would have run
+        # nothing at all. Same reasoning as the safety keyword override in
+        # risk_classifier, where keywords beat a confident LLM. The classified
+        # domain is checked first so its wording wins when both match.
+        order = [domain] + [d for d in all_domains if d != domain]
+
+        lowered = user_input.lower()
+        for name in order:
+            config = (all_domains.get(name) or {}).get("specialist_requests")
+            if not config:
+                continue
+            if any(t in lowered for t in config.get("triggers", [])):
+                return (config.get("response") or "").strip() or None
+        return None
 
     def _already_names_a_route(self, response: str) -> bool:
         """True if the reply already points somewhere human.
@@ -1331,6 +1393,13 @@ class WellnessGuide:
         # Apply voice filter — strip forbidden phrases (always, both modes)
         response = self._apply_voice_filter(response)
 
+        # Phase 25.2: unfilled template placeholders never reach the user on a
+        # conversational reply ("...about that, [Name]."). Practical replies are
+        # exempt: an email template the user asked for may legitimately contain
+        # [Name], and stripping it would destroy the deliverable.
+        if not is_practical:
+            response = self._strip_unfilled_placeholders(response)
+
         # Post-LLM: catch corporate jailbreak explanations Ollama sometimes generates
         response = self._catch_corporate_leaks(response)
 
@@ -1377,6 +1446,33 @@ class WellnessGuide:
                 response = self._truncate_at_sentence_boundary(response, 20)
 
         return response
+
+    _PLACEHOLDER_RE = re.compile(
+        r"\s*\[(?:name|your name|recipient|date|today\'s date|company|"
+        r"insert[^\]]*|your [a-z ]+)\]",
+        re.IGNORECASE,
+    )
+
+    def _strip_unfilled_placeholders(self, response: str) -> str:
+        """Remove template placeholders the model failed to fill (Phase 25.2).
+
+        `scenarios/responses/base_prompt.yaml` already instructs the model never
+        to leave these unfilled. It does it anyway - a real reply read "I won't
+        be able to reassure you about that, [Name]." A prompt instruction is not
+        a guard; that is the same lesson as the classifier-prompt experiment
+        (#204), so this is enforced in code.
+
+        Deliberately conservative: only the placeholder shapes a template
+        actually emits. Markdown links `[text](url)`, citations and code are
+        left alone, and anything not matched is passed through unchanged.
+        """
+        if "[" not in response:
+            return response
+        cleaned = self._PLACEHOLDER_RE.sub("", response)
+        # tidy the punctuation a removed placeholder leaves behind
+        cleaned = re.sub(r"\s+([,.!?])", r"\1", cleaned)
+        cleaned = re.sub(r",\s*([.!?])", r"\1", cleaned)
+        return cleaned
 
     def _apply_voice_filter(self, response: str) -> str:
         """Apply the empathySync voice filter — replace or remove forbidden phrases.
