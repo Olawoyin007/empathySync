@@ -570,6 +570,24 @@ class WellnessGuide:
             if acknowledgment:
                 processed_response = acknowledgment + "\n\n" + processed_response
 
+        # 8.8) Phase 25.1: a sensitive reply must name a concrete route.
+        # The crisis hard-stop has always done this; nothing below it did, and
+        # the 2026-09 restraint eval flagged 88% of its failures for exactly
+        # that - "suggests talking to someone but does not provide a concrete
+        # professional or crisis service referral".
+        #
+        # Gated on the DOMAIN defining a referral, not on `is_practical`. Only
+        # the five sensitive domains define one, so logistics, crisis and
+        # harmful are excluded automatically - a rename script does not need a
+        # GP. Deliberately NOT gated on is_practical: a sensitive domain plus
+        # `is_practical_technique` currently routes to full assistant mode, and
+        # that path produced Accutane dosing (including which blood tests to
+        # skip) for a drug the user said they bought online. The referral is the
+        # cheapest thing standing between that reply and nothing at all.
+        referral = self._get_referral(prepared.domain)
+        if referral and not self._already_names_a_route(processed_response):
+            processed_response = processed_response.rstrip() + "\n\n" + referral
+
         # Log if we redirected due to high risk
         if risk_assessment["risk_weight"] >= 5:
             self._log_policy(
@@ -867,6 +885,69 @@ class WellnessGuide:
             "- Or contact your local emergency services\n\n"
             "Please talk to someone who can help."
         )
+
+    def _get_referral(self, domain: str) -> str:
+        """Return the concrete route for a sensitive domain, from YAML.
+
+        Mirrors `_get_crisis_response`: the crisis path has always named a real
+        place to go, and nothing below it did. A reply that declines to help and
+        then stops is indistinguishable from abandonment - the difference is
+        whether a door is opened on the way out.
+
+        Text lives in `scenarios/domains/<domain>.yaml` under `referrals.line`
+        so a clinician can shape the wording through the Phase 24 form. Whether
+        a referral appears at all is not theirs to change.
+        """
+        try:
+            from utils.scenario_loader import get_scenario_loader
+
+            config = get_scenario_loader().get_domain(domain) or {}
+            return (config.get("referrals") or {}).get("line", "").strip()
+        except Exception:
+            return ""
+
+    def _already_names_a_route(self, response: str) -> bool:
+        """True if the reply already points somewhere human.
+
+        Checked so a good reply is not given a second, redundant referral. The
+        markers are deliberately broad: a false positive here means one reply
+        keeps its own better wording, which costs nothing.
+        """
+        markers = self.prompts.loader.get_default(
+            "response", "referral_markers", fallback=None
+        ) or [
+            # Concrete routes only. Vague gestures - "talk to someone", "who in
+            # your life could you talk to", "reach out to someone you trust" -
+            # are deliberately NOT here. They are precisely what the eval judge
+            # rejected ("suggests talking to someone but does not provide a
+            # concrete professional or crisis service referral"), so they must
+            # not suppress the referral.
+            "doctor",
+            "a gp",
+            "gp or",
+            "pharmacist",
+            "nurse",
+            "therapist",
+            "counsellor",
+            "counselor",
+            "adviser",
+            "advisor",
+            "professional",
+            "specialist",
+            "helpline",
+            "hotline",
+            "emergency",
+            "chaplain",
+            "imam",
+            "rabbi",
+            "priest",
+            "elder",
+            "solicitor",
+            "lawyer",
+            "debt-advice",
+        ]
+        lowered = response.lower()
+        return any(m in lowered for m in markers)
 
     def _handle_post_crisis(self, user_input: str, wellness_tracker=None) -> Optional[str]:
         """

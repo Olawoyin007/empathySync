@@ -326,3 +326,7 @@ redirects:
       - "existential crisis"
       - "everything feels pointless"
     response: "Those questions hit deep. Philosophy and therapy both have long traditions of sitting with exactly this. What's bringing this up for you right now?"
+
+referrals:
+  professional: "someone in your tradition - a chaplain, imam, rabbi, priest or elder"
+  line: "Someone inside your tradition can sit with this properly - a chaplain, imam, rabbi, priest or elder."

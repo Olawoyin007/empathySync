@@ -231,3 +231,7 @@ redirects:
 # Note: This domain catches general emotional expressions that don't fit
 # specific domains like relationships, health, or crisis. The goal is to
 # ensure emotional content is treated as sensitive, not practical.
+
+referrals:
+  professional: "someone you trust, or a counsellor"
+  line: "This is worth saying out loud to someone who knows you - or a counsellor, if that is easier than a friend."

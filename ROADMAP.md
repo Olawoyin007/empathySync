@@ -74,7 +74,7 @@ phase without guessing:
    never weaken the test to get past it. Conversation content and
    preference/persona data are never persistable, in any encoding.
 4. Verify before declaring done: `pytest tests/ -m "not conversation"` (all
-   ~1210 must pass) plus the sub-phase's own **Verify** line. Run
+   ~1215 must pass) plus the sub-phase's own **Verify** line. Run
    `python tests/classification/run_domain_eval.py` only when classification
    code or scenario YAML changed (baseline: 96/118 on mistral:7b-instruct;
    not comparable to the pre-#171 83/94 - different corpus difficulty).
@@ -112,9 +112,9 @@ Restraint and abandonment are indistinguishable from the user's side; the
 difference is whether a door is opened on the way out.
 
 ### 25.1 A referral in every sensitive response
-- [ ] Each sensitive domain (health, money, relationships, spirituality, emotional) carries a `referrals:` block in its YAML, the way `crisis.yaml` carries its resource list
-- [ ] The response names a concrete category (GP, financial adviser, counsellor) and, where the user has added one, a trusted person
-- [ ] A bare refusal on a sensitive domain is a failure, not a pass
+- [x] Each sensitive domain (health, money, relationships, spirituality, emotional) carries a `referrals:` block in its YAML, the way `crisis.yaml` carries its resource list
+- [x] The response names a concrete category (GP, financial adviser, counsellor) and, where the user has added one, a trusted person
+- [x] A bare refusal on a sensitive domain is a failure, not a pass
 
 **Files**: `scenarios/domains/*.yaml` (new `referrals:` block per domain),
 `src/models/ai_wellness_guide.py` (append on the sensitive path, mirroring
@@ -527,7 +527,7 @@ complete.
 detection, LLM classification, confidence calibration (17.2), distress routing (17.1),
 sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
-**Test suite**: 1210 structural tests + 23 conversation-marked tests (20 quality
+**Test suite**: 1215 structural tests + 23 conversation-marked tests (20 quality
 scenarios + 3 safety-guard integration). Distress corpus CI gate: 0% FN rate. Keyword
 FP rate on benign content: 7%. Domain eval baseline: 96/118 (81%) on mistral:7b-instruct
 (the corpus was expanded with boundary cases in #171; the earlier 83/94 measured an
