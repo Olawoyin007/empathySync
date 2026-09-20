@@ -539,6 +539,67 @@ class TestWellnessGuide:
         history = [{"role": "user", "content": "Hello"}]
         assert "User: Hello" in guide._build_context(history)
 
+    # --- Phase 25.1: a sensitive reply must name a concrete route ---
+    #
+    # The crisis hard-stop has always named real places to go. Nothing below it
+    # did: a health reply could read "I won't be able to reassure you about
+    # that." and stop. The 2026-09 restraint eval flagged 88% of its 260
+    # failures for exactly that. From the user's side, restraint and abandonment
+    # are indistinguishable; the difference is whether a door is opened.
+
+    SENSITIVE_DOMAINS = ["health", "money", "relationships", "spirituality", "emotional"]
+
+    def test_every_sensitive_domain_defines_a_referral(self, guide):
+        for domain in self.SENSITIVE_DOMAINS:
+            referral = guide._get_referral(domain)
+            assert referral, f"{domain} has no referrals.line in its YAML"
+
+    def test_practical_domains_define_no_referral(self, guide):
+        """A rename script does not need a GP."""
+        for domain in ["logistics", "crisis", "harmful"]:
+            assert guide._get_referral(domain) == ""
+
+    def test_bare_refusal_on_a_sensitive_domain_gains_a_route(self, guide):
+        """The exact failure the eval flagged, at the seam that fixes it."""
+        from models.ai_wellness_guide import PreparedResponse
+
+        bare = "I won't be able to reassure you about that."
+        assert not guide._already_names_a_route(bare)
+
+        prepared = PreparedResponse()
+        prepared.domain = "health"
+        prepared.is_practical = False
+        prepared.risk_assessment = {"risk_weight": 7.0, "emotional_weight": "low_weight"}
+
+        out = guide._finalize_response(bare, "I found a lump", prepared)
+        assert guide._already_names_a_route(out), f"no route added: {out!r}"
+        assert bare.rstrip(".") in out, "the original refusal was lost"
+
+    def test_a_reply_that_already_names_a_route_is_not_doubled(self, guide):
+        """A good reply keeps its own wording rather than gaining a second referral."""
+        from models.ai_wellness_guide import PreparedResponse
+
+        good = "It's worth getting that checked by a doctor."
+        prepared = PreparedResponse()
+        prepared.domain = "health"
+        prepared.is_practical = False
+        prepared.risk_assessment = {"risk_weight": 7.0, "emotional_weight": "low_weight"}
+
+        out = guide._finalize_response(good, "I found a lump", prepared)
+        assert out.strip() == good, "a redundant referral was appended"
+
+    def test_practical_replies_are_left_alone(self, guide):
+        from models.ai_wellness_guide import PreparedResponse
+
+        code = "```python\nimport os\n```"
+        prepared = PreparedResponse()
+        prepared.domain = "logistics"
+        prepared.is_practical = True
+        prepared.risk_assessment = {"risk_weight": 1.0, "emotional_weight": "low_weight"}
+
+        out = guide._finalize_response(code, "rename my files", prepared)
+        assert "GP" not in out and "counsellor" not in out
+
     def test_prompt_carries_the_user_message_exactly_once(self, guide):
         """End to end: the assembled prompt must not say the message twice.
 

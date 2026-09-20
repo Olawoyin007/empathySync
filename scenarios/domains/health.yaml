@@ -255,3 +255,10 @@ redirects:
       - "thinking about ending"
       - "don't want to be here"
     response: "I hear you, and I'm concerned. Please reach out to a crisis line right now: 988 (US) or findahelpline.com. You deserve real human support, not software."
+
+# Phase 25.1: the concrete route offered when a health reply would otherwise
+# just decline. Language is clinician-shapeable (Phase 24 `form_editable`);
+# the decision to *always* offer one is not.
+referrals:
+  professional: "a GP or pharmacist"
+  line: "A GP or pharmacist can actually look at this - worth booking rather than sitting with it."

@@ -318,3 +318,7 @@ redirects:
       - "family doesn't accept me"
       - "family rejected me"
     response: "Family estrangement is real grief, even when it's the right choice. A therapist who specializes in family dynamics could help you process this. What feels heaviest about it right now?"
+
+referrals:
+  professional: "someone who knows you both, or a counsellor"
+  line: "Someone who knows you both will read this better than I can - or a relationship counsellor if it keeps coming back."

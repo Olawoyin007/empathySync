@@ -280,3 +280,7 @@ redirects:
       - "too late to save"
       - "no retirement savings"
     response: "Retirement worries are heavy to carry alone. A certified financial planner (many offer free initial consultations) could help you see where you actually stand. What feels most overwhelming about it right now?"
+
+referrals:
+  professional: "a financial adviser or a free debt-advice service"
+  line: "A financial adviser, or a free debt-advice service if cost is the worry, can look at your actual numbers."
