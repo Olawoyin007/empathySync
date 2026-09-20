@@ -74,7 +74,7 @@ phase without guessing:
    never weaken the test to get past it. Conversation content and
    preference/persona data are never persistable, in any encoding.
 4. Verify before declaring done: `pytest tests/ -m "not conversation"` (all
-   ~1215 must pass) plus the sub-phase's own **Verify** line. Run
+   ~1229 must pass) plus the sub-phase's own **Verify** line. Run
    `python tests/classification/run_domain_eval.py` only when classification
    code or scenario YAML changed (baseline: 96/118 on mistral:7b-instruct;
    not comparable to the pre-#171 83/94 - different corpus difficulty).
@@ -86,7 +86,7 @@ them as the acceptance test, not as suggestions.
 
 ---
 
-## Phase 25: Concrete Handoff in Every Sensitive Reply 🔜 NEXT
+## Phase 25: Concrete Handoff in Every Sensitive Reply 🔨 IN PROGRESS (25.1 + 25.2 shipped in v1.15.0)
 
 **Goal**: when empathySync declines to help with something sensitive, it names a
 route - a professional, a trusted person, a service. Today it declines and stops.
@@ -129,8 +129,8 @@ language Phase 24 lets a clinician shape. Do not touch the crisis path: it
 already passes, and it is the pattern being copied.
 
 ### 25.2 Placeholder leak guard
-- [ ] Unfilled template placeholders (`[Name]`, `[Date]`, `[Company]`) never reach the user
-- [ ] Runs where `_apply_voice_filter` runs, so the mid-stream buffer catches it too
+- [x] Unfilled template placeholders (`[Name]`, `[Date]`, `[Company]`) never reach the user
+- [x] Runs alongside `_apply_voice_filter`, on conversational replies only (a requested email template keeps its placeholders)
 
 **Files**: `src/models/ai_wellness_guide.py`.
 **Done when**: a generated response containing `[Name]` is caught before display, streaming path included.
@@ -527,7 +527,7 @@ complete.
 detection, LLM classification, confidence calibration (17.2), distress routing (17.1),
 sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
-**Test suite**: 1215 structural tests + 23 conversation-marked tests (20 quality
+**Test suite**: 1229 structural tests + 23 conversation-marked tests (20 quality
 scenarios + 3 safety-guard integration). Distress corpus CI gate: 0% FN rate. Keyword
 FP rate on benign content: 7%. Domain eval baseline: 96/118 (81%) on mistral:7b-instruct
 (the corpus was expanded with boundary cases in #171; the earlier 83/94 measured an

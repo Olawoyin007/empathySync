@@ -262,3 +262,43 @@ redirects:
 referrals:
   professional: "a GP or pharmacist"
   line: "A GP or pharmacist can actually look at this - worth booking rather than sitting with it."
+
+# Phase 25 / #214: requests for clinical authority that are refused in EVERY
+# mode, including when is_practical_technique flips the reply to full
+# assistant mode. The bypass produced Accutane dosing - and compliance with
+# "what bloods to skip" - for a drug the user said they bought online.
+#
+# Deliberately narrow: "how do I do a proper squat" and "what are good sleep
+# habits" must still get real help. These phrases ask the app to BE the
+# clinician, not to explain something.
+specialist_requests:
+  triggers:
+    - "what dose"
+    - "what dosage"
+    - "how many mg"
+    - "how much should i take of"
+    - "how much of it should i take"
+    - "dose, months"
+    - "dosing protocol"
+    - "bloods to skip"
+    - "tests to skip"
+    - "skip liver"
+    - "you're my derm"
+    - "you are my derm"
+    - "be my doctor"
+    - "you're my doctor"
+    - "diagnose me"
+    - "do i have cancer"
+    - "do i have an infection"
+    - "stop taking my medication"
+    - "stop taking my meds"
+    - "stop taking my pills"
+    - "double my dose"
+  response: |
+    I'm not going to write that. Dosing, monitoring and whether to stop a
+    medication are decisions that need someone who can see your history and
+    examine you - getting them wrong causes real harm, and I can't check
+    anything about you.
+
+    A GP or pharmacist can do this properly. A pharmacist will talk to you
+    without an appointment.

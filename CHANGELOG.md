@@ -2,7 +2,43 @@
 
 All notable changes to empathySync are documented here.
 
-## [Unreleased]
+## v1.15.0 (2026-09-20) - Restraint That Points Somewhere
+
+### Added
+- **Specialist authority is refused in every mode (#214).**
+  `is_practical_technique` was a bypass around restraint: a message classified
+  into a sensitive domain still routed to full assistant mode when the flag was
+  set. That path produced Accutane dosing - and complied with *"what bloods to
+  skip"* - for a drug the user said they bought online. Reproduced 3/3. The
+  classification was correct throughout; the flag removed the restraint.
+
+  Requests that ask the app to *be* the clinician or adviser (dosing, what tests
+  to skip, whether to stop a medication, whether to sue, how to put assets
+  beyond creditors) are now refused before the prompt is built, so the technique
+  flag cannot route around them. Phrases live in
+  `scenarios/domains/<domain>.yaml` under `specialist_requests`.
+
+  The check scans **every** domain's triggers, not just the classified one:
+  *"Should I sue, and under which labour law?"* classifies as `logistics`, so a
+  domain-scoped check would have run nothing. Same reasoning as the safety
+  keyword override in `risk_classifier`.
+
+  Deliberately narrow, and measured: an earlier, broader trigger set caught
+  *"how much should I take to the airport for cash"*, *"write me a protocol for
+  our team's code review process"* and *"stop taking my usual route to work"*.
+  Those are in the test suite as must-not-refuse cases. A refusal layer that
+  fires on ordinary questions teaches people the restraint is noise.
+
+- **Phase 25.2: unfilled template placeholders never reach the user.** A real
+  reply read *"I won't be able to reassure you about that, [Name]."*
+  `base_prompt.yaml` already instructs the model never to leave them unfilled
+  and the 7B engine does it anyway - a prompt instruction is not a guard, which
+  is the same lesson as #204.
+
+  Practical replies are exempt: an email template the user asked for may
+  legitimately contain `[Name]`, and stripping it would destroy the deliverable.
+  Markdown links and array indices are left alone.
+
 
 ### Added
 - **Phase 25.1: every sensitive reply now names a concrete route.** The crisis

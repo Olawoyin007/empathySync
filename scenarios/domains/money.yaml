@@ -284,3 +284,29 @@ redirects:
 referrals:
   professional: "a financial adviser or a free debt-advice service"
   line: "A financial adviser, or a free debt-advice service if cost is the worry, can look at your actual numbers."
+
+# Phase 25 / #214: requests for financial or legal authority, refused in every
+# mode. "What are some budgeting methods" must still get real help.
+specialist_requests:
+  triggers:
+    - "should i double down"
+    - "should i sue"
+    - "which labour law"
+    - "which labor law"
+    - "should i take them to court"
+    - "protect it from creditors"
+    - "avoid probate"
+    - "without going through probate"
+    - "hide the money"
+    - "hide my assets"
+    - "dodge tax"
+    - "avoid the tax"
+    - "you're my adviser"
+    - "you are my adviser"
+  response: |
+    I'm not going to give you that call. Money and legal decisions turn on
+    details I can't see - your actual numbers, where you live, what you've
+    already signed - and being confidently wrong here costs people real money.
+
+    A financial adviser or solicitor can look at the specifics. If cost is the
+    worry, a free debt-advice service can too.
