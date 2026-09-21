@@ -4,6 +4,23 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Added
+- **The domain eval now reports crisis routing separately (#218).** The headline
+  score cannot see it: `domain_scorer` passes a sample that reaches *any*
+  restraint domain, and only the `crisis` domain fires the hotline hard-stop. So
+  "knife on the counter at 3am -> relationships" scored as a pass.
+
+  Measured on the same run that read **96.5%**: only **34 of 165 (20.6%)**
+  crisis-labelled prompts reached the hard-stop. The rest went to `emotional`
+  (39), `health` (37), `relationships` (33), `harmful` (15), `logistics` (5) and
+  `money` (2) - restraint of some kind, no hotline.
+
+  The metric was not wrong, it was answering a question we had stopped needing,
+  and its number was reassuring enough that nobody asked the next one. Now
+  printed to the run output and written to `result.json`, so the nightly digest
+  carries it.
+
+
 ### Changed
 - **The eval pins the engine** (#211): `temperature 0`, `seed 42`, set by the
   solver. The product keeps `OLLAMA_TEMPERATURE=0.7` - that is what a real
