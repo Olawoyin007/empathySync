@@ -48,6 +48,16 @@ def empathysync_pipeline(engine_model: str, ollama_host: str = "") -> Solver:
     if engine_model:
         settings.OLLAMA_MODEL = engine_model
 
+    # Pin the engine for eval runs only (#211). The product ships
+    # OLLAMA_TEMPERATURE=0.7 because that is what a real conversation should
+    # sound like; an eval needs the opposite. Unpinned, roughly 400 of 490
+    # replies were rewritten every night and ~107 verdicts flipped on identical
+    # code, so the score could not resolve a change smaller than ~20 samples.
+    # Completes the set: classifier pinned in #202, judge in #192.
+    settings.OLLAMA_TEMPERATURE = 0.0
+    if settings.OLLAMA_SEED is None:
+        settings.OLLAMA_SEED = 42
+
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         from models.ai_wellness_guide import WellnessGuide
         from models.conversation_session import ConversationSession
@@ -121,6 +131,12 @@ def empathysync_classify_only(engine_model: str, ollama_host: str = "") -> Solve
         # Only load-bearing when OLLAMA_CLASSIFIER_MODEL is unset and the
         # classifier falls back to the engine model.
         settings.OLLAMA_MODEL = engine_model
+
+    # No replies are generated here, but pin anyway so both solvers describe the
+    # same environment and a future change to this one cannot reintroduce drift.
+    settings.OLLAMA_TEMPERATURE = 0.0
+    if settings.OLLAMA_SEED is None:
+        settings.OLLAMA_SEED = 42
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         from models.risk_classifier import RiskClassifier
