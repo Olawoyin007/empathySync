@@ -63,6 +63,18 @@ domain-stability damping that sit between `classify()` and `risk_assessment` are
 no-ops (verified 25/25 against the corpus). **If samples ever become multi-turn,
 domain mode has to go back to the full pipeline solver.**
 
+**The engine is pinned for eval runs** (#211): `temperature 0` and `seed 42`,
+set by the solver. The product ships `OLLAMA_TEMPERATURE=0.7` because that is
+what a real conversation should sound like; an eval needs the opposite. Unpinned,
+roughly 400 of 490 replies were rewritten every night and ~107 verdicts flipped
+on *identical code*, so the score could not resolve a change smaller than about
+20 samples. Classifier pinned in #202, judge in #192; this completes the set.
+
+Honest limit: pinning is not perfect determinism. Verified 5/5 identical replies
+to the same prompt once the model is warm, but the **first generation after a
+cold model load can differ** - that is Ollama, not the pipeline (the assembled
+prompt is byte-identical across runs). In a 490-sample run that is one sample.
+
 Concurrency is still `--max-connections 1`. Rule 2 below applies: raising it on a
 unified-memory machine needs a measured memory cost first, and an over-commit
 there can take the whole host down.

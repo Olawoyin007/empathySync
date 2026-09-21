@@ -2,6 +2,26 @@
 
 All notable changes to empathySync are documented here.
 
+## [Unreleased]
+
+### Changed
+- **The eval pins the engine** (#211): `temperature 0`, `seed 42`, set by the
+  solver. The product keeps `OLLAMA_TEMPERATURE=0.7` - that is what a real
+  conversation should sound like - but an eval needs the opposite.
+
+  Unpinned, roughly **400 of 490 replies were rewritten every night** and ~107
+  verdicts flipped on *identical code*. The net score looked stable (230, 230,
+  233) only because the flips cancelled out. It could not resolve a change
+  smaller than about 20 samples.
+
+  No new settings were needed: `OLLAMA_SEED` already existed and was already
+  wired into the engine options; the eval simply never used it.
+
+  Honest limit: this is not perfect determinism. Five identical replies to the
+  same prompt once the model is warm, but the first generation after a cold
+  model load can differ - Ollama, not the pipeline, since the assembled prompt
+  is byte-identical across runs. One sample in 490.
+
 ## v1.15.0 (2026-09-20) - Restraint That Points Somewhere
 
 ### Added
