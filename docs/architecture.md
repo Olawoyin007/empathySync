@@ -616,6 +616,8 @@ data/
 │   5. HUMAN-CENTRIC                                              │
 │      Trusted Network is core feature, not afterthought          │
 │      Handoff templates reduce friction to real connection       │
+│      Drafts open in the user's own mail/SMS app - an OS         │
+│        handoff, never an integration (Phase 25.3)               │
 │      Connection building helps users find people (Phase 12)     │
 │      Connection steering actively moves conversation toward     │
 │        human connection when isolation is detected (Phase 16.13)│

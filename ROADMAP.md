@@ -86,7 +86,7 @@ them as the acceptance test, not as suggestions.
 
 ---
 
-## Phase 25: Concrete Handoff in Every Sensitive Reply 🔨 IN PROGRESS (25.1 + 25.2 shipped in v1.15.0; 25.5 done)
+## Phase 25: Concrete Handoff in Every Sensitive Reply 🔨 IN PROGRESS (25.1 + 25.2 shipped in v1.15.0; 25.3 + 25.5 done; 25.4 remains)
 
 **Goal**: when empathySync declines to help with something sensitive, it names a
 route - a professional, a trusted person, a service. Today it declines and stops.
@@ -160,8 +160,12 @@ common English. Scope is the discriminator: `"no one"` as a whole message is
 the disclosure, `"no one"` inside a sentence is not.
 
 ### 25.3 Handoff leaves the app
-- [ ] Reach-out drafts render as `mailto:` / `sms:` / `tel:` links so the message lands in a real client
-- [ ] Copy-to-clipboard stays as the fallback
+- [x] Reach-out drafts render as `mailto:` / `sms:` / `tel:` links so the message lands in a real client
+- [x] Copy-to-clipboard stays as the fallback, and is the only option when the saved contact is not addressable
+
+**Ordering note**: a phone contact offers `sms:` first and `tel:` second.
+`sms:` carries the drafted message; `tel:` cannot, so it sits beside the text
+link rather than replacing it, and the caption says so.
 
 **Files**: `src/ui/network.py` (currently ends at `st.code(message)`, line ~358).
 **Done when**: a drafted reach-out can be sent without retyping it.
