@@ -6,6 +6,7 @@ Covers:
 - validate_environment() delegation
 - format_wellness_tip() formatting
 - create_progress_summary() edge cases
+- build_handoff_link() OS handoff URLs (Phase 25.3)
 """
 
 import logging
@@ -129,3 +130,106 @@ class TestCreateProgressSummary:
         result = create_progress_summary(5, 0)
         assert isinstance(result, str)
         assert "5" in result
+
+
+class TestBuildHandoffLinks:
+    """Phase 25.3 - a drafted reach-out should not have to be retyped.
+
+    The links hand the draft to the user's own mail or messaging app. It is a
+    handoff, not an integration: no SMTP, no API, nothing leaves the machine
+    until the user presses send in their own client.
+    """
+
+    @pytest.mark.parametrize(
+        "contact,expected_target",
+        [
+            ("sam@example.com", "mailto:sam@example.com"),
+            ("Sam.Okafor+notes@sub.example.co.uk", "mailto:Sam.Okafor%2Bnotes@sub.example.co.uk"),
+        ],
+    )
+    def test_email_contacts_become_mailto(self, contact, expected_target):
+        from utils.helpers import build_handoff_links
+
+        links = build_handoff_links(contact, "hello")
+        assert len(links) == 1
+        kind, url = links[0]
+        assert kind == "email"
+        assert url.startswith(expected_target + "?body=")
+
+    @pytest.mark.parametrize(
+        "contact,expected_number",
+        [
+            ("+44 7700 900123", "+447700900123"),
+            ("(555) 123-4567", "5551234567"),
+            ("07700900123", "07700900123"),
+            ("555.123.4567", "5551234567"),
+        ],
+    )
+    def test_phone_contacts_offer_sms_then_call(self, contact, expected_number):
+        """Cosmetic characters are stripped; a leading + is kept, because
+        dropping it turns an international number into a local one.
+
+        sms: comes first because it carries the draft. tel: cannot, which is
+        why it is second rather than instead.
+        """
+        from utils.helpers import build_handoff_links
+
+        links = build_handoff_links(contact, "hello")
+        assert [kind for kind, _ in links] == ["sms", "tel"]
+        assert links[0][1].startswith(f"sms:{expected_number}?body=")
+        assert links[1][1] == f"tel:{expected_number}"
+
+    def test_call_link_carries_no_body(self):
+        """A tel: URL has nowhere to put a message. Appending one would produce
+        a link that silently fails to dial in some clients."""
+        from utils.helpers import build_handoff_links
+
+        links = build_handoff_links("+44 7700 900123", "please do not end up in the dial string")
+        tel = dict(links)["tel"]
+        assert "?" not in tel
+        assert "body" not in tel
+
+    @pytest.mark.parametrize(
+        "contact",
+        [
+            "",
+            "   ",
+            "the pub on Thursdays",
+            "ask her mum first",
+            "@handle",
+            "1234",  # too short to be a phone number
+        ],
+    )
+    def test_unaddressable_contacts_return_nothing(self, contact):
+        """A contact the OS cannot act on is not a bug - "the pub on Thursdays"
+        is a perfectly good thing to have saved. It falls back to copy."""
+        from utils.helpers import build_handoff_links
+
+        assert build_handoff_links(contact, "hello") == []
+
+    def test_none_contact_is_safe(self):
+        from utils.helpers import build_handoff_links
+
+        assert build_handoff_links(None, "hello") == []
+
+    def test_message_is_percent_encoded(self):
+        """An unencoded & or # truncates the body in the receiving client, so
+        the draft would arrive cut in half."""
+        from utils.helpers import build_handoff_links
+        from urllib.parse import unquote
+
+        message = "Hi Sam & Ada - can we talk? #worried\n\nIt's about the flat (50% mine)."
+        url = build_handoff_links("sam@example.com", message)[0][1]
+
+        body = url.split("?body=", 1)[1]
+        assert "&" not in body
+        assert "#" not in body
+        assert unquote(body) == message
+
+    def test_empty_message_still_produces_a_link(self):
+        """The text area can be cleared. Opening an empty draft is still better
+        than no route out of the app."""
+        from utils.helpers import build_handoff_links
+
+        links = build_handoff_links("sam@example.com", "")
+        assert links == [("email", "mailto:sam@example.com?body=")]

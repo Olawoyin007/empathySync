@@ -5,7 +5,9 @@ Supporting functions for logging, validation, and wellness features
 
 import logging
 import os
-from typing import List
+import re
+from typing import List, Optional, Tuple
+from urllib.parse import quote
 from config.settings import settings
 
 
@@ -79,3 +81,49 @@ def normalize_for_matching(text: str) -> str:
     keyword floor. Applied to both sides of every substring match.
     """
     return text.lower().translate(_APOSTROPHE_FOLD)
+
+
+# A phone number once the cosmetic characters are stripped: an optional leading
+# "+", then 7 to 15 digits (E.164 caps at 15; 7 is the shortest real number).
+_PHONE_SHAPE = re.compile(r"^\+?\d{7,15}$")
+_PHONE_NOISE = re.compile(r"[\s().\-/]")
+
+# Deliberately loose. This decides which app to open, not whether an address is
+# deliverable - the user typed it and the mail client will tell them if it is
+# wrong. Rejecting a valid-but-unusual address would be the worse failure.
+_EMAIL_SHAPE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def build_handoff_links(contact: str, message: str) -> List[Tuple[str, str]]:
+    """Turn a stored contact into links that open the user's own apps.
+
+    Returns ``[(kind, url), ...]`` where kind is ``"email"``, ``"sms"`` or
+    ``"tel"``, most-useful first. Empty when the contact is not something an
+    operating system can act on - "the pub on Thursdays" is a perfectly good
+    thing to have saved, and gets the copy button instead.
+
+    A phone number yields both: ``sms:`` carries the drafted message, ``tel:``
+    cannot and is offered second for people who would rather just call.
+
+    This is a handoff, not an integration, and the distinction is the whole
+    point: these schemes are handled by the OS, so the app never sees the
+    recipient, the send, or the reply. Sending mail properly would mean an
+    SMTP server or an API key, and "all processing must remain local"
+    forecloses that.
+    """
+    contact = (contact or "").strip()
+    if not contact:
+        return []
+
+    body = quote(message or "", safe="")
+
+    if _EMAIL_SHAPE.match(contact):
+        return [("email", f"mailto:{quote(contact, safe='@')}?body={body}")]
+
+    number = _PHONE_NOISE.sub("", contact)
+    if _PHONE_SHAPE.match(number):
+        number = quote(number, safe="+")
+        # "?body=" is the form Android and current iOS both accept.
+        return [("sms", f"sms:{number}?body={body}"), ("tel", f"tel:{number}")]
+
+    return []

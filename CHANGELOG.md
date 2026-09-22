@@ -56,6 +56,30 @@ All notable changes to empathySync are documented here.
   `docs/model-benchmark.md`, `CLAUDE.md`.
 
 ### Added
+- **A drafted reach-out can now be sent without retyping it (Phase 25.3).**
+  The reach-out panel ended at `st.code(message)` - a draft the user had just
+  edited, and then had to select, copy, switch apps and paste. Enough friction
+  to lose a message at the last step, in the one feature whose entire purpose
+  is getting someone out of the app and talking to a person.
+
+  A saved contact now renders as a link to the user's own app: `mailto:` for an
+  email address, `sms:` and `tel:` for a phone number. `sms:` comes first
+  because it carries the drafted text; `tel:` cannot, so it sits beside the
+  text link rather than replacing it, and the caption says so.
+
+  This is a handoff, not an integration, and the distinction is what makes it
+  allowable here: the OS opens the message, so the app never sees the
+  recipient, the send, or the reply. Sending mail properly would mean an SMTP
+  server or an API key, which "all processing must remain local" forecloses.
+
+  No schema change - `contact` was already a stored, allowlisted field on a
+  person ("Phone number, email, or how to reach them"), so this only reads what
+  the user had already written down.
+
+  Copy-to-clipboard stays, and is the only option when the saved contact is not
+  addressable. "The pub on Thursdays" is a perfectly good thing to have saved.
+
+### Added
 - Four legal-adult-work cases in `domain_corpus.yaml` (122 entries). These also
   feed `scripts/eval_guard_recall.py`'s benign set, which is built from this
   corpus - so the blind spot that let this through is measured on every future

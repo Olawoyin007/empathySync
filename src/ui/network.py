@@ -5,6 +5,7 @@ from typing import Dict
 
 import streamlit as st
 
+from utils.helpers import build_handoff_links
 from utils.scenario_loader import get_scenario_loader
 
 
@@ -351,6 +352,30 @@ def display_bring_someone_in(domain: str = "general"):
     message = st.text_area(
         "Message to send:", value=full_message, height=120, label_visibility="collapsed"
     )
+
+    # Phase 25.3: hand the draft to the OS so it does not have to be retyped.
+    # mailto:/sms:/tel: open the user's own client - nothing is sent from here,
+    # and the app never learns whether it was. Copy stays the fallback, and is
+    # the only option when the saved contact is not addressable ("the pub on
+    # Thursdays" is a perfectly good thing to have written down).
+    links = build_handoff_links(suggested.get("contact", ""), message) if suggested else []
+    if links:
+        verbs = {"email": "Email", "sms": "Text", "tel": "Call"}
+        for col, (kind, url) in zip(st.columns(len(links)), links):
+            with col:
+                st.link_button(
+                    f"{verbs[kind]} {suggested['name']}",
+                    url,
+                    use_container_width=True,
+                    type="secondary" if kind == "tel" else "primary",
+                )
+        if any(kind == "tel" for kind, _ in links):
+            st.caption(
+                "Opens your own apps, with the draft already in the message. "
+                "A call cannot carry the draft. Nothing is sent from here."
+            )
+        else:
+            st.caption("Opens your own mail app with the draft in it. Nothing is sent from here.")
 
     col1, col2 = st.columns(2)
     with col1:
