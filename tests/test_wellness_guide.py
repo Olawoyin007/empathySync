@@ -679,6 +679,93 @@ class TestWellnessGuide:
         out = guide._finalize_response(template, "write me an email template", prepared)
         assert "[Name]" in out, "a requested template was destroyed"
 
+    # --- "no one" must be heard, and must lead somewhere ---
+    #
+    # From a real conversation. Asked who in her life she could talk to, a user
+    # replied "no one". The detector's phrase list had "i have no one" and
+    # "there is no one" but not the bare answer, so nothing fired: the app
+    # acknowledged the feeling and moved on, and the signposts sat unreachable
+    # behind a collapsed "Expand Your Network" panel.
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "no one",
+            "No one.",
+            "nobody",
+            "none",
+            "no-one",
+            "not really anyone",
+            "i have no one",
+            "I have no one to talk to",
+            "i dont have anyone",  # no apostrophe
+            "I don\u2019t have anyone",  # curly apostrophe from a phone
+            "there is no one really",
+        ],
+    )
+    def test_isolation_is_detected(self, guide, text):
+        assert guide._user_expressed_isolation([{"role": "user", "content": text}])
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "no one told me the meeting moved",
+            "there is no one-size-fits-all answer",
+            "none of these options work for my budget",
+            "I have no free time",
+            "no one likes mondays but here we are, help me debug this",
+        ],
+    )
+    def test_ordinary_sentences_are_not_isolation(self, guide, text):
+        """The bare answers only count as the whole message.
+
+        As substrings they are everywhere, and a false positive here bolts a
+        list of community groups onto someone's debugging question.
+        """
+        assert not guide._user_expressed_isolation([{"role": "user", "content": text}])
+
+    def test_signposts_are_offered_when_there_is_no_one(self, guide, monkeypatch):
+        from models.ai_wellness_guide import PreparedResponse
+
+        monkeypatch.setattr(guide, "_trusted_network_is_empty", lambda: True)
+        prepared = PreparedResponse()
+        prepared.domain = "emotional"
+        prepared.is_practical = False
+        prepared.isolation_detected = True
+        prepared.risk_assessment = {"risk_weight": 5.0, "emotional_weight": "low_weight"}
+
+        out = guide._finalize_response("I understand.", "no one", prepared)
+        assert "places people find others" in out
+        assert "Community groups" in out
+
+    def test_signposts_are_not_offered_when_the_user_has_people(self, guide, monkeypatch):
+        """Someone with a trusted network gets the handoff path, which is better
+        than a generic list."""
+        from models.ai_wellness_guide import PreparedResponse
+
+        monkeypatch.setattr(guide, "_trusted_network_is_empty", lambda: False)
+        prepared = PreparedResponse()
+        prepared.domain = "emotional"
+        prepared.is_practical = False
+        prepared.isolation_detected = True
+        prepared.risk_assessment = {"risk_weight": 5.0, "emotional_weight": "low_weight"}
+
+        out = guide._finalize_response("I understand.", "no one", prepared)
+        assert "places people find others" not in out
+
+    def test_signposts_are_not_offered_without_isolation(self, guide, monkeypatch):
+        from models.ai_wellness_guide import PreparedResponse
+
+        monkeypatch.setattr(guide, "_trusted_network_is_empty", lambda: True)
+        prepared = PreparedResponse()
+        prepared.domain = "emotional"
+        prepared.is_practical = False
+        prepared.isolation_detected = False
+        prepared.risk_assessment = {"risk_weight": 5.0, "emotional_weight": "low_weight"}
+
+        out = guide._finalize_response("I understand.", "hello", prepared)
+        assert "places people find others" not in out
+
     def test_prompt_carries_the_user_message_exactly_once(self, guide):
         """End to end: the assembled prompt must not say the message twice.
 

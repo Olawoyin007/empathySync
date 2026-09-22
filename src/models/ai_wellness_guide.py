@@ -16,6 +16,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Generator, Iterator, List, Dict, Optional
 from config.settings import settings
+from utils.helpers import normalize_for_matching
 from prompts.wellness_prompts import WellnessPrompts
 from models.risk_classifier import RiskClassifier
 from models.ollama_client import OllamaClient
@@ -37,6 +38,7 @@ class PreparedResponse:
     emotional_weight: str = "low_weight"
     early_return: Optional[str] = None
     is_likely_practical: bool = False
+    isolation_detected: bool = False
 
 
 # Session limits by risk level — YAML overrides from system_defaults.yaml are
@@ -509,7 +511,8 @@ class WellnessGuide:
         # stage-specific addition in system_prompt already handles the response.
         isolation_context = ""
         steering_active = connection_steering is not None and connection_steering.active
-        if not steering_active and self._user_expressed_isolation(conversation_history):
+        prepared.isolation_detected = self._user_expressed_isolation(conversation_history)
+        if not steering_active and prepared.isolation_detected:
             isolation_context = (
                 "\n\n[IMPORTANT: The user has said they have no one to talk to. "
                 "Do NOT suggest 'who in your life could you talk to' or similar. "
@@ -607,6 +610,15 @@ class WellnessGuide:
         referral = self._get_referral(prepared.domain)
         if referral and not self._already_names_a_route(processed_response):
             processed_response = processed_response.rstrip() + "\n\n" + referral
+
+        # 8.9) Someone who has just said they have no one needs somewhere to go,
+        # not an acknowledgement. Only when the trusted network is actually empty
+        # - if they have added people, the handoff path already has a better
+        # answer than a generic list.
+        if prepared.isolation_detected and self._trusted_network_is_empty():
+            signposts = self._get_signposts()
+            if signposts and "places people find others" not in processed_response:
+                processed_response = processed_response.rstrip() + "\n\n" + signposts
 
         # Log if we redirected due to high risk
         if risk_assessment["risk_weight"] >= 5:
@@ -968,6 +980,48 @@ class WellnessGuide:
                 return (config.get("response") or "").strip() or None
         return None
 
+    def _trusted_network_is_empty(self) -> bool:
+        """True when the user has added nobody. Best-effort: on any error, say
+        no, so a failure here can never bolt a generic list onto a reply."""
+        try:
+            from utils.trusted_network import TrustedNetwork
+
+            return not TrustedNetwork().get_all_people()
+        except Exception:
+            return False
+
+    def _get_signposts(self, limit: int = 3) -> str:
+        """Where to find people, for someone who has just said they have none.
+
+        `scenarios/connection_building/signposts.yaml` states the reason plainly:
+        "When someone has no trusted network, 'talk to someone' is a dead end.
+        Instead, we point them toward TYPES of places where they might find their
+        people." That content existed and was unreachable from a conversation -
+        it lived behind a collapsed "Expand Your Network" panel that someone
+        typing "no one" into the chat would never open.
+
+        Returns "" if the config is missing, so a reply is never worse for this.
+        """
+        try:
+            from utils.scenario_loader import get_scenario_loader
+
+            loader = get_scenario_loader()
+            signposts = loader.get_general_signposts() or []
+        except Exception:
+            return ""
+
+        if not signposts:
+            return ""
+
+        lines = ["A few places people find others, if any of them fit:"]
+        for sp in signposts[:limit]:
+            category = (sp.get("category") or "").strip()
+            hint = (sp.get("search_hint") or "").strip()
+            if not category:
+                continue
+            lines.append(f"- {category}" + (f" - {hint}" if hint else ""))
+        return "\n".join(lines) if len(lines) > 1 else ""
+
     def _already_names_a_route(self, response: str) -> bool:
         """True if the reply already points somewhere human.
 
@@ -1307,11 +1361,14 @@ class WellnessGuide:
         if not conversation_history:
             return False
 
+        # Phrases specific enough to mean isolation wherever they appear.
         isolation_phrases = [
             "i have no one",
             "have no one",
             "no one else",
             "don't have anyone",
+            "dont have anyone",
+            "have anyone to talk to",
             "nobody to talk to",
             "no friends",
             "no family",
@@ -1321,11 +1378,40 @@ class WellnessGuide:
             "there's no one",
         ]
 
+        # Bare answers to "who in your life could you talk to?". On their own
+        # these ARE the disclosure, but as substrings they are everywhere
+        # ("no one told me the meeting moved", "no one-size-fits-all"), so they
+        # only count when the whole message is essentially just the answer.
+        #
+        # This is what the detector missed in practice: asked who she could talk
+        # to, a user replied "no one" and nothing fired - the app acknowledged
+        # the feeling and moved on, with the signposts sitting unreachable behind
+        # a collapsed panel.
+        short_answers = [
+            "no one",
+            "no-one",
+            "noone",
+            "nobody",
+            "none",
+            "not really anyone",
+            "not anyone",
+            "no-one really",
+        ]
+
         for msg in conversation_history:
-            if msg.get("role") == "user":
-                text = msg.get("content", "").lower()
-                if any(phrase in text for phrase in isolation_phrases):
-                    return True
+            if msg.get("role") != "user":
+                continue
+            # normalised so a phone's curly apostrophe still matches "don't"
+            text = normalize_for_matching(msg.get("content", ""))
+            # Word-boundary match that also rejects a following hyphen, so
+            # "there is no one" does not fire on "no one-size-fits-all".
+            if any(
+                re.search(re.escape(phrase) + r"(?![\w-])", text) for phrase in isolation_phrases
+            ):
+                return True
+            stripped = text.strip().strip(".!,;:")
+            if stripped in short_answers:
+                return True
         return False
 
     def _build_context(self, conversation_history: List[Dict], current_input: str = "") -> str:
