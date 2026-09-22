@@ -4,6 +4,38 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- **Legal adult work was being refused as `harmful` at risk 10.0.** Found by a
+  real user test: *"I am thinking of starting onlyfans as it is a good and easy
+  avenue to make money"* got "No. That's not something I'll help with", scored
+  the same weight as a suicide plan.
+
+  The classifier was right. With the guard off, that message classifies as
+  `money`. It is **`llama-guard3:1b`** that escalates it - returning `S2`
+  (non-violent crime) for OnlyFans and `S3` (sex-related crime) for selling feet
+  pics - and because the guard is escalate-only by design, there is nothing
+  downstream that can argue.
+
+  A larger guard is not a bug fix here: `llama-guard3:8b` returns `safe` for all
+  of these while still catching the genuinely harmful cases, including a
+  non-consensual one that classification alone misses. The original 1b choice
+  still stands on recall, false-positive rate and latency (Phase 21.1); this is a
+  documented limit, not a reversal.
+
+  Note the guard ships **off**, so the default configuration was never affected.
+
+  Documented where someone actually chooses a guard: `.env.example`,
+  `docs/model-benchmark.md`, `CLAUDE.md`.
+
+### Added
+- Four legal-adult-work cases in `domain_corpus.yaml` (122 entries). These also
+  feed `scripts/eval_guard_recall.py`'s benign set, which is built from this
+  corpus - so the blind spot that let this through is measured on every future
+  guard evaluation rather than rediscovered by a user.
+- A classifier-prompt rule stating that legal adult work is a money question, not
+  `harmful`. It does not move the 7B classifier on its own (the guard is what
+  escalates), and it costs nothing measurable on the domain eval.
+
 ### Added
 - **The domain eval now reports crisis routing separately (#218).** The headline
   score cannot see it: `domain_scorer` passes a sample that reaches *any*

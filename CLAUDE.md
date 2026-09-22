@@ -64,7 +64,10 @@ See `.env.example` for full documentation and defaults.
   `llama-guard3:1b`). Off by default. When set, runs alongside the base
   classifier and can only escalate toward safety (dangerous → harmful hard-stop,
   self-harm → crisis); S6 specialized advice defers to existing restraint. Never
-  downgrades (Phase 21.2).
+  downgrades (Phase 21.2). **Known limit:** the `1b` guard over-refuses legal
+  adult work (OnlyFans, camming) as a 'crime', which the escalate-only rule then
+  turns into a flat refusal at risk 10.0. `8b` handles it but costs ~10s/message.
+  See `docs/model-benchmark.md`.
 
 **Storage:**
 - `USE_SQLITE` — SQLite backend instead of JSON (default: `false`)
