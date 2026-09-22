@@ -259,6 +259,21 @@ User Input
     │
     ▼
 ┌─────────────────────────────────────────────┐
+│  APPENDS (_finalize_response)               │
+│     Added after the reply is generated,     │
+│     each at most once, each skipped if the  │
+│     reply already covers it:                │
+│     - Referral to a human route (Ph 25.1)   │
+│       skipped if _already_names_a_route()   │
+│     - Connection signposts (Phase 25.5)     │
+│       only when the user said they have no  │
+│       one AND the trusted network is empty  │
+│     Both are best-effort: a missing config  │
+│     leaves the reply untouched, never worse │
+└─────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────┐
 │  RESPONSE MODE LABEL (Phase 17.6)           │
 │     One-line caption under each response:   │
 │     "Responded as: practical task · coding" │
@@ -286,6 +301,12 @@ that matter when editing triggers:
   to ASCII `'`. Without the fold a curly apostrophe from a phone keyboard drops
   a message off the crisis floor, since 19 crisis triggers contain an
   apostrophe. Apply it anywhere a new substring match is added.
+- **Isolation detection is the one exception** (`ai_wellness_guide.
+  _user_expressed_isolation`). Bare answers like `"no one"` or `"none"` are only
+  matched against the *whole* message, and the longer phrases use a trailing
+  `(?![\w-])` boundary. Plain substring matching fires on `"no one told me the
+  meeting moved"` and `"no one-size-fits-all"`, which would bolt a list of
+  community groups onto an unrelated reply.
 
 ## Component Relationships
 

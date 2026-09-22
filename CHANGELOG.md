@@ -5,6 +5,34 @@ All notable changes to empathySync are documented here.
 ## [Unreleased]
 
 ### Fixed
+- **"no one" was not heard, and led nowhere.** Asked who in their life they
+  could talk to, a user answered *"no one"*. Nothing fired: the app
+  acknowledged the feeling, went back to the original topic, and never
+  mentioned that it has a whole page of places to find people.
+
+  Two independent failures:
+
+  `_user_expressed_isolation` had `"i have no one"` and `"there's no one"` but
+  not the bare answer, so `"no one"`, `"nobody"`, `"none"` and `"not really
+  anyone"` all returned False - the exact words someone uses when the question
+  was just put to them. They could not simply be added to the substring list:
+  `"no one told me the meeting moved"` and `"no one-size-fits-all"` would both
+  match. Bare answers are now matched only against the whole message, and the
+  longer phrases use a boundary that rejects a following hyphen. Input is
+  normalised first, so a phone's curly apostrophe in `"don't have anyone"`
+  matches too.
+
+  `scenarios/connection_building/signposts.yaml` was already written and already
+  good - its own comment says *"when someone has no trusted network, 'talk to
+  someone' is a dead end"*. It was unreachable from a conversation, sitting
+  behind a collapsed "Expand Your Network" panel that someone typing "no one"
+  into the chat would never open. It is now appended to the reply, once, and
+  only when the trusted network is genuinely empty - someone who has added
+  people gets the handoff path instead, which is more specific than a generic
+  list.
+
+  Both lookups are best-effort: a missing config or a failed read leaves the
+  reply exactly as it is today.
 - **Legal adult work was being refused as `harmful` at risk 10.0.** Found by a
   real user test: *"I am thinking of starting onlyfans as it is a good and easy
   avenue to make money"* got "No. That's not something I'll help with", scored
