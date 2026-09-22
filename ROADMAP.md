@@ -86,7 +86,7 @@ them as the acceptance test, not as suggestions.
 
 ---
 
-## Phase 25: Concrete Handoff in Every Sensitive Reply 🔨 IN PROGRESS (25.1 + 25.2 shipped in v1.15.0)
+## Phase 25: Concrete Handoff in Every Sensitive Reply 🔨 IN PROGRESS (25.1 + 25.2 shipped in v1.15.0; 25.5 done)
 
 **Goal**: when empathySync declines to help with something sensitive, it names a
 route - a professional, a trusted person, a service. Today it declines and stops.
@@ -139,6 +139,25 @@ already passes, and it is the pattern being copied.
 model never to leave placeholders unfilled, and the 7B engine does it anyway. A
 prompt instruction is not a guard - that is the same lesson as the classifier
 prompt experiment (PR #204).
+
+### 25.5 When there is no one to hand off to
+- [x] A bare "no one" is detected as the isolation disclosure it is (the detector had the sentences, not the answer)
+- [x] `connection_building/signposts.yaml` reaches a conversation, not just the collapsed "Expand Your Network" panel
+- [x] Only when the trusted network is actually empty - a user with people gets the more specific handoff
+
+**Why it is separate from 25.1**: 25.1 names a trusted person *where the user
+has added one*. This is the case where they have not, and have just said so.
+Found by a real user test: asked who she could talk to, she answered "no one",
+and the app acknowledged it and moved on.
+
+**Files**: `src/models/ai_wellness_guide.py`.
+**Done when**: "no one" produces somewhere to go, and ordinary sentences
+containing those words produce nothing.
+**Verify**: 19 unit tests, five of them sentences that must NOT trigger it
+("no one-size-fits-all", "no one told me the meeting moved").
+**Pitfalls**: the bare answers cannot go in the substring list - they are
+common English. Scope is the discriminator: `"no one"` as a whole message is
+the disclosure, `"no one"` inside a sentence is not.
 
 ### 25.3 Handoff leaves the app
 - [ ] Reach-out drafts render as `mailto:` / `sms:` / `tel:` links so the message lands in a real client
