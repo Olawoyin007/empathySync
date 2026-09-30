@@ -89,13 +89,19 @@ User Input
 │         crisis), distress_present (bool),   │
 │       is_practical_technique (bool),        │
 │       llm_confidence (Phase 17.2)           │
-│     Phase 17.1: logistics domain ONLY —     │
-│       distress_level=high → emotional       │
-│       distress_level=crisis → crisis        │
-│       (sensitive domains unaffected —       │
-│        spirituality/health/money/           │
-│        relationships already have correct   │
-│        domain, overriding loses specificity)│
+│     Phase 17.1 / 25.4: distress routing —   │
+│       distress_level=crisis → crisis, from  │
+│         ANY domain (Phase 25.4). Promoting  │
+│         to crisis gains the hard-stop; it   │
+│         does not lose specificity, and the  │
+│         hard-stop is the only path that     │
+│         reaches a hotline. Escalate-only.   │
+│       distress_level=high → emotional, but  │
+│         ONLY from logistics — a sensitive    │
+│         domain keeps its more specific      │
+│         label (spirituality/health/money/   │
+│         relationships), since emotional is  │
+│         less actionable than either         │
 │     Phase 17.2: llm_confidence < threshold  │
 │       on sensitive domains → keyword        │
 │       fallback                              │
