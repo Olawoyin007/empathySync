@@ -73,6 +73,16 @@ class ScenarioLoader:
         self._cache[cache_key] = result
         return result
 
+    # ==================== CLASSIFICATION ====================
+
+    def get_avoidance_patterns(self) -> Dict:
+        """Avoidance/substitution phrase lists (Phase 25.4).
+
+        Returns the `avoidance.yaml` config, or {} when it is absent so the
+        check simply never fires rather than breaking classification.
+        """
+        return self._load_directory("classification").get("avoidance", {})
+
     # ==================== DOMAINS ====================
 
     def get_all_domains(self) -> Dict[str, Dict]:

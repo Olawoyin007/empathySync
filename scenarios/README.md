@@ -8,7 +8,7 @@ This directory contains the structured knowledge base for empathySync's risk ass
 scenarios/
 ├── config/               # System defaults and tunables (Phase 16.10)
 │   └── system_defaults.yaml  # 100+ centralized settings (timeouts, turn limits, thresholds)
-├── classification/       # LLM classifier prompts and config (Phase 9, 9.1)
+├── classification/       # LLM classifier prompts, config, avoidance phrases (Phase 9, 9.1, 25.4)
 ├── connection_building/  # Signposts and first-contact templates (Phase 12)
 ├── domains/              # 8 risk domains and their triggers
 ├── emotional_markers/    # Emotional intensity detection (4 levels)
@@ -110,6 +110,23 @@ Response templates:
 
 LLM classifier configuration (Phase 9, 9.1):
 - `llm_classifier.yaml` - Classification prompt template, examples, and fast-path patterns
+- `avoidance.yaml` - (Phase 25.4) Substitution phrases: the app being chosen over
+  a real action
+
+**Editing `avoidance.yaml`:** it holds two lists and **both must match** for the
+check to fire. `chat_as_destination` is the conversation being named as where the
+user intends to stay ("stay here", "with you", "keep me company").
+`obligation_displaced` is a real-world action being set aside ("don't have to",
+"than actually", "forget the", "avoiding").
+
+Each half alone is ordinary English, which is why one list is not enough: *"I'd
+rather use Python than Java"* displaces something with no chat in it, and *"let's
+keep going"* names the chat with nothing displaced. Matching either half on its
+own routes ordinary coding questions into restraint.
+
+So when adding a phrase, put it in the list it actually belongs to, and keep
+generic continuations ("keep going", "carry on") out of `chat_as_destination`
+entirely - they appear in normal task requests.
 
 **Key fields in classification output:**
 - `domain` - One of 8 domains (crisis, harmful, health, money, emotional, relationships, spirituality, logistics)

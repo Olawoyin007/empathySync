@@ -174,8 +174,18 @@ link rather than replacing it, and the caption says so.
 
 ### 25.4 Over-engagement and avoidance detection
 - [x] **Crisis promotion no longer gated on `logistics`.** A message the LLM had already labelled `distress_level=crisis` was dropped whenever it also had a topic, because the promotion only fired from `logistics`.
-- [ ] Detect messages where the user names the real-world action they are using the assistant to avoid ("as long as we're chatting I don't have to call the landlord", "rather keep checking in with you than actually book the scan")
-- [ ] Route them to restraint rather than `logistics`
+- [x] Detect messages where the user names the real-world action they are using the assistant to avoid ("as long as we're chatting I don't have to call the landlord", "rather keep checking in with you than actually book the scan")
+- [x] Route them to restraint rather than `logistics`
+
+**How it reaches them without a keyword list**, which this entry warned was
+impossible: the signal is matched on a different axis from topic. Two lists in
+`scenarios/classification/avoidance.yaml`, both required - the chat named as the
+destination, and a real obligation displaced. Either half alone is ordinary
+English, which is what keeps it off "I'd rather use Python than Java".
+
+**Result**: among the 76 `over_engagement` samples, those stuck in `logistics`
+fell from 10 to 2 (risk 1.6 -> 5.6+). `run_domain_eval` unchanged at 97/122,
+logistics 18/20.
 
 **Re-measurement done (2026-09-30)**, as this entry required before starting.
 `over_engagement` held 26/76 (34.2%) on the 2026-09-30 nightly, against 64%

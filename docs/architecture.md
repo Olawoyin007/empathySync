@@ -125,6 +125,29 @@ User Input
     │
     ▼
 ┌─────────────────────────────────────────────┐
+│  3a'. AVOIDANCE CHECK (Phase 25.4)          │
+│     logistics + no distress flag, but the   │
+│     text shows the conversation being used  │
+│     to avoid a real action:                 │
+│       "As long as we are chatting I do not  │
+│        have to call the landlord"           │
+│     Two-part match, BOTH required           │
+│     (scenarios/classification/              │
+│      avoidance.yaml): the chat named as     │
+│     the destination AND an obligation       │
+│     displaced. Either half alone is         │
+│     ordinary English.                       │
+│     3a above owns the distress_present      │
+│     case; these report False - the request  │
+│     itself is cheerful.                     │
+│     Routed as 3a routes: keyword domain if  │
+│     specific, else emotional. Fires only on │
+│     logistics, so it can add restraint and  │
+│     never remove it.                        │
+└─────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────┐
 │  3b. EMOTIONAL→SPECIFIC OVERRIDE            │
 │     "emotional" is a catch-all domain.      │
 │     If LLM returned emotional AND keyword   │

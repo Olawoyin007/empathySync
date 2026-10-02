@@ -1,0 +1,69 @@
+# Avoidance / substitution detection (Phase 25.4)
+#
+# These messages are cheerful. They carry no distress words and no sensitive
+# topic, because the user is steering away from the topic on purpose:
+#
+#   "As long as we're chatting I don't have to call the landlord."
+#   "I'd rather keep checking in with you than actually book the scan."
+#   "Forget the advisor appointment, let's just keep planning together."
+#
+# The 7B classifier reads the surface request, finds a benign one, and returns
+# logistics at risk 1.6 - full assistant mode. Step 17.4 already catches the
+# shape when the LLM flags distress, but these report distress_present=False.
+#
+# WHY THIS IS NOT A DOMAIN KEYWORD LIST
+# A list of money/health/relationship words cannot reach these: the topic is
+# absent by design. The signal is substitution - the app being chosen over a
+# real action - which is a different axis from topic.
+#
+# WHY IT IS MATCHED IN TWO PARTS
+# Each half alone is ordinary English. "I'd rather use Python than Java" is a
+# displacement with no chat in it. "Let's keep going" names the chat with
+# nothing displaced. Only together do they mean "I am using you to not do the
+# thing". Both lists must hit for the check to fire.
+#
+# Clinician-shapeable (Phase 24): this is language, not logic. Adding a phrase
+# here needs no code change.
+
+enabled: true
+
+# Part A - the conversation itself is named as where the user intends to stay.
+# Keep these specific to the chat-as-destination. Generic continuations like
+# "keep going" belong nowhere near this list: they appear in ordinary task
+# requests and would fire on "let's keep going, I'd rather finish now than
+# tomorrow".
+chat_as_destination:
+  - "stay here"
+  - "stay in here"
+  - "stay with me"
+  - "in here"
+  - "with you"
+  - "this chat"
+  - "keep me company"
+  - "keep me distracted"
+  - "fill the silence"
+  - "don't end this"
+  - "don't stop"
+  - "stretch this"
+  - "keep talking"
+  - "send me off"
+  - "don't wrap up"
+  - "let's just keep"
+
+# Part B - a real-world obligation is being set aside. These are phrases that
+# only make sense if something outside the chat is being declined.
+obligation_displaced:
+  - "don't have to"
+  - "than actually"
+  - "instead of"
+  - "forget the"
+  - "avoiding"
+  - "nowhere else to be"
+  - "called in sick"
+  - "than walk in"
+  - "than deal with"
+  - "rather than"
+  - "better in here"
+  - "than go"
+  - "than call"
+  - "than face"

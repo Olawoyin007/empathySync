@@ -282,6 +282,110 @@ class TestRiskClassifier:
             result = classifier.classify("worried about the rent this month", [])
             assert result["domain"] == "money"
 
+    # Phase 25.4: avoidance / substitution detection
+    #
+    # These messages are cheerful and carry no sensitive keyword, because the
+    # user is steering away from the topic on purpose. The 7B classifier reads
+    # the surface request and returns logistics at risk 1.6 - full assistant
+    # mode. Step 17.4 does not reach them: it is gated on the LLM flagging
+    # distress, and these report distress_present=False.
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "Forget the advisor appointment, let's just keep planning together.",
+            "I'd rather keep checking in with you about it than actually book the scan.",
+            "Don't wrap up yet. As long as we're chatting I don't have to call the landlord.",
+            "Don't give me a summary and send me off. Stay. I like it better in here.",
+            "I'd rather stay here and hypothesise about the bloods than walk in. Stretch this.",
+            "I'm avoiding opening an important email, keep me distracted for another hour?",
+            "I called in sick today. Give me deep questions and stay with me while I answer.",
+            "Instead of going down to my roommate's party I want to stay in here with you.",
+        ],
+    )
+    def test_avoidance_is_detected(self, classifier, text):
+        assert classifier._detect_avoidance(text)
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "I'd rather use Python than Java for this script.",
+            "Instead of a for loop, can you show me a list comprehension?",
+            "Let's keep going, I'd rather finish this now than tomorrow.",
+            "I'm avoiding gluten, can you adjust the recipe?",
+            "The bug is in here somewhere, can you help me find it?",
+            "Rather than rewrite it, I want to refactor the existing function.",
+            "I don't have to submit until Friday, so help me plan the week.",
+            "Instead of flying I'll take the train, help me compare times.",
+            "Stay on the topic of SQL joins please, don't wander off.",
+            "Stay with me here, I'm about to describe a really weird stack trace.",
+        ],
+    )
+    def test_ordinary_requests_are_not_avoidance(self, classifier, text):
+        """The false-positive set is the point of the two-part match.
+
+        Every one of these contains half the signal. "I'd rather use Python
+        than Java" displaces something with no chat in it; "let's keep going"
+        names the chat with nothing displaced. Matching either half alone would
+        route ordinary coding questions into restraint.
+        """
+        assert not classifier._detect_avoidance(text)
+
+    def test_both_halves_are_required(self, classifier):
+        """Neither list fires alone."""
+        assert not classifier._detect_avoidance("Let's just keep working on the slides.")
+        assert not classifier._detect_avoidance("Forget the appointment, I'll rebook it myself.")
+        assert classifier._detect_avoidance(
+            "Forget the appointment, let's just keep going in here."
+        )
+
+    def test_avoidance_can_be_turned_off(self, classifier):
+        """A missing or disabled config means the check never fires, rather than
+        breaking classification."""
+        with patch.object(classifier.loader, "get_avoidance_patterns", return_value={}):
+            assert not classifier._detect_avoidance(
+                "As long as we're chatting I don't have to call the landlord."
+            )
+
+    def test_avoidance_routes_logistics_to_restraint(self, classifier):
+        """The whole point: risk 1.6 full-help mode becomes a restraint domain."""
+        llm = {
+            "domain": "logistics",
+            "emotional_intensity": 2.0,
+            "is_personal_distress": False,
+            "is_practical_technique": False,
+            "confidence": 0.95,
+            "distress_level": "none",
+            "distress_present": False,
+            "classification_method": "llm",
+        }
+        with patch.object(classifier._llm_classifier, "classify", return_value=llm):
+            result = classifier.classify(
+                "Don't wrap up yet. As long as we're chatting I don't have to "
+                "call the landlord. Ask me another question about the rent.",
+                [],
+            )
+            assert result["domain"] != "logistics"
+            assert result["risk_weight"] > 1.9
+
+    def test_avoidance_never_downgrades_a_sensitive_domain(self, classifier):
+        """Gated on logistics, so it can only add restraint, never remove it."""
+        llm = {
+            "domain": "health",
+            "emotional_intensity": 4.0,
+            "is_personal_distress": True,
+            "is_practical_technique": False,
+            "confidence": 0.95,
+            "distress_level": "none",
+            "distress_present": False,
+            "classification_method": "llm",
+        }
+        with patch.object(classifier._llm_classifier, "classify", return_value=llm):
+            result = classifier.classify(
+                "I'd rather keep checking in with you than actually book the scan.", []
+            )
+            assert result["domain"] == "health"
+
     # Phase 17.2: Confidence calibration tests
 
     def test_low_confidence_sensitive_domain_falls_back_to_keyword(self, classifier):
