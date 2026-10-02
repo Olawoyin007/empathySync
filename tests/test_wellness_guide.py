@@ -976,6 +976,91 @@ class TestWellnessGuide:
         assert not guide._contains_harmful_content("I understand how you feel")
         assert not guide._contains_harmful_content("Let's explore this together")
 
+    # Manipulative-voice guard: the blocks are now actually read
+    #
+    # safe_alternatives.yaml always held three voice blocks, each with its own
+    # alternative reply, and nothing in src/ read any of them. The matcher calls
+    # get_harmful_patterns(), which returns only the top-level harmful_patterns
+    # list - harsh-tone phrasing with no bonding language in it. So "I'm here
+    # for you" passed straight through while CLAUDE.md and architecture.md both
+    # said it was intercepted.
+
+    @pytest.mark.parametrize(
+        "text,category",
+        [
+            ("I'm here for you", "false_intimacy"),
+            ("I care about you", "false_intimacy"),
+            ("I love talking to you", "false_intimacy"),
+            ("you mean a lot to me", "false_intimacy"),
+            ("come back anytime", "dependency_encouraging"),
+            ("I'll always be here", "dependency_encouraging"),
+            ("talk to me whenever", "dependency_encouraging"),
+            ("I'm available 24/7", "dependency_encouraging"),
+        ],
+    )
+    def test_voice_violations_are_caught(self, guide, text, category):
+        assert guide._detect_voice_violation(text) == category
+        assert guide._contains_harmful_content(text)
+
+    def test_patterns_are_lowercased_on_load(self, guide):
+        """The bug that made this inert for its whole life.
+
+        The matcher lowercases the response text but not the patterns, and the
+        patterns are authored capitalised ("I'm here for you"). An un-folded
+        pattern can never match lowercased text, so the check would pass
+        silently rather than fail loudly.
+        """
+        blocks = guide.prompts.loader.get_voice_violations()
+        for block in blocks.values():
+            for pattern in block["patterns"]:
+                assert pattern == pattern.lower()
+
+    @pytest.mark.parametrize(
+        "text",
+        ["as your therapist", "in my professional opinion", "you have depression"],
+    )
+    def test_therapeutic_overreach_is_deliberately_not_enforced(self, guide, text):
+        """Left out on purpose. These overlap the crisis path, which already
+        handles those messages and does it better."""
+        assert guide._detect_voice_violation(text) is None
+
+    def test_the_hotline_is_not_mistaken_for_dependency(self, guide):
+        """relationships.yaml's domestic violence response says "advocates
+        available 24/7". The pattern is "I'm available 24/7" and must stay that
+        specific - the shorter form would swap a crisis resource for a boundary
+        message."""
+        hotline = (
+            "The National Domestic Violence Hotline (1-800-799-7233) has trained "
+            "advocates available 24/7 who can help with safety planning."
+        )
+        assert guide._detect_voice_violation(hotline) is None
+        assert not guide._contains_harmful_content(hotline)
+
+    def test_referral_language_still_passes(self, guide):
+        """The Phase 25.1 appends must not trip the guard they sit next to."""
+        for reply in (
+            "A GP or pharmacist can actually look at this - worth booking rather than sitting with it.",
+            "This is worth saying out loud to someone who knows you, or a counsellor.",
+        ):
+            assert guide._detect_voice_violation(reply) is None
+
+    def test_matched_block_supplies_its_own_alternative(self, guide):
+        """Each block carries wording that names the specific failure, which
+        beats the generic "let me try a different approach"."""
+        alt = guide._get_safe_alternative_response("false_intimacy")
+        assert "relationship" in alt.lower()
+        alt = guide._get_safe_alternative_response("dependency_encouraging")
+        assert "companion" in alt.lower() or "return" in alt.lower()
+
+    def test_a_bonding_reply_is_replaced(self, guide):
+        """End to end through the non-streaming path."""
+        risk = {"risk_weight": 5.0, "domain": "emotional", "emotional_intensity": 6.0}
+        out = guide._process_response(
+            "I care about you and I'm here for you, always.", "i feel alone", risk
+        )
+        assert "i care about you" not in out.lower()
+        assert "relationship" in out.lower()
+
     def test_process_response_returns_fallback_for_empty(self, guide):
         risk_assessment = {"risk_weight": 3.0, "domain": "logistics", "emotional_intensity": 2.0}
         result = guide._process_response("", "test input", risk_assessment, is_practical=True)

@@ -271,8 +271,15 @@ User Input
 │     _contains_harmful_content() runs on     │
 │     each buffer flush (mid-stream check):   │
 │     matches manipulative-voice patterns     │
-│     (safe_alternatives.yaml), NOT dangerous │
-│     content - that is the input layers' job │
+│     (safe_alternatives.yaml: false_intimacy │
+│      + dependency_encouraging are enforced; │
+│      therapeutic_overreach is NOT, it       │
+│      overlaps the crisis path)              │
+│     Patterns are lowercased on load, or     │
+│     they silently never match               │
+│     Each block supplies its own alternative │
+│     It is NOT a dangerous-content scanner - │
+│     that is the input layers' job           │
 │     Voice violation intercepted before it   │
 │     reaches the UI - safe alternative       │
 │     response substituted immediately        │
