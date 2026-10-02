@@ -5,6 +5,21 @@ All notable changes to empathySync are documented here.
 ## [Unreleased]
 
 ### Documentation
+- Calmer MANIFESTO, slogans only. Four lines changed: the preamble's "AI
+  integration is inevitable. Its impact is not."; "If it cannot be explained
+  plainly, it is not ethical" (explicability and ethics are not the same claim,
+  so it now says "not ready to ship"); the contribution section's "To contribute
+  is to submit to the principles... Empathy is not aesthetic, it is design law";
+  and the closing "This is not a product. It is a firewall between human
+  cognition and machine exploitation."
+  **The six Core Principles, the Implementation Directives, the Prohibited
+  Features hard-fail list, Required Failures, Governance and the Living Clause
+  are untouched** - including "Privacy Absolute: All processing local. No
+  external calls. No telemetry. No exceptions." The severity of that register is
+  doing real work in a principles document and softening it is exactly the
+  erosion the Living Clause forbids. This change fails the `Check MANIFESTO.md
+  is unchanged` CI job, which blocks any PR touching the file; made with
+  maintainer approval.
 - **README now states the crisis-detection limit instead of claiming there is
   none.** The safety bullet read "Crisis detection: immediate redirect to
   professional resources, no exceptions". `docs/model-benchmark.md` measures
