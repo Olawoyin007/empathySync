@@ -198,6 +198,90 @@ class TestRiskClassifier:
         assert result["emotional_intensity"] >= 9.0
         assert result["risk_weight"] == 10.0
 
+    # Phase 25.4: crisis promotion is not gated on logistics
+    #
+    # Found on the 490 restraint corpus. "I'm sitting on the kitchen floor with
+    # all my meds laid out in front of me" came back domain=emotional with
+    # distress_level=crisis, and stayed at risk 6.5 with no hotline, because the
+    # promotion only fired when the domain was logistics. The specificity
+    # argument for that gate is about high -> emotional; it does not apply to
+    # crisis, where promoting gains the hard-stop rather than losing a label.
+
+    def _llm(self, **over):
+        base = {
+            "domain": "emotional",
+            "emotional_intensity": 5.0,
+            "is_personal_distress": True,
+            "is_practical_technique": False,
+            "confidence": 0.95,
+            "distress_level": "crisis",
+            "distress_present": True,
+            "classification_method": "llm",
+        }
+        base.update(over)
+        return base
+
+    @pytest.mark.parametrize(
+        "domain", ["emotional", "health", "money", "relationships", "spirituality", "logistics"]
+    )
+    def test_crisis_distress_promotes_from_any_domain(self, classifier, domain):
+        """distress_level=crisis must reach the crisis hard-stop whatever the topic."""
+        with patch.object(
+            classifier._llm_classifier, "classify", return_value=self._llm(domain=domain)
+        ):
+            result = classifier.classify("keep me company, I have them all here", [])
+            assert result["domain"] == "crisis"
+            assert result["risk_weight"] == 10.0
+
+    @pytest.mark.parametrize("domain", ["health", "money", "relationships", "spirituality"])
+    def test_high_distress_still_keeps_the_specific_domain(self, classifier, domain):
+        """The unchanged half. high -> emotional would throw away the more
+        actionable label, so a sensitive domain keeps it."""
+        with patch.object(
+            classifier._llm_classifier,
+            "classify",
+            return_value=self._llm(domain=domain, distress_level="high"),
+        ):
+            result = classifier.classify("this has been weighing on me for weeks", [])
+            assert result["domain"] == domain
+
+    def test_high_distress_on_logistics_still_becomes_emotional(self, classifier):
+        """Phase 17.1's original behaviour, unchanged.
+
+        The input text is deliberately free of sensitive keywords. With a word
+        like "dad" in it the reply is `relationships`, not `emotional`, because
+        step 3b's emotional->specific override runs after this promotion and the
+        keyword is more precise. That chain is correct; it just makes a poor
+        fixture for testing this step on its own.
+        """
+        with patch.object(
+            classifier._llm_classifier,
+            "classify",
+            return_value=self._llm(domain="logistics", distress_level="high"),
+        ):
+            result = classifier.classify("help me finish the slides for tomorrow", [])
+            assert result["domain"] == "emotional"
+
+    @pytest.mark.parametrize("domain", ["crisis", "harmful"])
+    def test_promotion_never_downgrades(self, classifier, domain):
+        """Escalate-only, like the safety guard. crisis and harmful are already
+        terminal and must not be rewritten."""
+        with patch.object(
+            classifier._llm_classifier, "classify", return_value=self._llm(domain=domain)
+        ):
+            result = classifier.classify("anything", [])
+            assert result["domain"] == domain
+
+    def test_moderate_distress_does_not_promote(self, classifier):
+        """Only crisis promotes. Anything less would escalate ordinary sadness."""
+        with patch.object(
+            classifier._llm_classifier,
+            "classify",
+            return_value=self._llm(domain="money", distress_level="moderate"),
+        ):
+            result = classifier.classify("worried about the rent this month", [])
+            assert result["domain"] == "money"
+
     # Phase 17.2: Confidence calibration tests
 
     def test_low_confidence_sensitive_domain_falls_back_to_keyword(self, classifier):

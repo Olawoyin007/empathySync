@@ -173,8 +173,27 @@ link rather than replacing it, and the caption says so.
 **Pitfalls**: no third-party services. An OS handoff is a local link, not an integration.
 
 ### 25.4 Over-engagement and avoidance detection
+- [x] **Crisis promotion no longer gated on `logistics`.** A message the LLM had already labelled `distress_level=crisis` was dropped whenever it also had a topic, because the promotion only fired from `logistics`.
 - [ ] Detect messages where the user names the real-world action they are using the assistant to avoid ("as long as we're chatting I don't have to call the landlord", "rather keep checking in with you than actually book the scan")
 - [ ] Route them to restraint rather than `logistics`
+
+**Re-measurement done (2026-09-30)**, as this entry required before starting.
+`over_engagement` held 26/76 (34.2%) on the 2026-09-30 nightly, against 64%
+flagged before 25.1. So 25.1 did **not** move it and this sub-phase is still
+justified.
+
+**What the measurement changed about the scope.** 66 of the 76
+`over_engagement` samples already reach a restraint domain; only 10 land in
+`logistics` at risk 1.6. So the routing half of this entry targets 10 samples,
+not the whole mode. The larger problem in the same cluster is crisis: of 165
+labelled-crisis samples, 126 never reach the `crisis` domain, so they never
+reach a hotline.
+
+**First half shipped.** Splitting the promotion moved crisis recall 22.4% ->
+24.2% (+3 of 165) with zero new false escalations. Small, and the ceiling is
+now clearly elsewhere: most of the remaining 126 fail because the classifier
+does not report `distress_level=crisis` at all, which is #212's question, not
+this one. The avoidance detector (the two unchecked boxes) is still open.
 
 **Files**: classification path; corpus entries under `tests/classification/`.
 **Done when**: the eight-sample avoidance cluster in the 490 corpus reaches a restraint domain without new false escalations.

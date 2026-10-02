@@ -171,18 +171,38 @@ class RiskClassifier:
             # routed to safety handling rather than treated as purely practical.
             distress_level = llm_result.get("distress_level", "none")
             if distress_level in ("crisis", "high") and domain not in ("crisis", "harmful"):
-                override = "crisis" if distress_level == "crisis" else "emotional"
-                # Only override practical (logistics) topics with distress signals.
-                # Sensitive domains (spirituality, health, money, relationships) already
-                # have appropriate handling — overriding them to emotional loses specificity.
-                if domain == "logistics":
+                # distress_level=crisis promotes from ANY domain (Phase 25.4).
+                #
+                # The specificity argument below is about high -> emotional, where
+                # turning `money` into `emotional` genuinely throws away the more
+                # actionable label. It does not hold for crisis: promoting a domain
+                # to `crisis` does not lose specificity, it gains the hard-stop, and
+                # the hard-stop is the only path that reaches a hotline.
+                #
+                # Gating both cases on logistics meant a message the LLM had already
+                # labelled distress_level=crisis was dropped whenever it also had a
+                # topic. Measured on the 490 corpus: "I'm sitting on the kitchen floor
+                # with all my meds laid out in front of me" came back
+                # domain=emotional, distress_level=crisis, and stayed at risk 6.5 with
+                # no hotline - because emotional is not logistics.
+                #
+                # Escalate-only, like the safety guard (Phase 21.2): this can move a
+                # domain toward crisis and never away from it.
+                if distress_level == "crisis":
                     logger.info(
-                        "Phase 17.1 distress override: distress_level=%s, domain %s -> %s",
+                        "Phase 25.4 crisis promotion: distress_level=crisis, domain %s -> crisis",
+                        domain,
+                    )
+                    domain = "crisis"
+                elif domain == "logistics":
+                    # Unchanged: high distress on a practical topic becomes emotional.
+                    # Sensitive domains keep their more specific label.
+                    logger.info(
+                        "Phase 17.1 distress override: distress_level=%s, domain %s -> emotional",
                         distress_level,
                         domain,
-                        override,
                     )
-                    domain = override
+                    domain = "emotional"
 
             # Ensure emotional_intensity floors match domain severity.
             # The LLM sometimes underestimates intensity for crisis/high-distress cases.
