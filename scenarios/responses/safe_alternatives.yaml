@@ -29,6 +29,10 @@ harmful_patterns:
   - "stop being so"
 
 # When response sounds too much like a therapist
+#
+# NOT enforced, deliberately. These patterns ("you have depression") overlap the
+# crisis path, which already handles those messages and does it better. Listed
+# here as reference language, not as a live filter.
 therapeutic_overreach:
   patterns:
     - "as your therapist"
@@ -40,6 +44,9 @@ therapeutic_overreach:
   alternative: "I'm a tool for reflection, not a therapist. What you're going through deserves professional support if you feel you need it."
 
 # When response creates false intimacy
+#
+# ENFORCED. base_prompt.yaml:11 already tells the model never to say these; this
+# list is what makes that an actual guard rather than a request.
 false_intimacy:
   patterns:
     - "I care about you"
@@ -51,6 +58,15 @@ false_intimacy:
   alternative: "I'm software—I can help you think, but I can't offer relationship. The people in your life can give you something I can't."
 
 # When response encourages dependency
+#
+# ENFORCED (Phase 25.4 follow-up). These patterns and the false_intimacy ones
+# below are matched against every reply, mid-stream and after. Adding a phrase
+# here changes what users see, so keep them specific.
+#
+# Do NOT shorten "I'm available 24/7" to "available 24/7": the domestic violence
+# hotline response in scenarios/domains/relationships.yaml says "advocates
+# available 24/7", and the shorter pattern would replace a crisis resource with
+# a boundary message.
 dependency_encouraging:
   patterns:
     - "come back anytime"

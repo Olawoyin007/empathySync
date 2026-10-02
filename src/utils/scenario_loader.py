@@ -268,6 +268,32 @@ class ScenarioLoader:
         safe_alts = responses.get("safe_alternatives", {})
         return safe_alts.get("harmful_patterns", [])
 
+    # Voice blocks that are ENFORCED. therapeutic_overreach is deliberately not
+    # here: its patterns ("you have depression") overlap the crisis path, which
+    # already handles those messages and does it better.
+    ENFORCED_VOICE_BLOCKS = ("false_intimacy", "dependency_encouraging")
+
+    def get_voice_violations(self) -> Dict[str, Dict]:
+        """Manipulative-voice blocks from `safe_alternatives.yaml`.
+
+        Returns {category: {"patterns": [...], "alternative": str}} with every
+        pattern lowercased. The lowercasing matters: the matcher lowercases the
+        response text but not the patterns, and these are authored capitalised
+        ("I'm here for you"), so an un-folded pattern silently never matches.
+        """
+        responses = self.get_all_responses()
+        safe_alts = responses.get("safe_alternatives", {})
+        out = {}
+        for name in self.ENFORCED_VOICE_BLOCKS:
+            block = safe_alts.get(name) or {}
+            patterns = [p.lower() for p in (block.get("patterns") or [])]
+            if patterns:
+                out[name] = {
+                    "patterns": patterns,
+                    "alternative": (block.get("alternative") or "").strip(),
+                }
+        return out
+
     def get_base_prompt_config(self) -> Dict:
         """Get base prompt configuration."""
         responses = self.get_all_responses()

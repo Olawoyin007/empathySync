@@ -104,6 +104,16 @@ User-facing prompts and AI styles:
 Response templates:
 - `fallbacks.yaml` - When AI can't generate suitable response
 - `safe_alternatives.yaml` - When response contains harmful patterns
+
+**Which blocks are live:** `harmful_patterns` (harsh tone), `false_intimacy` and
+`dependency_encouraging` are matched against every reply. `therapeutic_overreach`
+is reference language only, left unenforced because it overlaps the crisis path.
+
+Adding a phrase to a live block changes what users see, so keep them specific.
+In particular do not shorten `"I'm available 24/7"`: the domestic violence
+hotline response in `domains/relationships.yaml` contains "advocates available
+24/7", and the shorter pattern would replace a crisis resource with a boundary
+message.
 - `base_prompt.yaml` - Core system prompt configuration
 
 ### classification/

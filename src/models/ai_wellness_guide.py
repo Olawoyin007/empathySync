@@ -733,9 +733,13 @@ class WellnessGuide:
                 accumulated += token
                 _buf += token
                 if len(_buf) >= _STREAM_BUFFER_SIZE:
-                    if self._contains_harmful_content(_tail + _buf):
-                        logger.warning("Harmful content detected in stream buffer (mid-stream)")
-                        safe_alt = self._get_safe_alternative_response()
+                    _violation = self._detect_voice_violation(_tail + _buf)
+                    if _violation or self._contains_harmful_content(_tail + _buf):
+                        logger.warning(
+                            "Harmful content detected in stream buffer (mid-stream): %s",
+                            _violation or "harmful_patterns",
+                        )
+                        safe_alt = self._get_safe_alternative_response(_violation)
                         self._last_streamed_response = safe_alt
                         yield "\n\n" + safe_alt
                         return
@@ -743,9 +747,13 @@ class WellnessGuide:
                     yield _buf
                     _buf = ""
             if _buf:
-                if self._contains_harmful_content(_tail + _buf):
-                    logger.warning("Harmful content detected in stream buffer (flush)")
-                    safe_alt = self._get_safe_alternative_response()
+                _violation = self._detect_voice_violation(_tail + _buf)
+                if _violation or self._contains_harmful_content(_tail + _buf):
+                    logger.warning(
+                        "Harmful content detected in stream buffer (flush): %s",
+                        _violation or "harmful_patterns",
+                    )
+                    safe_alt = self._get_safe_alternative_response(_violation)
                     self._last_streamed_response = safe_alt
                     yield "\n\n" + safe_alt
                     return
@@ -758,9 +766,13 @@ class WellnessGuide:
                 yield "\n" + fallback
                 return
 
-            if self._contains_harmful_content(accumulated):
-                logger.warning("Harmful content detected in streamed response (post-stream check)")
-                safe_alt = self._get_safe_alternative_response()
+            _violation = self._detect_voice_violation(accumulated)
+            if _violation or self._contains_harmful_content(accumulated):
+                logger.warning(
+                    "Harmful content detected in streamed response (post-stream check): %s",
+                    _violation or "harmful_patterns",
+                )
+                safe_alt = self._get_safe_alternative_response(_violation)
                 self._last_streamed_response = safe_alt
                 # Content already streamed — log warning, safe alt appended
                 yield "\n\n" + safe_alt
@@ -1468,9 +1480,13 @@ class WellnessGuide:
             return self._get_fallback_response(is_practical=is_practical)
 
         # Basic safety checks (always apply)
-        if self._contains_harmful_content(response):
-            logger.warning("Potentially harmful content detected in response")
-            return self._get_safe_alternative_response()
+        violation = self._detect_voice_violation(response)
+        if violation or self._contains_harmful_content(response):
+            logger.warning(
+                "Potentially harmful content detected in response: %s",
+                violation or "harmful_patterns",
+            )
+            return self._get_safe_alternative_response(violation)
 
         # Ensure response is meaningful
         if len(response.strip()) < 10:
@@ -1879,8 +1895,36 @@ class WellnessGuide:
             return "Not something I track."
         return None
 
+    def _detect_voice_violation(self, text: str) -> Optional[str]:
+        """Which manipulative-voice block the text trips, if any.
+
+        `safe_alternatives.yaml` has always held three such blocks, each with
+        its own `alternative:` reply, and nothing in the code read any of them -
+        `get_harmful_patterns()` returns only the top-level `harmful_patterns`
+        list, which is harsh-tone phrasing ("grow up", "that's pathetic") and
+        contains no bonding language at all. So "I'm here for you" and "come
+        back anytime" passed straight through, while both CLAUDE.md and
+        docs/architecture.md said they were intercepted.
+
+        `scenarios/responses/base_prompt.yaml:11` already instructs the model
+        never to say these. This is the guard for that instruction, which is the
+        same lesson as Phase 25.2: a prompt instruction is not a guard.
+
+        Returns the category name so the caller can use that block's own
+        alternative, which is more specific than the generic one.
+        """
+        if not text:
+            return None
+        lowered = text.lower()
+        for category, block in self.prompts.loader.get_voice_violations().items():
+            if any(p in lowered for p in block["patterns"]):
+                return category
+        return None
+
     def _contains_harmful_content(self, text: str) -> bool:
         """Check for harmful content patterns."""
+        if self._detect_voice_violation(text):
+            return True
         harmful_patterns = self.prompts.loader.get_harmful_patterns()
 
         # Fallback patterns if scenarios not loaded
@@ -1917,8 +1961,17 @@ class WellnessGuide:
             "What's the main thing on your mind?"
         )
 
-    def _get_safe_alternative_response(self) -> str:
-        """Safe alternative when potentially harmful content is detected"""
+    def _get_safe_alternative_response(self, category: Optional[str] = None) -> str:
+        """Safe alternative when potentially harmful content is detected.
+
+        When a voice block matched, prefer that block's own `alternative:` - it
+        names the specific thing that went wrong ("I can't offer relationship")
+        instead of the generic "let me try a different approach".
+        """
+        if category:
+            block = self.prompts.loader.get_voice_violations().get(category) or {}
+            if block.get("alternative"):
+                return block["alternative"]
         safe_alt = self.prompts.get_safe_alternative_response()
         if safe_alt:
             return safe_alt

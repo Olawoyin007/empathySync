@@ -5,6 +5,49 @@ All notable changes to empathySync are documented here.
 ## [Unreleased]
 
 ### Fixed
+- **The manipulative-voice guard was never switched on (#177).** Both
+  `CLAUDE.md` and `docs/architecture.md` described `_contains_harmful_content()`
+  as intercepting false-intimacy and dependency-encouraging phrasing. It did
+  not. It calls `get_harmful_patterns()`, which returns only the top-level
+  `harmful_patterns` list - 17 harsh-tone phrases like "grow up" and "that's
+  pathetic", with no bonding language in it at all.
+
+  The three voice blocks in `safe_alternatives.yaml` - 17 patterns plus a
+  hand-written `alternative:` each - were read by nothing. `grep -rn` across
+  `src/` returned zero hits for all three block names. Measured before the fix:
+
+  ```
+  False  "I'm here for you"      False  "come back anytime"
+  False  "I care about you"      False  "I'll always be here"
+  True   "grow up"               True   "you should feel"
+  ```
+
+  `false_intimacy` and `dependency_encouraging` are now enforced.
+  `therapeutic_overreach` is deliberately left out: its patterns ("you have
+  depression") overlap the crisis path, which already handles those messages.
+
+  Two details worth keeping:
+
+  Patterns are lowercased on load. The matcher lowercases the response text but
+  not the patterns, and they are authored capitalised, so an un-folded pattern
+  silently never matches. A test now pins this.
+
+  The pattern is `"I'm available 24/7"` and must stay that specific. The
+  domestic violence hotline response in `domains/relationships.yaml` says
+  "advocates available 24/7"; the shorter form would replace a crisis resource
+  with a boundary message. Also pinned by a test.
+
+  Each block's own `alternative:` is now used in place of the generic one, so a
+  bonding slip gets "I can't offer relationship" rather than "let me try a
+  different approach".
+
+  `base_prompt.yaml:11` already told the model never to say these. This is the
+  guard for that instruction - the same lesson as Phase 25.2: a prompt
+  instruction is not a guard. Two conversation scenarios
+  (`stress_test_003`, `stress_test_005`) already listed "I'm here for you" under
+  `must_not_contain`, so the tests were asking for this before the code did it.
+
+### Fixed
 - **A message already labelled `distress_level=crisis` was dropped unless its
   domain was `logistics` (Phase 25.4, part).** The promotion in
   `risk_classifier.py` read:
