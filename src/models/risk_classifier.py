@@ -313,6 +313,23 @@ class RiskClassifier:
                     )
                     domain = "emotional"
                     sanity_check_triggered = "distress_present->emotional"
+            # Phase 25.4: logistics with no distress flag, but the text shows the
+            # conversation being used to avoid a real action. 17.4 above owns the
+            # case where the LLM flagged distress; these report
+            # distress_present=False, because the request itself is cheerful
+            # ("ask me another question about the rent"). Routed the same way
+            # 17.4 routes: a specific keyword domain if there is one, else
+            # emotional. Only fires on logistics, so it can never take a
+            # sensitive domain away.
+            elif domain == "logistics" and self._detect_avoidance(user_input):
+                keyword_domain = self._detect_domain(
+                    user_input, primary_domain=primary_domain, domain_streak=domain_streak
+                )
+                resolved = keyword_domain if keyword_domain != "logistics" else "emotional"
+                logger.info("Phase 25.4 avoidance: logistics + substitution -> %s", resolved)
+                domain = resolved
+                sanity_check_triggered = "avoidance->" + resolved
+
             # Emotional is a catch-all. If keywords find a more specific sensitive domain,
             # that signal is more precise than the LLM's generic emotional classification.
             elif domain == "emotional":
@@ -489,6 +506,28 @@ class RiskClassifier:
             or t.startswith(phrase + "!")
             for phrase in continuation_phrases
         )
+
+    def _detect_avoidance(self, text: str) -> bool:
+        """True when the message uses this conversation to not do something.
+
+        Two-part match, both halves required (Phase 25.4). Each half on its own
+        is ordinary English: "I'd rather use Python than Java" displaces
+        something with no chat in it; "let's just keep going" names the chat
+        with nothing displaced. Together they mean the app is being chosen over
+        a real action.
+
+        These messages report distress_present=False and carry no sensitive
+        keyword, which is why step 17.4 does not reach them - the user is
+        steering away from the topic on purpose, so there is no topic to detect.
+        """
+        config = self.loader.get_avoidance_patterns()
+        if not config.get("enabled", False):
+            return False
+
+        t = normalize_for_matching(text)
+        destination = config.get("chat_as_destination") or []
+        displaced = config.get("obligation_displaced") or []
+        return any(p in t for p in destination) and any(p in t for p in displaced)
 
     def _detect_domain(self, text: str, primary_domain: str = None, domain_streak: int = 0) -> str:
         """
