@@ -206,6 +206,37 @@ User Input
     │
     ▼
 ┌─────────────────────────────────────────────┐
+│  3e. CRISIS SECOND PASS (#212)              │
+│     Everything above sorts a message into   │
+│     ONE topic, and only `crisis` fires the  │
+│     hotline block. So a self-harm message   │
+│     that also mentions money, or wears a    │
+│     cheerful request on the surface, is     │
+│     sorted by its loudest feature and gets  │
+│     no emergency resource.                  │
+│     This asks one question instead of all   │
+│     eight: does this point at self-harm?    │
+│     One word back.                          │
+│     Config + the prompt's reasoning:        │
+│       scenarios/classification/             │
+│       crisis_second_pass.yaml               │
+│     Escalate-only, and skipped entirely     │
+│     when the domain is already crisis or    │
+│     harmful. Only an explicit True          │
+│     escalates. Fails closed to no-change.   │
+│     Measured (490 corpus, 2026-10-02):      │
+│       pipeline alone      46/165  27.9%     │
+│       union, shipped      94/165  57.0%     │
+│       false positives      2/120   1.7%     │
+│       cost             0.10s / message      │
+│     The rejected alternative was a bigger   │
+│     classifier: slower on every message,    │
+│     to buy accuracy on eight topics when    │
+│     the one that matters is one.            │
+└─────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────┐
 │  4. MODE SELECTION                          │
 │     domain == "logistics" → Practical Mode  │
 │     OR is_practical_technique → Practical   │

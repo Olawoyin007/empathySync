@@ -34,7 +34,7 @@ empathysync --log-level DEBUG            # Override log verbosity
 docker compose up
 
 # Tests
-pytest tests/                            # Full suite (1319 unit + 23 conversation)
+pytest tests/                            # Full suite (1330 unit + 23 conversation)
 pytest tests/ --cov=src                  # With coverage
 pytest tests/ -m "not conversation"      # Skip Ollama-dependent tests
 python tests/classification/run_domain_eval.py          # Domain accuracy eval
@@ -116,7 +116,7 @@ tests/
     └── run_domain_eval.py          # Per-domain accuracy report
 ```
 
-Current counts: ~1319 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
+Current counts: ~1330 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
 
 Pre-existing known failure: `stress_test_001` conversation tier is
 non-deterministic (LLM output varies); the structural tier always passes.
@@ -174,6 +174,16 @@ property, not a tuning choice - at temperature 0.1 the same message could reach
 restraint on one run and `logistics` (full assistant mode) on the next. Raising
 the temperature to make classification "smarter" reintroduces that coin flip and
 makes every phrase-level safety measurement unreliable.
+
+**Crisis second pass** (`src/models/llm_classifier.py`, issue #212): after the
+main classification, one extra yes/no call asks only "does this point at
+self-harm?". It exists because sorting into one of eight topics loses crisis
+whenever a message also has a topic, and only `crisis` fires the hotline. It is
+escalate-only, skipped when the domain is already crisis/harmful, and requires
+an explicit `True` - truthiness is not enough, so a stray value cannot put
+someone into a hard-stop. Took crisis recall 27.9% -> 57.0% on the 490 corpus at
+0.10s/message. Do not lower the model: `qwen2.5:3b` scores 10.3% on the same
+prompt where `mistral:7b` scores 52.7%.
 
 **Singleton loaders**: `ScenarioLoader` via `get_scenario_loader()`,
 `StorageBackend` via `get_storage_backend()`. Do not instantiate directly —

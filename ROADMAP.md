@@ -216,6 +216,26 @@ re-measure before starting.
 
 ---
 
+## Phase 25.6: Crisis Second Pass ✅ DONE (2026-10-02, closes #212)
+
+**The decision #212 asked for**: bigger classifier, crisis-only second pass, or
+accept. Chosen: the second pass, because the fault was never model capacity. The
+pipeline sorts into one of eight topics and only `crisis` fires the hotline, so
+crisis is lost whenever a message also has a topic. A bigger classifier slows
+every message to buy accuracy on eight labels when the one that matters is one.
+
+**Result**: crisis recall 27.9% -> 57.0% on the 490 corpus. `run_domain_eval`
+97/122 -> 98/122 with crisis 9/13 -> 10/13 and no domain regressed. 0.10s per
+message, 1.7% false positives.
+
+**What #218 looks like now**: it reported 21% of crisis prompts reaching the
+hard-stop. That is now 57%. The remaining 71 are missed by the pipeline and the
+second pass both, which overlap on only 36 samples - so they are complementary
+and the rest needs something neither does. That is a corpus and clinician
+question (Phase 24), not another classifier layer.
+
+---
+
 ## Phase 24: Clinician Co-Design Tooling (Guided Form → Reviewed PR) 🔜 PLANNED (moved ahead of 23 and 22 on 2026-09-19)
 
 **Why it moved up**: every number in this project is measured against corpora

@@ -401,6 +401,33 @@ class RiskClassifier:
                 domain = "harmful"
                 safety_guard_override = "harmful"
 
+        # Crisis second pass (issue #212). Mirrors the guard above: additive,
+        # escalate-only, and never consulted once the domain is already crisis or
+        # harmful.
+        #
+        # Everything upstream sorts a message into ONE topic, so a self-harm
+        # message that also mentions money, or that wears a cheerful request on
+        # the surface, gets sorted by its loudest feature. Only the crisis domain
+        # fires the hotline block, so being sorted elsewhere means no emergency
+        # resource at all. This asks about the one thing instead of all eight.
+        #
+        # Measured on the 490 corpus (2026-10-02): the pipeline alone reached 46
+        # of 165 crisis prompts, this pass alone 87, together 97 - so it finds 51
+        # the pipeline cannot while the pipeline finds 10 it cannot. 1.7% false
+        # positives on non-crisis, 0.10s per message. The rejected alternative
+        # was a larger classifier, which slows every message to buy accuracy on
+        # eight topics when the accuracy that matters is on one.
+        crisis_second_pass_fired = False
+        if domain not in ("crisis", "harmful") and self._llm_classifier.is_enabled() is True:
+            # `is True`, not truthiness: only a definite yes escalates anyone to
+            # crisis. Anything else - None, an error sentinel, a test double -
+            # leaves the classification alone.
+            if self._llm_classifier.crisis_second_pass(user_input) is True:
+                logger.warning("Crisis second pass: %s -> crisis", domain)
+                domain = "crisis"
+                emotional_intensity = max(emotional_intensity, 9.0)
+                crisis_second_pass_fired = True
+
         # Always use keyword matching for these (LLM doesn't handle them yet)
         dependency_risk = self._assess_dependency(conversation_history)
         emotional_weight, weight_score = self._assess_emotional_weight(user_input)
@@ -416,6 +443,9 @@ class RiskClassifier:
             "risk_weight": risk_weight,
             "classification_method": classification_method,
         }
+
+        if crisis_second_pass_fired:
+            result["crisis_second_pass"] = True
 
         # Phase 21.2: flag safety-guard escalations for policy transparency.
         if safety_guard_override:

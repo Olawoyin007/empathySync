@@ -122,6 +122,13 @@ LLM classifier configuration (Phase 9, 9.1):
 - `llm_classifier.yaml` - Classification prompt template, examples, and fast-path patterns
 - `avoidance.yaml` - (Phase 25.4) Substitution phrases: the app being chosen over
   a real action
+- `crisis_second_pass.yaml` - (#212) One extra yes/no question asked after the
+  main classification: does this message point at self-harm? The file carries
+  the measured numbers and explains why the prompt is worded as it is - the NO
+  list is doing the real work, and removing items from it raises recall and
+  wrecks precision. Re-measure both before changing a word, and do not swap the
+  model down (qwen2.5:3b manages 10.3% on this prompt where mistral:7b manages
+  52.7%).
 
 **Editing `avoidance.yaml`:** it holds two lists and **both must match** for the
 check to fire. `chat_as_destination` is the conversation being named as where the

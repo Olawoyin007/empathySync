@@ -1,0 +1,86 @@
+# Crisis second pass (Phase 25.6, issue #212)
+#
+# THE PROBLEM THIS SOLVES
+# The main classifier sorts a message into one topic. Crisis is one topic among
+# eight, so a message about self-harm that also mentions money, or that wears a
+# cheerful request on the surface, gets sorted by its loudest feature. Measured
+# on the 490 corpus: only 46 of 165 crisis prompts reached the crisis domain,
+# and only the crisis domain fires the hotline block. The other 119 got a
+# thoughtful reply and no emergency resource.
+#
+# A bigger classifier was the other option considered. It was rejected because
+# it slows down every message to buy accuracy on all eight topics, when the
+# accuracy that matters is on one.
+#
+# WHAT THIS IS
+# One extra question, asked after the main classification: "is there an
+# indication this person may harm themselves?" One word back. It cannot change
+# anything except promoting a domain to crisis, and it is never consulted when
+# the domain is already crisis or harmful.
+#
+# MEASURED (490 corpus, mistral:7b-instruct, 2026-10-02)
+#   pipeline alone        46/165   27.9%
+#   this pass alone       87/165   52.7%
+#   union, what ships     97/165   58.8%
+#   false positives        2/120    1.7%   (both arguably correct; the corpus
+#                                           labels "I just want everything to
+#                                           stop" as emotional)
+#   cost                  0.10s per message
+#
+# The two overlap on 36 samples, so this pass finds 51 the pipeline cannot and
+# the pipeline finds 10 this pass cannot. They are complementary, which is why
+# this is additive rather than a replacement.
+#
+# WHY THE PROMPT LOOKS LIKE THIS
+# The first version asked about "risk of suicide or self-harm" and included
+# "needing company so they don't act". It caught 92.7% and false-positived on
+# 37.5% of everything else - it fired on debt panic, gambling, and anyone
+# relying on the app. A 37.5% rate means handing a hotline to someone asking
+# about credit cards, which teaches people to ignore it.
+#
+# The NO list below is doing the real work. Removing items from it will raise
+# recall and wreck precision. Measure both before changing a word.
+#
+# A smaller model was tried: qwen2.5:3b-instruct manages 10.3% on this prompt.
+# It cannot hold the distinction. Do not swap the model down without re-running
+# the numbers.
+
+enabled: true
+
+# Falls back to the classifier model, then the main model, if unset.
+model: "mistral:7b-instruct"
+
+timeout_ms: 20000
+
+# Deterministic, for the same reason classification is (see CLAUDE.md): a crisis
+# that is caught on one run and missed on the next is not a safety property.
+temperature: 0.0
+seed: 42
+max_tokens: 4
+
+prompt_template: |
+  You are a safety triage check. You answer exactly one word.
+
+  Is there an indication in this message that the person may harm or kill
+  themselves?
+
+  Say YES only if the message points at self-harm or death. That includes a plan,
+  a method or means they have to hand, a place or act they picture, wanting to
+  stop existing or not be here, or saying they will do something to themselves.
+  Indirect wording still counts: "before I do something", "I picture the bridge",
+  "I want everything to stop".
+
+  Say NO for everything else, however severe it sounds. These are all NO:
+  debt, gambling or money panic; physical symptoms or health fear; grief,
+  loneliness, numbness or hopelessness with no mention of harm; relationship or
+  faith distress; wanting to keep talking to you; preferring you to people;
+  relying on you daily; avoiding an appointment or a phone call.
+
+  Distress alone is NO. Dependence on this app alone is NO. There must be a
+  pointer to self-harm or death.
+
+  <user_message>
+  {message}
+  </user_message>
+
+  Answer YES or NO.
