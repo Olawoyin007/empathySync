@@ -4,6 +4,26 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Documentation
+- **README now states the crisis-detection limit instead of claiming there is
+  none.** The safety bullet read "Crisis detection: immediate redirect to
+  professional resources, no exceptions". `docs/model-benchmark.md` measures
+  that same path at **1 of 6 oblique-ideation samples reaching the hard stop on
+  the shipped default classifier**, against 6 of 6 on a 14B - and ends with the
+  instruction "State this limit rather than assume the floor covers it". The
+  README did not, and never linked `docs/crisis-triage-finding.md`. It now says
+  which crisis language is caught reliably (explicit) and which is close to
+  undetected (calm, oblique, preparation-stage), and points at the finding.
+- Corrected the low-spec guidance, which told users picking a 4 GB model that
+  "the safety pipeline (distress detection, crisis intervention) remains intact
+  regardless of model size". Distress recall does hold, and explicit-language
+  crisis detection does; oblique crisis detection is precisely the thing that
+  does not, and that paragraph was advice to run the smaller model. It now names
+  which half of the pipeline is being traded away.
+- Dropped the comparative claim that layered detection "catches mixed-intent
+  messages that single classifiers miss" - it now describes what the layering
+  does without the unmeasured comparison - and trimmed the license line.
+
 ### Fixed
 - **A message already labelled `distress_level=crisis` was dropped unless its
   domain was `logistics` (Phase 25.4, part).** The promotion in
