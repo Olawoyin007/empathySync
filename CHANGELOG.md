@@ -4,6 +4,41 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Documentation
+- Calmer MANIFESTO, slogans only. Four lines changed: the preamble's "AI
+  integration is inevitable. Its impact is not."; "If it cannot be explained
+  plainly, it is not ethical" (explicability and ethics are not the same claim,
+  so it now says "not ready to ship"); the contribution section's "To contribute
+  is to submit to the principles... Empathy is not aesthetic, it is design law";
+  and the closing "This is not a product. It is a firewall between human
+  cognition and machine exploitation."
+  **The six Core Principles, the Implementation Directives, the Prohibited
+  Features hard-fail list, Required Failures, Governance and the Living Clause
+  are untouched** - including "Privacy Absolute: All processing local. No
+  external calls. No telemetry. No exceptions." The severity of that register is
+  doing real work in a principles document and softening it is exactly the
+  erosion the Living Clause forbids. This change fails the `Check MANIFESTO.md
+  is unchanged` CI job, which blocks any PR touching the file; made with
+  maintainer approval.
+- **README now states the crisis-detection limit instead of claiming there is
+  none.** The safety bullet read "Crisis detection: immediate redirect to
+  professional resources, no exceptions". `docs/model-benchmark.md` measures
+  that same path at **1 of 6 oblique-ideation samples reaching the hard stop on
+  the shipped default classifier**, against 6 of 6 on a 14B - and ends with the
+  instruction "State this limit rather than assume the floor covers it". The
+  README did not, and never linked `docs/crisis-triage-finding.md`. It now says
+  which crisis language is caught reliably (explicit) and which is close to
+  undetected (calm, oblique, preparation-stage), and points at the finding.
+- Corrected the low-spec guidance, which told users picking a 4 GB model that
+  "the safety pipeline (distress detection, crisis intervention) remains intact
+  regardless of model size". Distress recall does hold, and explicit-language
+  crisis detection does; oblique crisis detection is precisely the thing that
+  does not, and that paragraph was advice to run the smaller model. It now names
+  which half of the pipeline is being traded away.
+- Dropped the comparative claim that layered detection "catches mixed-intent
+  messages that single classifiers miss" - it now describes what the layering
+  does without the unmeasured comparison - and trimmed the license line.
+
 ### Fixed
 - **The manipulative-voice guard was never switched on (#177).** Both
   `CLAUDE.md` and `docs/architecture.md` described `_contains_harmful_content()`

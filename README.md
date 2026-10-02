@@ -57,9 +57,20 @@ We optimise for exit, not engagement.
 
 ### Safety & restraint
 
-- **Crisis detection**: immediate redirect to professional resources, no exceptions
+- **Crisis detection**: explicit crisis language triggers an immediate redirect
+  to professional resources, before anything else in the pipeline can respond.
+  **This has a measured limit.** Calm, oblique, preparation-stage crisis -
+  a pre-emptive goodbye, a means inquiry, post-decision calm - is close to
+  undetected on the recommended 7-8 GB classifiers: 1 of 6 such samples reached
+  the hard stop on the shipped default, against 6 of 6 on a 14B classifier. It
+  is a model capability limit, not a prompt that needs rewording, and the
+  keyword floor cannot reach these cases either. Read
+  [`docs/crisis-triage-finding.md`](docs/crisis-triage-finding.md) before relying
+  on this in any setting that matters.
 - **Post-crisis protection**: never apologises for safety interventions
-- **Layered distress detection**: tracks conversation topic and distress level independently - catches mixed-intent messages ("help me write a goodbye letter") that single classifiers miss
+- **Layered distress detection**: tracks conversation topic and distress level
+  independently, so a message can register distress even when its surface request
+  is practical ("help me write a goodbye letter")
 
 ### Awareness & honesty
 
@@ -141,7 +152,13 @@ empathysync --log-level DEBUG  # Set log verbosity (DEBUG, INFO, WARNING, ERROR)
 - 8GB RAM recommended (4GB minimum with smaller models)
 - GPU optional but improves response time
 
-**Lower-spec machine?** `qwen2.5:3b-instruct` runs on 4GB GPU and passes 55% of scenarios. The safety pipeline (distress detection, crisis intervention) remains intact regardless of model size - distress recall is measured separately and stays high even on the smallest models.
+**Lower-spec machine?** `qwen2.5:3b-instruct` runs on 4GB GPU and passes 55% of
+scenarios. Distress recall is measured separately and stays high even on the
+smallest models, and explicit-language crisis detection is unaffected by model
+size. Oblique crisis detection is not: it degrades sharply below a 14B
+classifier (see the crisis-detection note above and
+[`docs/crisis-triage-finding.md`](docs/crisis-triage-finding.md)). Choose the
+smaller model knowing which half of the safety pipeline you are trading away.
 
 ## How It's Built
 
@@ -214,7 +231,7 @@ If you're an engineer, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT License - Built for everyone's benefit and maximum accessibility.
+MIT License.
 
 ---
 

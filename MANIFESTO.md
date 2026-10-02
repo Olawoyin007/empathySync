@@ -3,12 +3,13 @@
 
 ## Preamble
 
-AI integration is inevitable. Its impact is not.  
-This project exists to enforce one outcome:  
+AI is going to be built into more and more things. How it behaves there is still
+a choice. This project exists to hold one outcome:  
 **Preservation of human agency in the presence of machine intelligence.**
 
-empathySync rejects optimization for engagement, control, or revenue.  
-Its only metric is whether the human stays whole.
+empathySync is not optimised for engagement, control, or revenue. It is measured
+on whether the person using it is better off for having done so, including when
+that means a short answer and a suggestion to talk to someone.
 
 ---
 
@@ -28,7 +29,7 @@ User data belongs to the user or it does not exist.
 
 ### 4. **Transparency by Default**
 System behavior, limitations, and architecture must be understandable without mediation.  
-If it cannot be explained plainly, it is not ethical.
+If it cannot be explained plainly, it is not ready to ship.
 
 ### 5. **Zero Manipulation**
 No dark patterns. No behavior tracking for optimization.  
@@ -51,9 +52,9 @@ Any feature that compromises a principle is rejected, regardless of technical me
 
 ## Contribution Protocol
 
-To contribute is to submit to the principles.  
-No ideological flexibility is tolerated where user safety is concerned.  
-Empathy is not aesthetic, it is design law.
+Contributions are held to these principles. Where user safety is concerned there
+is no room to negotiate them, and that is not a matter of taste - the response
+behaviour is the product, not decoration on it.
 
 ---
 
@@ -89,4 +90,5 @@ Expansion is permitted. Erosion is not.
 
 ---
 
-**This is not a product. It is a firewall between human cognition and machine exploitation.**
+**The measure of this project is whether someone using it ends up relying on it
+less over time, not more.**
