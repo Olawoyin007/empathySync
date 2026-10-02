@@ -75,6 +75,11 @@ class ScenarioLoader:
 
     # ==================== CLASSIFICATION ====================
 
+    def get_crisis_second_pass_config(self) -> Dict:
+        """Crisis second-pass config (issue #212). {} when absent, which
+        disables the pass rather than breaking classification."""
+        return self._load_directory("classification").get("crisis_second_pass", {})
+
     def get_avoidance_patterns(self) -> Dict:
         """Avoidance/substitution phrase lists (Phase 25.4).
 

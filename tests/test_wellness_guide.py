@@ -386,6 +386,127 @@ class TestRiskClassifier:
             )
             assert result["domain"] == "health"
 
+    # Crisis second pass (issue #212)
+    #
+    # Everything upstream sorts a message into ONE topic. Only the crisis domain
+    # fires the hotline block, so a self-harm message sorted as money or
+    # emotional gets no emergency resource. Measured on the 490 corpus: the
+    # pipeline reached 46 of 165, this pass 87, together 97.
+
+    def _plain_llm(self, domain="money"):
+        return {
+            "domain": domain,
+            "emotional_intensity": 3.0,
+            "is_personal_distress": False,
+            "is_practical_technique": False,
+            "confidence": 0.95,
+            "distress_level": "none",
+            "distress_present": False,
+            "classification_method": "llm",
+        }
+
+    def test_second_pass_promotes_to_crisis(self, classifier):
+        with (
+            patch.object(classifier._llm_classifier, "classify", return_value=self._plain_llm()),
+            patch.object(classifier._llm_classifier, "crisis_second_pass", return_value=True),
+            patch.object(classifier._llm_classifier, "is_enabled", return_value=True),
+        ):
+            result = classifier.classify("i have them all here with me tonight", [])
+            assert result["domain"] == "crisis"
+            assert result["risk_weight"] == 10.0
+            assert result["crisis_second_pass"] is True
+
+    def test_second_pass_false_changes_nothing(self, classifier):
+        with (
+            patch.object(classifier._llm_classifier, "classify", return_value=self._plain_llm()),
+            patch.object(classifier._llm_classifier, "crisis_second_pass", return_value=False),
+            patch.object(classifier._llm_classifier, "is_enabled", return_value=True),
+        ):
+            result = classifier.classify("my credit card bill is out of control", [])
+            assert result["domain"] == "money"
+            assert "crisis_second_pass" not in result
+
+    @pytest.mark.parametrize("bad", [None, "yes", 1, object()])
+    def test_only_an_explicit_true_escalates(self, classifier, bad):
+        """Truthiness is not enough. A string, a 1, or a stray object must not
+        put someone into the crisis hard-stop."""
+        with (
+            patch.object(classifier._llm_classifier, "classify", return_value=self._plain_llm()),
+            patch.object(classifier._llm_classifier, "crisis_second_pass", return_value=bad),
+            patch.object(classifier._llm_classifier, "is_enabled", return_value=True),
+        ):
+            result = classifier.classify("help me budget for next month", [])
+            assert result["domain"] == "money"
+
+    @pytest.mark.parametrize("already", ["crisis", "harmful"])
+    def test_second_pass_is_not_consulted_when_already_terminal(self, classifier, already):
+        """No point asking, and it must not be able to rewrite `harmful`."""
+        called = []
+        with (
+            patch.object(
+                classifier._llm_classifier, "classify", return_value=self._plain_llm(already)
+            ),
+            patch.object(
+                classifier._llm_classifier,
+                "crisis_second_pass",
+                side_effect=lambda *a: called.append(1) or True,
+            ),
+            patch.object(classifier._llm_classifier, "is_enabled", return_value=True),
+        ):
+            result = classifier.classify("anything at all", [])
+            assert result["domain"] == already
+            assert called == []
+
+    def test_a_failing_second_pass_leaves_classification_alone(self, classifier):
+        """Network error, timeout, bad JSON: the reply must be whatever it would
+        have been, never an exception out of classify()."""
+        with (
+            patch.object(classifier._llm_classifier, "classify", return_value=self._plain_llm()),
+            patch.object(classifier._llm_classifier, "is_enabled", return_value=True),
+            patch.object(
+                classifier._llm_classifier.http_client, "post", side_effect=RuntimeError("boom")
+            ),
+        ):
+            result = classifier.classify("help me budget for next month", [])
+            assert result["domain"] == "money"
+
+    def test_second_pass_disabled_by_config(self, classifier):
+        """Patched at the point of use: crisis_second_pass calls the module-level
+        get_scenario_loader(), not self.loader."""
+        from unittest.mock import MagicMock
+
+        fake = MagicMock()
+        fake.get_crisis_second_pass_config.return_value = {"enabled": False}
+        with patch("models.llm_classifier.get_scenario_loader", return_value=fake):
+            assert classifier._llm_classifier.crisis_second_pass("i want to die") is False
+
+    def test_second_pass_parses_only_a_leading_yes(self, classifier):
+        """A chatty or empty answer is a no, so a confused model cannot escalate
+        anyone by accident."""
+        from unittest.mock import MagicMock
+
+        cfg = {"enabled": True, "prompt_template": "{message}", "model": "m", "max_tokens": 4}
+        for answer, expected in [
+            ("YES", True),
+            ("yes", True),
+            ("Yes.", True),
+            ("NO", False),
+            ("", False),
+            ("I cannot determine that", False),
+            ("Maybe yes", False),
+        ]:
+            resp = MagicMock()
+            resp.json.return_value = {"response": answer}
+            resp.raise_for_status.return_value = None
+            fake = MagicMock()
+            fake.get_crisis_second_pass_config.return_value = cfg
+            with (
+                patch("models.llm_classifier.get_scenario_loader", return_value=fake),
+                patch.object(classifier._llm_classifier.http_client, "post", return_value=resp),
+            ):
+                got = classifier._llm_classifier.crisis_second_pass("x")
+                assert got is expected, f"{answer!r} -> {got}, wanted {expected}"
+
     # Phase 17.2: Confidence calibration tests
 
     def test_low_confidence_sensitive_domain_falls_back_to_keyword(self, classifier):

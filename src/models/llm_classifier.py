@@ -28,6 +28,7 @@ _RE_JSON_PERMISSIVE = re.compile(r'\{.*?"domain".*?\}', re.DOTALL)
 from models.enums import Domain
 
 from config.settings import settings
+from utils.scenario_loader import get_scenario_loader
 from utils.helpers import normalize_for_matching
 
 logger = logging.getLogger(__name__)
@@ -392,6 +393,70 @@ class LLMClassifier:
         except httpx.HTTPError as e:
             logger.error(f"LLM classification API error: {e}")
             return None
+
+    def crisis_second_pass(self, message: str) -> bool:
+        """One question: does this message point at self-harm? (issue #212)
+
+        The main classifier sorts a message into one of eight topics, so a
+        self-harm message that also mentions money, or wears a cheerful request
+        on the surface, gets sorted by its loudest feature. Measured on the 490
+        corpus, only 46 of 165 crisis prompts reached the crisis domain, and
+        only that domain fires the hotline block.
+
+        This asks about the one thing instead, and is additive: the caller may
+        promote a domain to crisis on a True and must do nothing on a False.
+        Config and the reasoning behind the prompt live in
+        `scenarios/classification/crisis_second_pass.yaml`.
+
+        Returns False on anything unexpected - disabled, timeout, unparseable
+        answer - so a failure here leaves classification exactly as it was.
+        """
+        config = get_scenario_loader().get_crisis_second_pass_config()
+        if not config.get("enabled", False) or not message:
+            return False
+
+        template = config.get("prompt_template")
+        if not template:
+            return False
+
+        model = config.get("model") or settings.OLLAMA_CLASSIFIER_MODEL or settings.OLLAMA_MODEL
+        options = {
+            "temperature": config.get("temperature", 0.0),
+            "num_predict": config.get("max_tokens", 4),
+        }
+        seed = config.get("seed")
+        if seed is not None:
+            options["seed"] = seed
+
+        try:
+            t_start = time.perf_counter()
+            response = self.http_client.post(
+                self.ollama_url,
+                json={
+                    "model": model,
+                    # Same XML boundary as the main prompt: a crafted message
+                    # cannot escape the message field.
+                    "prompt": template.format(message=f"{message}"),
+                    "stream": False,
+                    "options": options,
+                },
+                timeout=config.get("timeout_ms", 20000) / 1000,
+            )
+            response.raise_for_status()
+            answer = (response.json().get("response") or "").strip().lower()
+            duration = time.perf_counter() - t_start
+            logger.info(
+                "crisis_second_pass | model=%s | duration_s=%.2f | answer=%s",
+                model,
+                duration,
+                answer[:12],
+            )
+            # Only an explicit yes counts. An empty or chatty answer is a no,
+            # so a confused model cannot escalate anyone by accident.
+            return answer.startswith("yes")
+        except Exception as e:
+            logger.warning("crisis_second_pass failed, leaving classification alone: %s", e)
+            return False
 
     def classify(
         self, message: str, conversation_history: List[Dict] = None, use_cache: bool = True
