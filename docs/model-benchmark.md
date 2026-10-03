@@ -79,8 +79,13 @@ specialist overreach, 1 false intimacy).
 
 A 7B classifier has a fixed attention budget for its prompt. Buying crisis
 sensitivity spends it, and other domains pay. The rules themselves are sound -
-they are what the 14B model applies to reach 6/6 - so this is a model capability
-limit, not a wording problem. The change was reverted.
+they are what the 14B model applies to reach 6/6. The change was reverted.
+
+Updated 2026-10-02: this section previously called that a model capability
+limit. The budget is only shared if the prompt is. Asking the same
+`mistral:7b-instruct` one dedicated question in a separate call reaches 52.7% of
+165 crisis samples, so the limit was the shared prompt rather than the model
+(issue #212).
 
 **What this means for a deployment.** On the recommended 7-8 GB classifiers,
 detection of calm, oblique, preparation-stage crisis is close to absent, and the

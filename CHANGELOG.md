@@ -82,7 +82,6 @@ All notable changes to empathySync are documented here.
   (`stress_test_003`, `stress_test_005`) already listed "I'm here for you" under
   `must_not_contain`, so the tests were asking for this before the code did it.
 
-### Fixed
 - **A message already labelled `distress_level=crisis` was dropped unless its
   domain was `logistics` (Phase 25.4, part).** The promotion in
   `risk_classifier.py` read:
@@ -122,7 +121,6 @@ All notable changes to empathySync are documented here.
   `distress_level=crisis` for them at all. That is #212's question, not this
   one.
 
-### Fixed
 - **"no one" was not heard, and led nowhere.** Asked who in their life they
   could talk to, a user answered *"no one"*. Nothing fired: the app
   acknowledged the feeling, went back to the original topic, and never
@@ -226,7 +224,6 @@ All notable changes to empathySync are documented here.
   the rest. Config and reasoning in
   `scenarios/classification/crisis_second_pass.yaml`.
 
-### Added
 - **Avoidance detection: the app no longer helps you not do the thing (Phase 25.4).**
   A cluster of messages used empathySync as a way to put off a real action, and
   got full assistant mode for it:
@@ -267,7 +264,6 @@ All notable changes to empathySync are documented here.
   The phrases are YAML, so this is language a clinician can shape without a code
   change (Phase 24).
 
-### Added
 - **A drafted reach-out can now be sent without retyping it (Phase 25.3).**
   The reach-out panel ended at `st.code(message)` - a draft the user had just
   edited, and then had to select, copy, switch apps and paste. Enough friction
@@ -291,7 +287,6 @@ All notable changes to empathySync are documented here.
   Copy-to-clipboard stays, and is the only option when the saved contact is not
   addressable. "The pub on Thursdays" is a perfectly good thing to have saved.
 
-### Added
 - Four legal-adult-work cases in `domain_corpus.yaml` (122 entries). These also
   feed `scripts/eval_guard_recall.py`'s benign set, which is built from this
   corpus - so the blind spot that let this through is measured on every future
@@ -300,7 +295,6 @@ All notable changes to empathySync are documented here.
   `harmful`. It does not move the 7B classifier on its own (the guard is what
   escalates), and it costs nothing measurable on the domain eval.
 
-### Added
 - **The domain eval now reports crisis routing separately (#218).** The headline
   score cannot see it: `domain_scorer` passes a sample that reaches *any*
   restraint domain, and only the `crisis` domain fires the hotline hard-stop. So

@@ -181,12 +181,14 @@ smaller model knowing which half of the safety pipeline you are trading away.
 
 ## How the Safety Pipeline Works
 
-Two complementary layers run before and around the model:
+Four layers run before and around the model, each covering a different gap:
 
 - **Keyword triage** - instant detection of known harmful and crisis phrases.
 - **LLM classifier** - context-aware detection of rephrased, euphemistic, or framed intent the keywords miss.
+- **Avoidance check** - catches the conversation being used to put off a real action ("as long as we're chatting I don't have to call the landlord").
+- **Crisis second pass** - a single yes/no question after classification, because sorting a message into one topic can lose crisis when the message also has a topic.
 
-The layers cover different gaps, but enumeration is never complete: a phrasing that escapes both can get through. See **[THREAT_MODEL.md](THREAT_MODEL.md)** for what the pipeline does and does not protect, and [docs/architecture.md](docs/architecture.md) for the full design.
+The layers cover different gaps, but enumeration is never complete: a phrasing that escapes all of them can get through. See **[THREAT_MODEL.md](THREAT_MODEL.md)** for what the pipeline does and does not protect, and [docs/architecture.md](docs/architecture.md) for the full design.
 
 ## Configuration
 
@@ -202,6 +204,8 @@ OLLAMA_TEMPERATURE=0.7
 LLM_CLASSIFICATION_ENABLED=true        # Intelligent context-aware classification
 OLLAMA_CLASSIFIER_MODEL=mistral:7b-instruct  # Separate classifier model (faster; falls back to OLLAMA_MODEL)
 # OLLAMA_SAFETY_MODEL=llama-guard3:1b  # Optional additive LlamaGuard layer (off by default; escalate-only, never downgrades)
+# Crisis second pass is on by default and adds one short model call per message.
+# Configured in scenarios/classification/crisis_second_pass.yaml
 STORE_CONVERSATIONS=true               # Local storage only
 USE_SQLITE=false                       # SQLite backend (better concurrency)
 ENABLE_DEVICE_LOCK=false               # Multi-device sync safety
