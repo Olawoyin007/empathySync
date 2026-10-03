@@ -24,19 +24,34 @@ empathySync assumes a **single trusted user running it on their own machine**, r
 Do not expose the Streamlit port to an untrusted network. If you need remote access, put it
 behind your own authenticated tunnel or reverse proxy; empathySync provides none.
 
+## Threat classes
+
+Three classes fail differently, are mitigated differently, and are tested
+differently. The sections below are grouped by them so a reviewer does not have
+to sort them out while reading.
+
+| Class | What it covers |
+|---|---|
+| **Security** | Local data confidentiality and integrity, network exposure, injection, container privileges |
+| **AI safety** | Crisis detection, harmful-request refusal, dependency and manipulation detection, output restraint, classifier failure |
+| **Reliability** | Ollama unavailable, classifier unavailable, model timeout, corrupt storage, crash during a write |
+
+The **trust boundary** above is the assumption all three rest on: one trusted
+operator, on their own machine, running unmodified source.
+
 ## What the design protects
 
-- **Privacy by locality.** Conversations, patterns, and trusted-network data never leave the
+- **Privacy by locality.** *(security)* Conversations, patterns, and trusted-network data never leave the
   machine. There are no analytics, accounts, or outbound calls beyond local inference.
-- **Restraint that cannot be removed by a prompt.** Crisis routing, harmful-content refusal,
+- **Restraint that cannot be removed by a prompt.** *(AI safety)* Crisis routing, harmful-content refusal,
   turn limits, and dependency cooldowns are pipeline steps that execute in code before the
   model is called. A jailbreak or instruction in the user's message cannot disable them. This
   holds for the software as distributed (see *Source modification* below).
-- **A crisis floor that does not depend on the model.** Crisis detection has a keyword
+- **A crisis floor that does not depend on the model.** *(AI safety, reliability)* Crisis detection has a keyword
   fast-path (`scenarios/classification/llm_classifier.yaml`, `fast_path_crisis`) that runs
   without the LLM, so the highest-priority safety signal still fires when the model is weak,
   slow, or unavailable.
-- **Classifier prompt-injection resistance.** User content sent to the LLM classifier is
+- **Classifier prompt-injection resistance.** *(security)* User content sent to the LLM classifier is
   wrapped in an explicit `<user_message>...</user_message>` boundary and truncated to a
   maximum length (`src/models/llm_classifier.py`), so untrusted text is treated as data, not
   as instructions to the classifier.
@@ -48,21 +63,42 @@ the quick index for reviewers: a change that weakens one of these is a regressio
 not a refactor. The prose above explains *why* each control exists; this maps
 *where* it lives.
 
+### Security
+
 | Control | Enforcement | Where |
 |---------|-------------|-------|
 | No external calls | Only outbound traffic is to the local `OLLAMA_HOST` | `src/models/llm_classifier.py`, `src/utils/http_client.py` |
 | Prompt-injection boundary | User message wrapped in `<user_message>` tags, truncated to 5000 chars | `src/models/llm_classifier.py` |
-| Mid-stream output voice check | 200-char rolling buffer scanned for manipulative-language patterns (false intimacy, dependency-encouraging phrasing, `safe_alternatives.yaml`) before tokens reach the UI. Not a dangerous-content scanner - blocking harmful *requests* is the input-side layers' job | `src/models/ai_wellness_guide.py` |
 | No SQL injection via dynamic names | Table and column whitelists; all values parameterized | `src/utils/storage_backend.py` |
-| Write gate | `_ensure_write_allowed()` at the top of every write method | `src/utils/write_gate.py`, `src/utils/storage_backend.py` |
-| Atomic writes | `mkstemp` + `fsync` + `os.replace` (no torn files on crash) | `src/utils/storage_backend.py` |
 | `OLLAMA_HOST` validation | http(s) scheme checked at config load | `src/config/settings.py` |
 | Non-root container | `gosu` drops root to `PUID:PGID`; Ollama bound to `127.0.0.1` | `docker/entrypoint.sh`, `docker-compose.yml` |
+| Write gate | `_ensure_write_allowed()` at the top of every write method | `src/utils/write_gate.py`, `src/utils/storage_backend.py` |
 | Restraint-memory invariant | Property test serializes every persisted structure (both backends) and fails the build if any field outside the allowlist is written - no conversation content, no preference/persona data, ever | `tests/test_restraint_memory.py`, `scenarios/config/system_defaults.yaml` (`restraint_memory`) |
+
+### AI safety
+
+| Control | Enforcement | Where |
+|---------|-------------|-------|
+| Crisis keyword floor | `fast_path_crisis` phrases route to crisis without calling the LLM | `scenarios/classification/llm_classifier.yaml` |
+| Crisis second pass | One dedicated yes/no call after classification; escalate-only, skipped when already crisis or harmful, requires an explicit `True` | `src/models/llm_classifier.py`, `scenarios/classification/crisis_second_pass.yaml` |
+| Safety guard escalation | Optional LlamaGuard, additive and escalate-only; never downgrades a domain | `src/models/safety_classifier.py` |
+| Avoidance check | Two-part match, both halves required; fires only on `logistics`, so it can add restraint and never remove it | `scenarios/classification/avoidance.yaml` |
+| Mid-stream output voice check | 200-char rolling buffer scanned for manipulative-language patterns (false intimacy, dependency-encouraging phrasing, `safe_alternatives.yaml`) before tokens reach the UI. Not a dangerous-content scanner - blocking harmful *requests* is the input-side layers' job | `src/models/ai_wellness_guide.py` |
+
+### Reliability
+
+| Control | Enforcement | Where |
+|---------|-------------|-------|
+| Atomic writes | `mkstemp` + `fsync` + `os.replace` (no torn files on crash) | `src/utils/storage_backend.py` |
+| Engine unavailable | A canned safe reply is returned rather than an error or an empty response | `src/models/ai_wellness_guide.py` (`_get_fallback_response`) |
+| Classifier unavailable | Connection errors and timeouts return `None`; classification falls through to keyword detection, which still reaches crisis and harmful | `src/models/llm_classifier.py`, `src/models/risk_classifier.py` |
+| Corrupt storage file | Unreadable JSON falls back to defaults instead of raising | `src/utils/storage_backend.py` |
 
 ## Known gaps
 
 These are open and acknowledged. Contributor help is welcome.
+
+### AI safety
 
 - **Enumeration-based detection is incomplete.** Harmful- and crisis-content detection rests
   on enumerated keyword patterns plus an LLM classifier. Enumeration is never complete: a
@@ -78,6 +114,9 @@ These are open and acknowledged. Contributor help is welcome.
   miss some of these even though the prompt contains the correct anti-framing rules. Choose a
   classifier model you have verified against the safety scenarios, not the smallest one
   available.
+
+### Security
+
 - **No encryption at rest.** Conversation history and tracked patterns are stored as plain
   JSON or SQLite under `data/` (git-ignored). Their confidentiality equals your operating
   system account and file permissions. On a shared or portable device, use full-disk
@@ -86,6 +125,20 @@ These are open and acknowledged. Contributor help is welcome.
 - **No access control.** The optional device lock (`ENABLE_DEVICE_LOCK`) prevents two devices
   writing to synced data at once. It is a data-integrity safeguard, not authentication. Anyone
   with access to the running app or the `data/` directory can read and write everything.
+
+### Reliability
+
+- **Corrupt data fails silently.** An unreadable JSON file is replaced with
+  defaults and the app continues. That keeps it usable, but the records in that
+  file are gone without the user being told, which sits awkwardly beside the
+  transparency the rest of the design claims. SQLite is less exposed to this.
+- **A missing classifier degrades safety quietly.** With Ollama unreachable or
+  the classifier timing out, detection falls back to keyword matching. Crisis and
+  harmful phrases still route correctly, but the oblique cases the LLM catches do
+  not, and nothing in the UI says the weaker path is in use.
+
+### Scope
+
 - **Not a clinical or emergency service.** Dependency detection is a heuristic on behavioural
   signals (message frequency, repetition, sensitive-domain engagement), not a validated
   clinical instrument or a diagnosis. Crisis handling routes the user to professional

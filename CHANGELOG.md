@@ -5,6 +5,29 @@ All notable changes to empathySync are documented here.
 ## [Unreleased]
 
 ### Documentation
+- **`THREAT_MODEL.md` is now grouped by threat class** (closes #234). Security,
+  AI safety and reliability fail differently, are mitigated differently and are
+  tested differently, and the document previously interleaved them - prompt
+  injection and dependency detection sat under one heading, leaving the reader to
+  sort them out.
+
+  No existing content was changed: all 10 gap entries, all 8 controls and every
+  prose line are preserved verbatim. The controls table is split into three by
+  class, the gaps grouped the same way, and a short table up front says what each
+  class covers.
+
+  The regrouping exposed that **reliability was absent as a class**, so the
+  behaviours were verified and added: an unavailable engine returns a canned safe
+  reply, an unavailable classifier falls through to keyword detection, and a
+  corrupt JSON file falls back to defaults. Two of those are also now listed as
+  gaps, because both are quiet: corrupt data is replaced without telling the
+  user, and the keyword fallback loses the oblique cases with nothing in the UI
+  saying the weaker path is in use.
+
+  Four AI-safety controls that existed but were missing from the index are now
+  in it: the crisis keyword floor, the crisis second pass, the escalate-only
+  safety guard, and the avoidance check.
+
 - Calmer MANIFESTO, slogans only. Four lines changed: the preamble's "AI
   integration is inevitable. Its impact is not."; "If it cannot be explained
   plainly, it is not ethical" (explicability and ethics are not the same claim,
