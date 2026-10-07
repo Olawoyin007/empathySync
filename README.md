@@ -25,7 +25,7 @@ empathySync is a local AI assistant built on one design principle:
 
 > *The part of AI that handles your personal life should belong to you.*
 
-It gives full help on practical tasks - writing, coding, explanations. On sensitive topics (emotional distress, health, relationships, finances), it applies deliberate restraint: brief responses, human redirects, no follow-up questions designed to keep you talking. When it detects crisis signals, it routes to professional resources immediately, without exception.
+It gives full help on practical tasks - writing, coding, explanations, and everyday taks. On sensitive topics (emotional distress, health, relationships, finances, spirituality), it applies deliberate restraint: brief responses, human redirects, no follow-up questions designed to keep you talking. When it detects signals of a potential crisis, it prioritizes directing you toward professional or emergency resources rather than attempting to handle the situation itself.
 
 Everything runs on your hardware via Ollama. No cloud. No external API calls. No telemetry. No engagement optimization.
 
