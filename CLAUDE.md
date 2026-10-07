@@ -34,7 +34,7 @@ empathysync --log-level DEBUG            # Override log verbosity
 docker compose up
 
 # Tests
-pytest tests/                            # Full suite (1330 unit + 23 conversation)
+pytest tests/                            # Full suite (1352 unit + 23 conversation)
 pytest tests/ --cov=src                  # With coverage
 pytest tests/ -m "not conversation"      # Skip Ollama-dependent tests
 python tests/classification/run_domain_eval.py          # Domain accuracy eval
@@ -116,7 +116,7 @@ tests/
     └── run_domain_eval.py          # Per-domain accuracy report
 ```
 
-Current counts: ~1330 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
+Current counts: ~1352 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
 
 Pre-existing known failure: `stress_test_001` conversation tier is
 non-deterministic (LLM output varies); the structural tier always passes.
@@ -154,11 +154,12 @@ rolling buffer accumulates tokens before yielding to the UI. `_contains_harmful_
 runs on each flush — it matches the manipulative-voice patterns from
 `safe_alternatives.yaml` (false intimacy, dependency-encouraging phrasing), so
 voice violations are intercepted before they reach the screen. Enforced via
-`get_voice_violations()`, which lowercases every pattern: the matcher lowercases
-the response text but not the patterns, and they are authored capitalised, so an
-un-folded pattern silently never matches. That is exactly how this layer sat
-inert from the time it was written until 2026-10-02 — the docs described it, no
-code read it. `therapeutic_overreach` is deliberately still not enforced; its
+`get_voice_violations()`, which runs every pattern through
+`normalize_for_matching` — the same fold the matcher applies to the response
+text. Folding both sides with one function is the point: the patterns are
+authored capitalised, and a pattern folded differently from the text silently
+never matches. That is exactly how this layer sat inert from the time it was
+written until 2026-10-02 — the docs described it, no code read it. `therapeutic_overreach` is deliberately still not enforced; its
 patterns overlap the crisis path. It is not a
 dangerous-content scanner; blocking harmful requests is the input-side layers' job.
 
