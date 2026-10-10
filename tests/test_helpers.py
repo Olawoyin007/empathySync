@@ -7,6 +7,7 @@ Covers:
 - format_wellness_tip() formatting
 - create_progress_summary() edge cases
 - build_handoff_link() OS handoff URLs (Phase 25.3)
+- normalize_for_matching() the fold under every substring match (#233)
 """
 
 import logging
@@ -233,3 +234,72 @@ class TestBuildHandoffLinks:
 
         links = build_handoff_links("sam@example.com", "")
         assert links == [("email", "mailto:sam@example.com?body=")]
+
+
+class TestNormalizeForMatching:
+    """Tests for normalize_for_matching() - the fold under every substring match.
+
+    Each fold exists because a message that reads identically on screen missed
+    the keyword floor without it (#233).
+    """
+
+    @pytest.mark.parametrize(
+        "raw,note",
+        [
+            ("k​ill", "zero-width space"),
+            ("k­ill", "soft hyphen"),
+            ("k‌ill", "zero-width non-joiner"),
+            ("﻿kill", "byte-order mark"),
+            ("ki⁠ll", "word joiner"),
+        ],
+    )
+    def test_invisible_characters_are_dropped(self, raw, note):
+        from utils.helpers import normalize_for_matching
+
+        assert normalize_for_matching(raw) == "kill", note
+
+    def test_compatibility_forms_fold(self):
+        """Full-width characters render as the same word to a reader."""
+        from utils.helpers import normalize_for_matching
+
+        assert normalize_for_matching("ｋｉｌｌ") == "kill"
+
+    def test_whitespace_runs_collapse(self):
+        from utils.helpers import normalize_for_matching
+
+        assert normalize_for_matching("i  want\tto\nkill  myself") == "i want to kill myself"
+
+    def test_surrounding_whitespace_is_stripped(self):
+        from utils.helpers import normalize_for_matching
+
+        assert normalize_for_matching("  have a plan  ") == "have a plan"
+
+    @pytest.mark.parametrize("apostrophe", ["‘", "’", "ʼ", "′"])
+    def test_typographic_apostrophes_fold_to_ascii(self, apostrophe):
+        from utils.helpers import normalize_for_matching
+
+        assert normalize_for_matching(f"don{apostrophe}t") == "don't"
+
+    def test_lowercases(self):
+        from utils.helpers import normalize_for_matching
+
+        assert normalize_for_matching("I Want To KILL Myself") == "i want to kill myself"
+
+    def test_is_idempotent(self):
+        """Patterns and text are both folded, sometimes more than once as a
+        value passes through layers. Folding twice must not change the result."""
+        from utils.helpers import normalize_for_matching
+
+        once = normalize_for_matching("  I  don’t want to k​ill  myself ")
+        assert normalize_for_matching(once) == once
+
+    def test_empty_string_survives(self):
+        from utils.helpers import normalize_for_matching
+
+        assert normalize_for_matching("") == ""
+
+    def test_visible_punctuation_is_untouched(self):
+        """The fold must not quietly eat characters triggers are authored with."""
+        from utils.helpers import normalize_for_matching
+
+        assert normalize_for_matching("i'm done - it's over.") == "i'm done - it's over."

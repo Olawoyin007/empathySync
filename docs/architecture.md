@@ -363,11 +363,17 @@ that matter when editing triggers:
 - **Word order is literal.** `"giving away my things"` does not match
   `"giving my things away"`. A phrase and its natural variants are separate
   entries.
-- **Text is normalised on both sides** via `utils.helpers.normalize_for_matching`:
-  lowercased, with typographic apostrophes (U+2018/U+2019/U+02BC/U+2032) folded
-  to ASCII `'`. Without the fold a curly apostrophe from a phone keyboard drops
-  a message off the crisis floor, since 19 crisis triggers contain an
-  apostrophe. Apply it anywhere a new substring match is added.
+- **Text is normalised on both sides** via `utils.helpers.normalize_for_matching`,
+  which applies four folds: NFKC compatibility forms, format characters
+  (Unicode category Cf) dropped, lowercase with typographic apostrophes
+  (U+2018/U+2019/U+02BC/U+2032) folded to ASCII `'`, and runs of whitespace
+  collapsed to one space. Each one closes a way a message that reads identically
+  on screen cleared the floor: a curly apostrophe from a phone keyboard (19
+  crisis triggers contain an apostrophe), and a zero-width space, soft hyphen or
+  doubled space that renders as nothing at all (#233). Apply it anywhere a new
+  substring match is added, **to the patterns as well as the text** - a pattern
+  folded differently from the text silently never matches, which is how the
+  voice guard sat inert (#177).
 - **Isolation detection is the one exception** (`ai_wellness_guide.
   _user_expressed_isolation`). Bare answers like `"no one"` or `"none"` are only
   matched against the *whole* message, and the longer phrases use a trailing

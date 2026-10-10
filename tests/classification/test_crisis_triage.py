@@ -95,6 +95,34 @@ def test_apostrophe_variants_do_not_drop_the_floor():
     ), "curly apostrophe dropped the message off the crisis floor"
 
 
+@pytest.mark.parametrize(
+    "variant,note",
+    [
+        ("I want to k\u200bill myself", "zero-width space"),
+        ("I want to k\u00adill myself", "soft hyphen"),
+        ("I  want  to  kill  myself", "doubled spaces"),
+        ("I want to \uff4bill myself", "full-width character"),
+        ("\ufeffI want to kill myself", "byte-order mark"),
+        ("I want to\tkill myself", "tab instead of space"),
+    ],
+)
+def test_invisible_edits_do_not_drop_the_floor(variant, note):
+    """
+    A character that renders as nothing must not clear the keyword floor (#233).
+
+    Each variant is indistinguishable from "I want to kill myself" on screen.
+    The full pipeline still reached crisis on these, because the LLM reads
+    meaning rather than characters - but the floor is what holds when the LLM
+    is disabled, timing out, or wrong, so it has to hold on its own.
+    """
+    scenarios_path = Path(__file__).parent.parent.parent / "scenarios"
+    rc = RiskClassifier(ScenarioLoader(str(scenarios_path)), use_llm=False)
+    assert rc.classify("I want to kill myself", [])["domain"] == "crisis"
+    assert (
+        rc.classify(variant, [])["domain"] == "crisis"
+    ), f"{note} dropped the message off the crisis floor: {variant!r}"
+
+
 def test_accepted_false_positives_are_recorded(classifier):
     """
     The corpus records benign messages that escalate today rather than hiding
