@@ -282,16 +282,18 @@ class ScenarioLoader:
         """Manipulative-voice blocks from `safe_alternatives.yaml`.
 
         Returns {category: {"patterns": [...], "alternative": str}} with every
-        pattern lowercased. The lowercasing matters: the matcher lowercases the
-        response text but not the patterns, and these are authored capitalised
-        ("I'm here for you"), so an un-folded pattern silently never matches.
+        pattern run through `normalize_for_matching`, the same fold the matcher
+        applies to the response text. Folding both sides with one function is
+        the point: these are authored capitalised ("I'm here for you"), and a
+        pattern folded differently from the text silently never matches - which
+        is how this layer sat inert until #177.
         """
         responses = self.get_all_responses()
         safe_alts = responses.get("safe_alternatives", {})
         out = {}
         for name in self.ENFORCED_VOICE_BLOCKS:
             block = safe_alts.get(name) or {}
-            patterns = [p.lower() for p in (block.get("patterns") or [])]
+            patterns = [normalize_for_matching(p) for p in (block.get("patterns") or [])]
             if patterns:
                 out[name] = {
                     "patterns": patterns,

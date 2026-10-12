@@ -555,8 +555,12 @@ class RiskClassifier:
             return False
 
         t = normalize_for_matching(text)
-        destination = config.get("chat_as_destination") or []
-        displaced = config.get("obligation_displaced") or []
+        # Both sides folded. These lists are explicitly clinician-shapeable
+        # (Phase 24), and a phrase typed in a word processor arrives with a
+        # curly apostrophe - raw, it would be added in good faith and never
+        # match a thing.
+        destination = [normalize_for_matching(p) for p in config.get("chat_as_destination") or []]
+        displaced = [normalize_for_matching(p) for p in config.get("obligation_displaced") or []]
         return any(p in t for p in destination) and any(p in t for p in displaced)
 
     def _detect_domain(self, text: str, primary_domain: str = None, domain_streak: int = 0) -> str:

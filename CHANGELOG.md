@@ -63,6 +63,54 @@ All notable changes to empathySync are documented here.
   does without the unmeasured comparison - and trimmed the license line.
 
 ### Fixed
+- **One invisible character cleared the keyword floor (#233).**
+  `normalize_for_matching` folded typographic apostrophes and lowercased.
+  Nothing else. Every substring match in the project runs on its output, so a
+  character that renders as nothing was enough to clear all of them. Measured
+  on the keyword layer alone:
+
+  ```
+  "i want to kill myself"            -> crisis
+  "i want to k<U+200B>ill myself"    -> logistics     (zero-width space)
+  "i want to k<U+00AD>ill myself"    -> logistics     (soft hyphen)
+  "i  want  to  kill  myself"        -> logistics     (doubled spaces)
+  ```
+
+  This was defence-in-depth, not a live bypass: the full pipeline still reached
+  `crisis @10.0` on all three, because the LLM classifier reads meaning rather
+  than characters. But the keyword layer is the deterministic floor - the layer
+  that holds when the classifier is disabled, times out, or is wrong. With
+  `LLM_CLASSIFICATION_ENABLED=false`, one invisible character was the whole
+  difference.
+
+  The fold now also applies NFKC, drops format characters (Unicode category
+  Cf), and collapses runs of whitespace. All four cases above reach `crisis`,
+  as do full-width characters, byte-order marks and tabs.
+
+  **Checked rather than assumed:** NFKC folds more than invisibles, so every
+  one of the 4280 strings in `scenarios/` was compared under the old fold and
+  the new one. 61 differ, all by collapsed whitespace only; **no authored
+  trigger changes meaning**. The 122-example domain eval scores 98/122 both
+  before and after - this closes a hole without moving classification.
+
+- **Three matchers folded only one side (same class as #177).** The rule in
+  `docs/architecture.md` is that normalization applies to both the pattern and
+  the text, because a pattern folded differently silently never matches. Three
+  places did not follow it:
+
+  - `get_voice_violations()` used `p.lower()` instead of the shared fold, so a
+    pattern authored with a curly apostrophe would never have matched.
+  - The avoidance lists (`risk_classifier._detect_avoidance`) were matched raw.
+    They work today, but that file explicitly invites clinicians to add phrases
+    (Phase 24) - and a phrase typed in a word processor arrives with U+2019.
+  - `_contains_harmful_content()` matched raw patterns against lowercased text.
+    Three of its seven hardcoded fallback phrases are authored capitalised
+    ("I care about you", "I'm here for you", "I understand you"), so they could
+    never fire. That list is what runs when scenarios fail to load, which is
+    exactly when it should not be half inert.
+
+  All three now use `normalize_for_matching` on both sides.
+
 - **The manipulative-voice guard was never switched on (#177).** Both
   `CLAUDE.md` and `docs/architecture.md` described `_contains_harmful_content()`
   as intercepting false-intimacy and dependency-encouraging phrasing. It did

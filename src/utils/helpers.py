@@ -6,6 +6,7 @@ Supporting functions for logging, validation, and wellness features
 import logging
 import os
 import re
+import unicodedata
 from typing import List, Optional, Tuple
 from urllib.parse import quote
 from config.settings import settings
@@ -70,17 +71,39 @@ def create_progress_summary(conversation_count: int, days_active: int) -> str:
 
 _APOSTROPHE_FOLD = str.maketrans({"‘": "'", "’": "'", "ʼ": "'", "′": "'"})
 
+_WHITESPACE_RUN = re.compile(r"\s+")
+
 
 def normalize_for_matching(text: str) -> str:
     """
-    Lowercase text and fold typographic apostrophes to the ASCII form.
+    Fold text to the single form every substring match in the project uses.
 
-    Trigger phrases are authored with a straight apostrophe ("don't want to
-    be here"), but phone keyboards and word processors emit U+2019. Without
-    this fold, a curly apostrophe silently drops a message off the crisis
-    keyword floor. Applied to both sides of every substring match.
+    Four folds, each closing a way a message that reads identically on screen
+    missed the keyword floor (#233):
+
+    - **Compatibility forms (NFKC)**, so full-width and decorated characters
+      collapse to the ones triggers are authored in: "ｋｉｌｌ" becomes "kill".
+    - **Format characters (Unicode category Cf) are dropped.** A zero-width
+      space or a soft hyphen renders as nothing at all, so "k<U+200B>ill" is
+      indistinguishable from "kill" to the reader and matched neither.
+    - **Lowercase, with typographic apostrophes folded to ASCII.** Triggers are
+      authored with a straight apostrophe ("don't want to be here"), but phone
+      keyboards and word processors emit U+2019.
+    - **Runs of whitespace collapse to one space**, so "i  want  to" still
+      matches a trigger written with single spaces.
+
+    Applied to BOTH sides of every match, so a pattern and a message always
+    fold the same way - a pattern folded differently from the text silently
+    never matches, which is how the voice guard sat inert (#177).
+
+    This is the deterministic floor. It has to hold when the LLM classifier is
+    disabled, timing out, or wrong, which is exactly when one invisible
+    character must not be the difference.
     """
-    return text.lower().translate(_APOSTROPHE_FOLD)
+    text = unicodedata.normalize("NFKC", text)
+    text = "".join(ch for ch in text if unicodedata.category(ch) != "Cf")
+    text = text.lower().translate(_APOSTROPHE_FOLD)
+    return _WHITESPACE_RUN.sub(" ", text).strip()
 
 
 # A phone number once the cosmetic characters are stripped: an optional leading

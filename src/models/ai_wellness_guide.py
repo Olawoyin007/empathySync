@@ -1915,7 +1915,7 @@ class WellnessGuide:
         """
         if not text:
             return None
-        lowered = text.lower()
+        lowered = normalize_for_matching(text)
         for category, block in self.prompts.loader.get_voice_violations().items():
             if any(p in lowered for p in block["patterns"]):
                 return category
@@ -1939,8 +1939,12 @@ class WellnessGuide:
                 "I understand you",
             ]
 
-        text_lower = text.lower()
-        return any(pattern in text_lower for pattern in harmful_patterns)
+        # Both sides folded. Three of the fallback phrases above are authored
+        # capitalised, so against a merely-lowercased text they could never
+        # match - the fallback list is what runs when scenarios fail to load,
+        # which is precisely when it should not be half inert.
+        folded = normalize_for_matching(text)
+        return any(normalize_for_matching(p) in folded for p in harmful_patterns)
 
     def _get_fallback_response(self, is_practical: bool = False) -> str:
         """Safe fallback response when AI is unavailable
