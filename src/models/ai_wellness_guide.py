@@ -388,7 +388,7 @@ class WellnessGuide:
                 "harmful_stop", domain, 10.0, "Refused harmful request", wellness_tracker
             )
             self.post_harmful_turn = self.session_turn_count
-            prepared.early_return = "No. That's not something I'll help with."
+            prepared.early_return = self._get_harmful_response()
             prepared.risk_assessment = risk_assessment
             prepared.domain = domain
             return prepared
@@ -931,6 +931,42 @@ class WellnessGuide:
             "- Or contact your local emergency services\n\n"
             "Please talk to someone who can help."
         )
+
+    def _get_harmful_response(self) -> str:
+        """Return the harmful refusal with its route out, from YAML (#232).
+
+        Two separate problems met at this line. The refusal text already lived
+        in `harmful.yaml` as `refusal_response`, but only `wellness_prompts`
+        read it - this path never calls the model, so it carried a second copy
+        of the same sentence in Python. And `harmful` was the one restraint
+        domain with no `referrals:` block, so a correct refusal ended in
+        silence: 19 of the 25 restraint flags on the 2026-10-03 nightly carried
+        the same judge comment, "refused, no route".
+
+        The referral is appended unconditionally - deliberately no
+        `_already_names_a_route` check, unlike the generated path at
+        `_finalize_response`. That guard exists so a model reply is not given a
+        second, redundant route. Here both halves are authored, and Phase 24
+        hands the refusal wording to a clinician: a doubled route reads
+        awkwardly, a suppressed one is the bug this fixes. Erring toward saying
+        it twice is the right way round.
+        """
+        refusal = ""
+        try:
+            from utils.scenario_loader import get_scenario_loader
+
+            config = get_scenario_loader().get_domain("harmful") or {}
+            refusal = (config.get("refusal_response") or "").strip()
+        except Exception:
+            pass
+
+        # Fallback if YAML is unavailable, mirroring `_get_crisis_response`.
+        # A harmful request is never answered just because a file failed to load.
+        if not refusal:
+            refusal = "No. That's not something I'll help with."
+
+        referral = self._get_referral("harmful")
+        return f"{refusal}\n\n{referral}" if referral else refusal
 
     def _get_referral(self, domain: str) -> str:
         """Return the concrete route for a sensitive domain, from YAML.

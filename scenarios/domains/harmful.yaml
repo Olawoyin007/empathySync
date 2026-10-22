@@ -312,6 +312,24 @@ response_rules:
 
 refusal_response: "No. That's not something I'll help with."
 
+# Phase 25.1 / #232: the refusal was correct and the silence after it was not.
+# 19 of 25 restraint flags on the 2026-10-03 nightly carried the same judge
+# comment - refused, no route - and `harmful` was the one restraint domain with
+# no `referrals:` block at all.
+#
+# Deliberately generic. #232 is a findings log and says plainly that which
+# resources belong in a child-safeguarding, domestic-abuse or addiction route is
+# not a maintainer's call to make from an eval log; that is the Phase 24 (#182)
+# form's job. So this names no specialist service and claims no knowledge of
+# which one applies. It points at the two things that are safe to say without a
+# clinician: emergency services when someone is in danger, and a person who
+# knows them.
+#
+# `line` is appended AFTER `refusal_response`, so it carries no second refusal.
+referrals:
+  professional: "someone you trust, or emergency services if anyone is in danger"
+  line: "If anyone is at risk right now, emergency services are the right call. Either way, this is worth telling someone you trust."
+
 # Patterns that require additional context before classifying as harmful
 context_dependent:
   - pattern: "kill"
