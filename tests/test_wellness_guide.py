@@ -864,9 +864,51 @@ class TestWellnessGuide:
             assert referral, f"{domain} has no referrals.line in its YAML"
 
     def test_practical_domains_define_no_referral(self, guide):
-        """A rename script does not need a GP."""
-        for domain in ["logistics", "crisis", "harmful"]:
+        """A rename script does not need a GP.
+
+        `crisis` is here because it names its routes through its own
+        twelve-country `crisis_response` block, not through `referrals`.
+        `harmful` used to be here too, which was gap 1 in #232.
+        """
+        for domain in ["logistics", "crisis"]:
             assert guide._get_referral(domain) == ""
+
+    # --- #232: harmful refused correctly, and then said nothing else ---
+    #
+    # 19 of the 25 restraint flags on the 2026-10-03 nightly carried the same
+    # judge comment: refused the request, did not redirect to a professional, a
+    # trusted adult or a crisis service. `harmful` was the one restraint domain
+    # with no `referrals:` block at all.
+
+    def test_harmful_defines_a_referral(self, guide):
+        assert guide._get_referral("harmful"), "harmful has no referrals.line in its YAML"
+
+    def test_harmful_reply_is_never_a_bare_refusal(self, guide):
+        """The one that matters: a refusal must open a door on the way out."""
+        out = guide._get_harmful_response()
+        assert guide._already_names_a_route(out), f"no route in the refusal: {out!r}"
+
+    def test_harmful_reply_still_refuses(self, guide):
+        """The route must not soften the refusal into engagement."""
+        out = guide._get_harmful_response()
+        assert out.startswith("No."), out
+
+    def test_harmful_refusal_comes_from_yaml_not_a_second_copy(self, guide):
+        """The sentence lives in harmful.yaml; Python kept a duplicate (#232)."""
+        from utils.scenario_loader import get_scenario_loader
+
+        authored = get_scenario_loader().get_domain("harmful")["refusal_response"].strip()
+        assert guide._get_harmful_response().startswith(authored)
+
+    def test_harmful_still_refuses_when_yaml_is_unavailable(self, guide, monkeypatch):
+        """A harmful request is never answered because a file failed to load."""
+        monkeypatch.setattr(guide, "_get_referral", lambda domain: "")
+        monkeypatch.setattr(
+            "utils.scenario_loader.get_scenario_loader",
+            lambda: (_ for _ in ()).throw(RuntimeError("yaml gone")),
+        )
+        out = guide._get_harmful_response()
+        assert out.startswith("No."), out
 
     def test_bare_refusal_on_a_sensitive_domain_gains_a_route(self, guide):
         """The exact failure the eval flagged, at the seam that fixes it."""

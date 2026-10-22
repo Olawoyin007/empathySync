@@ -4,6 +4,40 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- **A refused harmful request now names a route out** (closes #232, part 1).
+  `harmful` was the one restraint domain with no `referrals:` block, so a
+  correct refusal ended in silence. 19 of the 25 restraint flags on the
+  2026-10-03 nightly carried the same judge comment, almost word for word:
+  refused the request, did not redirect to a professional, a trusted adult or a
+  crisis service. That is precisely what Phase 25.1 exists to prevent, and
+  `harmful` was never wired into it.
+
+  The referral is deliberately generic. It names emergency services when
+  someone is in immediate danger, and a person the user trusts, and claims no
+  knowledge of which specialist service applies. #232 says plainly that which
+  resources belong in a child-safeguarding, domestic-abuse or addiction route is
+  not a maintainer's call to make from an eval log - that is the Phase 24 (#182)
+  form's job. What was safe to decide without a clinician is that `harmful`
+  should have *some* route rather than none.
+
+  The same change removes a duplicate: the refusal sentence already lived in
+  `harmful.yaml` as `refusal_response`, but only `wellness_prompts` read it.
+  This path never calls the model, so it carried a second copy in Python. It now
+  reads the authored text, with the old string kept as the fallback for when
+  YAML is unavailable - a harmful request is never answered because a file
+  failed to load.
+
+  The referral is appended unconditionally, with no `_already_names_a_route`
+  check. That guard stops a *generated* reply getting a second, redundant route.
+  Here both halves are authored and Phase 24 hands the refusal wording to a
+  clinician: a doubled route reads awkwardly, a suppressed one is the bug being
+  fixed.
+
+  Still open on #232: the crisis resource block is suicide-specific, with no
+  shelter, child protection, addiction or eating-disorder route. That one needs
+  a clinician, not a maintainer.
+
 ### Documentation
 - **`THREAT_MODEL.md` is now grouped by threat class** (closes #234). Security,
   AI safety and reliability fail differently, are mitigated differently and are
