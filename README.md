@@ -59,12 +59,15 @@ We optimise for exit, not engagement.
 
 - **Crisis detection**: explicit crisis language triggers an immediate redirect
   to professional resources, before anything else in the pipeline can respond.
-  **This has a measured limit.** Calm, oblique, preparation-stage crisis -
-  a pre-emptive goodbye, a means inquiry, post-decision calm - is close to
-  undetected on the recommended 7-8 GB classifiers: 1 of 6 such samples reached
-  the hard stop on the shipped default, against 6 of 6 on a 14B classifier. It
-  is a model capability limit, not a prompt that needs rewording, and the
-  keyword floor cannot reach these cases either. Read
+  **Oblique, keyword-light ideation is harder, and was measured.** An adversarial
+  probe in August 2026 found 5 of 8 such messages routed to `emotional` rather
+  than `crisis` - stably across runs, and missed by both a 1B and an 8B guard
+  model, so it was not a weak-model issue. Resolved 13 September 2026: targeted
+  trigger phrases, each measured against 23 intense-but-not-suicidal controls
+  before inclusion, after a candidate intensity-escalation fix was rejected for
+  escalating 6 of 15 benign messages to a crisis hard stop. Testing the fix also
+  surfaced a typographic apostrophe (U+2019) silently defeating the deterministic
+  keyword floor in two independent layers, now folded at match time. Read
   [`docs/crisis-triage-finding.md`](docs/crisis-triage-finding.md) before relying
   on this in any setting that matters.
 - **Post-crisis protection**: never apologises for safety interventions
@@ -154,11 +157,11 @@ empathysync --log-level DEBUG  # Set log verbosity (DEBUG, INFO, WARNING, ERROR)
 
 **Lower-spec machine?** `qwen2.5:3b-instruct` runs on 4GB GPU and passes 55% of
 scenarios. Distress recall is measured separately and stays high even on the
-smallest models, and explicit-language crisis detection is unaffected by model
-size. Oblique crisis detection is not: it degrades sharply below a 14B
-classifier (see the crisis-detection note above and
-[`docs/crisis-triage-finding.md`](docs/crisis-triage-finding.md)). Choose the
-smaller model knowing which half of the safety pipeline you are trading away.
+smallest models, and crisis detection is unaffected by model size: the
+oblique-ideation gap found in August 2026 was a routing and matcher problem, not
+a capability one, and both a 1B and an 8B guard model missed it equally (see
+[`docs/crisis-triage-finding.md`](docs/crisis-triage-finding.md)). What you trade
+on a smaller model is scenario pass rate, not the safety floor.
 
 ## How It's Built
 
