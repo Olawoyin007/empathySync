@@ -303,3 +303,65 @@ class TestNormalizeForMatching:
         from utils.helpers import normalize_for_matching
 
         assert normalize_for_matching("i'm done - it's over.") == "i'm done - it's over."
+
+
+class TestOllamaNumCtx:
+    """`OLLAMA_NUM_CTX` caps the context Ollama reserves at load time.
+
+    Unset, Ollama reserves the model's full trained context. That reservation
+    decides whether a model loads at all when Ollama shares a machine, and a
+    failed load is not an error anyone sees - classification falls back to
+    keywords, correctly and silently. Measured: 67/122 on the domain eval
+    instead of 98/122, degraded across every domain at once.
+
+    The helper exists because four separate payload builders need the same
+    option (engine generate, engine stream, classification, crisis second
+    pass, safety guard). Four copies of one rule is how the capitalised-
+    pattern bug in #233 happened.
+    """
+
+    def test_absent_by_default(self):
+        """Unset must change nothing: the old payload, byte for byte."""
+        from config.settings import settings
+
+        original = settings.OLLAMA_NUM_CTX
+        settings.OLLAMA_NUM_CTX = None
+        try:
+            assert settings.apply_num_ctx({"temperature": 0.0}) == {"temperature": 0.0}
+        finally:
+            settings.OLLAMA_NUM_CTX = original
+
+    def test_applied_when_set(self):
+        from config.settings import settings
+
+        original = settings.OLLAMA_NUM_CTX
+        settings.OLLAMA_NUM_CTX = 8192
+        try:
+            assert settings.apply_num_ctx({"temperature": 0.0})["num_ctx"] == 8192
+        finally:
+            settings.OLLAMA_NUM_CTX = original
+
+    def test_returns_the_same_dict_for_inline_use(self):
+        """Callers pass it inline, so it must mutate and return, not copy."""
+        from config.settings import settings
+
+        original = settings.OLLAMA_NUM_CTX
+        settings.OLLAMA_NUM_CTX = 4096
+        try:
+            options: dict = {}
+            assert settings.apply_num_ctx(options) is options
+        finally:
+            settings.OLLAMA_NUM_CTX = original
+
+    def test_every_ollama_payload_builder_uses_the_helper(self):
+        """A new request path must not hand-roll its own options dict."""
+        import pathlib
+
+        src = pathlib.Path(__file__).resolve().parents[1] / "src"
+        callers = {p.name for p in src.rglob("*.py") if "apply_num_ctx" in p.read_text()}
+        assert callers == {
+            "settings.py",
+            "ollama_client.py",
+            "llm_classifier.py",
+            "safety_classifier.py",
+        }, callers

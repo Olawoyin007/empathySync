@@ -32,6 +32,30 @@ class Settings:
     # Set OLLAMA_SEED=42 in test environments to eliminate LLM non-determinism.
     OLLAMA_SEED: Optional[int] = int(os.getenv("OLLAMA_SEED")) if os.getenv("OLLAMA_SEED") else None
 
+    # Optional context window cap, in tokens, sent as Ollama's `num_ctx`.
+    # Unset means Ollama decides, which is its own default: the model's full
+    # trained context. That is a KV-cache reservation, not a cost paid per
+    # token, and on a machine shared with another engine it can be the
+    # difference between loading and not loading - a 7B asking for its full
+    # 131k context reserves tens of GB before answering anything. When the
+    # reservation fails, the pipeline falls back to keyword-only
+    # classification, correctly and silently, so the symptom is a worse answer
+    # rather than an error. Set this when Ollama is not alone on the machine.
+    OLLAMA_NUM_CTX: Optional[int] = (
+        int(os.getenv("OLLAMA_NUM_CTX")) if os.getenv("OLLAMA_NUM_CTX") else None
+    )
+
+    def apply_num_ctx(self, options: dict) -> dict:
+        """Add `num_ctx` to an Ollama options dict when one is configured.
+
+        Every request path goes through this rather than reading the setting
+        itself, so the four payload builders cannot drift apart. Mutates and
+        returns `options` for use inline.
+        """
+        if self.OLLAMA_NUM_CTX is not None:
+            options["num_ctx"] = self.OLLAMA_NUM_CTX
+        return options
+
     # Dedicated classifier model (optional)
     # Uses a smaller, faster model for classification while the main model handles responses.
     # Falls back to OLLAMA_MODEL if not set. Recommended: mistral:7b-instruct

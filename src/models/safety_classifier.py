@@ -164,7 +164,7 @@ class SafetyClassifier:
             "model": self.model,
             "messages": [{"role": "user", "content": message}],
             "stream": False,
-            "options": {"temperature": 0.0},
+            "options": settings.apply_num_ctx({"temperature": 0.0}),
         }
         try:
             response = self.http_client.post(self.chat_url, json=payload, timeout=30)
