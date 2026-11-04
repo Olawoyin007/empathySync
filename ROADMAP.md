@@ -86,7 +86,7 @@ them as the acceptance test, not as suggestions.
 
 ---
 
-## Phase 25: Concrete Handoff in Every Sensitive Reply 🔨 IN PROGRESS (25.1 + 25.2 shipped in v1.15.0; 25.3 + 25.5 done; 25.4 remains)
+## Phase 25: Concrete Handoff in Every Sensitive Reply ✅ COMPLETE (25.1 + 25.2 in v1.15.0; 25.3, 25.4, 25.5, 25.6 in v1.16.0)
 
 **Goal**: when empathySync declines to help with something sensitive, it names a
 route - a professional, a trusted person, a service. Today it declines and stops.
@@ -587,27 +587,34 @@ Each agent evolution phase must maintain these cross-cutting guarantees:
 
 ---
 
-## Current Status (2026-08-01)
+## Current Status (2026-11-04)
 
-**Released**: v1.14.0 (2026-08-01, "Adversarial Restraint Eval"): self
-red-teaming Inspect eval, classifier-side domain scorer, `--health` CLI flag,
-plus install/test-hermeticity fixes. No pipeline or corpus changes. Prior:
-v1.13.0 (2026-07-08, "Safety Guard Integration"). Phases 1-17, 21, and 23.1
-complete.
+**Released**: v1.16.0 (2026-11-04, "Layers That Actually Fire"). Crisis recall
+27.9% -> 57.0% via a crisis-only second pass (#212); three layers that existed,
+were documented, and were not firing are now switched on and tested (the
+manipulative-voice guard #177, the keyword floor against invisible characters
+#233, and the crisis promotion that was gated on `logistics`); a refused
+harmful request names a route out (#232); and the eval pins its engine (#211)
+so a score change means a code change. Prior: v1.15.0 (2026-09-20, "Restraint
+That Points Somewhere"). Phases 1-17, 21, 23.1 and **25** complete.
 
 **Safety pipeline depth**: 7 independent layers - post-crisis check, cooldown, keyword
 detection, LLM classification, confidence calibration (17.2), distress routing (17.1),
 sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
-**Test suite**: 1229 structural tests + 23 conversation-marked tests (20 quality
+**Test suite**: 1361 structural tests + 23 conversation-marked tests (20 quality
 scenarios + 3 safety-guard integration). Distress corpus CI gate: 0% FN rate. Keyword
-FP rate on benign content: 7%. Domain eval baseline: 96/118 (81%) on mistral:7b-instruct
-(the corpus was expanded with boundary cases in #171; the earlier 83/94 measured an
-easier set, not a better classifier).
+FP rate on benign content: 7%. Domain eval baseline: **97/122 on mistral:7b-instruct**,
+measured 2026-11-04 with Ollama alone on the machine. The corpus is versioned with the
+code and grew to 122 after v1.15.0, so this is **not** comparable to the earlier 96/118
+or 83/94 - each measured a different set, not a better classifier. Always re-measure
+rather than trusting a number written down.
 
-**Next**: Phase 22 (daemon), then Phase 19 (multilingual). Phase 23.1 shipped in
-v1.12.0; Phase 21 (safety classifier upgrade, issue #125, including the 21.4
-domain-routing corrections) shipped in v1.13.0.
+**Next**: Phase 24 (clinician co-design), then 23.2-23.4, then Phase 22 (daemon),
+then Phase 19 (multilingual). Phase 24 is next because every number above is measured
+against corpora the maintainer wrote and graded against labels the maintainer set; it
+is the only planned work that opens that loop. Phase 23.1 shipped in v1.12.0; Phase 21
+shipped in v1.13.0; Phase 25 completed in v1.16.0.
 
 **v1.11.0 deferred items - resolved (2026-07-03)**:
 - `dev`/`main` branch split: **dropped.** Solo maintainer + branch protection + PR-only

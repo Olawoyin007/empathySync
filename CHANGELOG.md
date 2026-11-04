@@ -2,7 +2,7 @@
 
 All notable changes to empathySync are documented here.
 
-## [Unreleased]
+## v1.16.0 (2026-11-04) - Layers That Actually Fire
 
 ### Added
 - **`OLLAMA_NUM_CTX`: cap the context Ollama reserves.** Unset, Ollama uses its
