@@ -34,7 +34,7 @@ empathysync --log-level DEBUG            # Override log verbosity
 docker compose up
 
 # Tests
-pytest tests/                            # Full suite (1352 unit + 23 conversation)
+pytest tests/                            # Full suite (1361 unit + 23 conversation)
 pytest tests/ --cov=src                  # With coverage
 pytest tests/ -m "not conversation"      # Skip Ollama-dependent tests
 python tests/classification/run_domain_eval.py          # Domain accuracy eval
@@ -127,7 +127,7 @@ tests/
     └── run_domain_eval.py          # Per-domain accuracy report
 ```
 
-Current counts: ~1352 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
+Current counts: ~1361 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
 
 Pre-existing known failure: `stress_test_001` conversation tier is
 non-deterministic (LLM output varies); the structural tier always passes.
@@ -214,14 +214,17 @@ content and preference/persona data are never persistable.
 
 ## Roadmap
 
-Phases 1–17, 21, and 23.1 complete. See `docs/roadmap-history.md` for the
+Phases 1–17, 21, 23.1 and 25 complete. See `docs/roadmap-history.md` for the
 full record; `ROADMAP.md` holds only planned work.
 
 Current version: check `pyproject.toml` (source of truth).
 Run `python scripts/check_version.py` to verify all files are in sync.
 
-Execution order (reordered 2026-09-19): open issues, then Phase 25
-(concrete handoff in every sensitive reply), Phase 24 (clinician co-design),
-Phase 23.2-23.4, Phase 22 (daemon), Phase 19 (multilingual). Phase 25 moved
-ahead of 22 because the response side scores 46.9% while classification is at
-96.3% - a daemon starts more sensitive conversations, so the replies come first.
+Execution order: open issues, then Phase 24 (clinician co-design), Phase
+23.2-23.4, Phase 22 (daemon), Phase 19 (multilingual). **Phase 25 completed in
+v1.16.0** - it was moved ahead of 22 on 2026-09-19 because the response side
+scored 46.9% while classification was at 96.3%, and a daemon starts more
+sensitive conversations, so the replies came first. Phase 24 is now next: every
+number in this project is measured against corpora the maintainer wrote and
+graded against labels the maintainer set, and 24 is the only planned work that
+opens that loop.
