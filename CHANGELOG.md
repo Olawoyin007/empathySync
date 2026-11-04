@@ -4,6 +4,37 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
+### Added
+- **`OLLAMA_NUM_CTX`: cap the context Ollama reserves.** Unset, Ollama uses its
+  own default, which is the model's full trained context - 131072 tokens for a
+  Llama-family 7B. That is a KV-cache reservation made at load time, not a cost
+  paid per token, so where Ollama shares a machine with another engine it
+  decides whether the model loads at all.
+
+  Found by measurement, not by reading. With another large model resident,
+  `run_domain_eval.py` read **67/122 instead of 98/122**, degraded across every
+  domain at once (crisis 10/13 -> 8/13, logistics 18/20 -> 15/20). The cause was
+  not the pipeline: Ollama was reserving ~50GB of KV cache for a 7B, failing to
+  load, and returning `500` with an empty body. The pipeline then did exactly
+  what it is designed to do and fell back to keyword-only classification - which
+  is the right behaviour and is **silent**. The symptom of a failed model load is
+  a worse answer, not an error.
+
+  Setting `OLLAMA_NUM_CTX=8192` restored the eval to 97/122 on the same machine
+  with nothing else changed. 8192 and 16384 score identically, so the cap size
+  is not what costs the remaining sample against the 98/122 baseline; that
+  baseline was recorded when Ollama had the machine to itself.
+
+  **Unset by default, so behaviour is unchanged unless you set it.** This
+  matters most on the hardware the project is built for: the restraint
+  guarantees assume the classifier is actually running, and on a constrained
+  machine it may quietly not be.
+
+  All four Ollama payload builders - engine generate, engine stream,
+  classification, crisis second pass, and the safety guard - go through
+  `settings.apply_num_ctx()`, with a test asserting no fifth caller hand-rolls
+  its own options dict. Four copies of one rule is how #233 happened.
+
 ### Fixed
 - **A refused harmful request now names a route out** (closes #232, part 1).
   `harmful` was the one restraint domain with no `referrals:` block, so a

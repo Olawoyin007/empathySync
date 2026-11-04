@@ -361,6 +361,7 @@ class LLMClassifier:
         seed = self.config.get("seed")
         if seed is not None:
             options["seed"] = seed
+        settings.apply_num_ctx(options)
 
         payload = {
             "model": self.model,
@@ -427,6 +428,7 @@ class LLMClassifier:
         seed = config.get("seed")
         if seed is not None:
             options["seed"] = seed
+        settings.apply_num_ctx(options)
 
         try:
             t_start = time.perf_counter()

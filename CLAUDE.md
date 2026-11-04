@@ -56,6 +56,17 @@ See `.env.example` for full documentation and defaults.
 - `OLLAMA_MODEL` — Engine model (e.g. `gemma3:12b`)
 - `OLLAMA_TEMPERATURE` — Response temperature (default: `0.7`)
 
+**Optional:**
+- `OLLAMA_NUM_CTX` — Context window cap in tokens, sent as Ollama's `num_ctx`.
+  Unset means Ollama reserves the model's full trained context (131072 for a
+  Llama-family 7B). That reservation is made at load time, so where Ollama
+  shares a machine with another engine it decides whether the model loads at
+  all - and a failed load is not an error the user sees, it is a silent fall
+  back to keyword-only classification. Added after a measured case: with
+  another large model resident on the same machine, `run_domain_eval.py` read
+  67/122 instead of 98/122, degraded across every domain at once. All four Ollama payload builders go
+  through `settings.apply_num_ctx()` so they cannot drift apart.
+
 **Classification:**
 - `LLM_CLASSIFICATION_ENABLED` — Enable LLM classifier (default: `true`)
 - `OLLAMA_CLASSIFIER_MODEL` — Dedicated classifier model; falls back to

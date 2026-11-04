@@ -92,6 +92,7 @@ class OllamaClient:
         options: dict = {"temperature": self.temperature, "top_p": 0.9, "num_predict": max_tokens}
         if settings.OLLAMA_SEED is not None:
             options["seed"] = settings.OLLAMA_SEED
+        settings.apply_num_ctx(options)
 
         payload = {
             "model": self.model,
@@ -148,6 +149,7 @@ class OllamaClient:
         options: dict = {"temperature": self.temperature, "top_p": 0.9, "num_predict": max_tokens}
         if settings.OLLAMA_SEED is not None:
             options["seed"] = settings.OLLAMA_SEED
+        settings.apply_num_ctx(options)
 
         payload = {
             "model": self.model,

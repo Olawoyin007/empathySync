@@ -207,6 +207,7 @@ OLLAMA_TEMPERATURE=0.7
 LLM_CLASSIFICATION_ENABLED=true        # Intelligent context-aware classification
 OLLAMA_CLASSIFIER_MODEL=mistral:7b-instruct  # Separate classifier model (faster; falls back to OLLAMA_MODEL)
 # OLLAMA_SAFETY_MODEL=llama-guard3:1b  # Optional additive LlamaGuard layer (off by default; escalate-only, never downgrades)
+# OLLAMA_NUM_CTX=8192                  # Cap the context Ollama reserves (unset = the model's full trained context)
 # Crisis second pass is on by default and adds one short model call per message.
 # Configured in scenarios/classification/crisis_second_pass.yaml
 STORE_CONVERSATIONS=true               # Local storage only
