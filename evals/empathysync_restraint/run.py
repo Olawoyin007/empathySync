@@ -36,11 +36,13 @@ from .config import (
     DEFAULT_OLLAMA_HOST,
     STARTER_DATASET,
 )
-from .preflight import preflight
+from .preflight import preflight, resolve_slots
 
 
 def _pipeline_models(engine: str) -> list[str]:
     """Every model the empathySync pipeline loads for this engine.
+
+    See also `_pipeline_num_ctx` for the context those requests carry.
 
     The pipeline loads more than the engine: the classifier and the optional
     safety guard come from the app's .env. Passing only the engine is how the
@@ -59,6 +61,17 @@ def _pipeline_models(engine: str) -> list[str]:
     if settings.OLLAMA_SAFETY_MODEL:
         models.append(settings.OLLAMA_SAFETY_MODEL)
     return list(dict.fromkeys(models))
+
+
+def _pipeline_num_ctx(models: list[str]) -> dict[str, int]:
+    """The num_ctx the pipeline sends each of its models, if it sends one.
+
+    The pipeline sends OLLAMA_NUM_CTX on every request (Settings.apply_num_ctx)
+    when it is set. The judge is called through Inspect and is not included.
+    """
+    from config.settings import settings  # src is on the path via _pipeline_models
+
+    return {m: settings.OLLAMA_NUM_CTX for m in models} if settings.OLLAMA_NUM_CTX else {}
 
 
 def _write_verdict(logs, path: str, mode: str, dataset: str) -> None:
@@ -197,6 +210,14 @@ def main() -> int:
     parser.add_argument("--max-connections", type=int, default=1)
     parser.add_argument("--no-preflight", action="store_true")
     parser.add_argument(
+        "--num-parallel",
+        type=int,
+        default=None,
+        help="parallel slots the ollama server runs, for the KV-cache estimate "
+        "(default: OLLAMA_NUM_PARALLEL in this shell, else 1). Set it when the "
+        "service sets OLLAMA_NUM_PARALLEL somewhere this shell cannot see.",
+    )
+    parser.add_argument(
         "--result-json",
         default=None,
         help="also write a structured verdict (same shape as intentKeeper) here",
@@ -212,10 +233,21 @@ def main() -> int:
 
     if not args.no_preflight:
         # Domain mode never loads the judge, so it does not need judge headroom.
-        needed_models = _pipeline_models(args.engine)
+        pipeline_models = _pipeline_models(args.engine)
+        needed_models = pipeline_models
         if args.mode != "domain":
             needed_models = needed_models + [args.judge]
-        fatals, warnings = preflight(args.host, needed_models, headroom_gb=args.headroom)
+        # Print the slot assumption on every run: the server's own value is not
+        # visible from here, and a wrong guess must not stay silent (#247).
+        slots, slot_source = resolve_slots(args.num_parallel)
+        print(f"preflight: sizing KV cache for {slots} parallel slot(s) ({slot_source})")
+        fatals, warnings = preflight(
+            args.host,
+            needed_models,
+            headroom_gb=args.headroom,
+            num_ctx_by_model=_pipeline_num_ctx(pipeline_models),
+            num_parallel=args.num_parallel,
+        )
         for w in warnings:
             print(f"WARNING: {w}")
         if fatals:
