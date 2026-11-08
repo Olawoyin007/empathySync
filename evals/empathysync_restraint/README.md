@@ -164,3 +164,18 @@ what it meant / what to do" format, so the next person inherits the context.
   optimistic - true steady state is larger than what it sums. *What to do:* keep
   a generous `--headroom` for restraint mode, or teach preflight to include the
   classifier + safety models. Domain mode is unaffected (no judge, small models).
+  *Resolved (#247):* `run.py` now reads the classifier and safety models from
+  the app's settings and passes them to the preflight. The 1B guard alone can
+  reserve 16 GiB of KV cache uncapped at 4 slots, so "small models" no longer
+  holds for domain mode either.
+- **Preflight passed, then the load died (#247).** *What happened:* the guard
+  summed weights only. With `OLLAMA_NUM_PARALLEL=4` set in the ollama service's
+  systemd drop-in, `llama-guard3:1b` (131072 default context, nothing baked)
+  had four slots of KV cache reserved - 16 GiB for 1.3G of weights - and a load
+  failed. The pipeline fell back to keyword-only classification, silently, and
+  the domain score dropped across every domain. *What it meant:* a check that
+  passes and then lets the run quietly degrade is worse than no check, and the
+  eval shell cannot see how many slots the server runs. *What to do:* the
+  preflight now adds each model's KV reservation (from `/api/show`) and prints
+  the slot count it assumed on every run. If that line does not match the
+  service, pass `--num-parallel N`.

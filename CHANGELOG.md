@@ -2,6 +2,38 @@
 
 All notable changes to empathySync are documented here.
 
+## [Unreleased]
+
+### Fixed
+- **The eval preflight now sizes every model the pipeline loads** (#247). `run.py`
+  passed only the engine and the judge into `preflight()`; the classifier and
+  the safety guard come from the app's `.env` and were never counted, including
+  the guard whose failed load silently dropped the domain eval to keyword-only
+  classification in #247. `run.py` now reads them through the app's own
+  settings, with the same classifier fallback the pipeline uses. A configured
+  classifier or guard that is not installed is now a preflight failure with a
+  pull hint, rather than a silent fallback mid-run.
+- **The eval preflight counts the KV cache, not just the weights** (closes #247).
+  It summed model sizes plus a fixed headroom, so `llama-guard3:1b` (1.3G of
+  weights, 131072-token default context, nothing baked) passed the check while
+  Ollama reserved 16 GiB of KV cache for it at `OLLAMA_NUM_PARALLEL=4`. The
+  budget is now weights plus each model's KV reservation: `2 x block_count x
+  head_count_kv x head_dim x 2 bytes` per token from `/api/show`, times
+  `num_ctx`, times the slot count. `num_ctx` is the first of `OLLAMA_NUM_CTX`
+  (for the pipeline models, which send it), the model's baked `num_ctx`, or its
+  `context_length`. The estimate assumes an f16 cache, so it errs high. A
+  failure states the arithmetic per model: context and where it came from,
+  slots, bytes per token, and the total.
+- **The preflight prints the slot count it assumed on every run, pass or fail.**
+  The server's `OLLAMA_NUM_PARALLEL` is not visible over the API, and in #247 it
+  was set in a systemd drop-in the eval shell never saw. New `--num-parallel N`
+  sets it explicitly; otherwise it comes from this shell, else 1, and the
+  output says which.
+- **Warns when `OLLAMA_MAX_LOADED_MODELS` is below the models a run needs.**
+  Restraint mode needs four resident; with fewer, Ollama evicts and reloads the
+  65G judge mid-run, which does not fail so much as never finish. No defaults
+  changed.
+
 ## v1.16.0 (2026-11-04) - Layers That Actually Fire
 
 ### Added
