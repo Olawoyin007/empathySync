@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from pathlib import Path
 
 from .config import (
     DEFAULT_ENGINE,
@@ -36,6 +37,28 @@ from .config import (
     STARTER_DATASET,
 )
 from .preflight import preflight
+
+
+def _pipeline_models(engine: str) -> list[str]:
+    """Every model the empathySync pipeline loads for this engine.
+
+    The pipeline loads more than the engine: the classifier and the optional
+    safety guard come from the app's .env. Passing only the engine is how the
+    guard in #247 went uncounted. Read them through the app's own settings, with
+    the same fallback the classifier uses (the eval pins OLLAMA_MODEL to the
+    engine), so the preflight sees what the pipeline will load.
+    """
+    # Same src path pipeline_solver uses; not imported from there because that
+    # module pulls in Inspect, which this file loads lazily on purpose.
+    src = str(Path(__file__).resolve().parents[2] / "src")
+    if src not in sys.path:
+        sys.path.insert(0, src)
+    from config.settings import settings
+
+    models = [engine, settings.OLLAMA_CLASSIFIER_MODEL or engine]
+    if settings.OLLAMA_SAFETY_MODEL:
+        models.append(settings.OLLAMA_SAFETY_MODEL)
+    return list(dict.fromkeys(models))
 
 
 def _write_verdict(logs, path: str, mode: str, dataset: str) -> None:
@@ -187,10 +210,11 @@ def main() -> int:
             DEFAULT_LOG_DIR if args.mode == "restraint" else DEFAULT_LOG_DIR.parent / "domain"
         )
 
-    # Domain mode never loads the judge, so it does not need judge headroom.
-    needed_models = [args.engine] if args.mode == "domain" else [args.engine, args.judge]
-
     if not args.no_preflight:
+        # Domain mode never loads the judge, so it does not need judge headroom.
+        needed_models = _pipeline_models(args.engine)
+        if args.mode != "domain":
+            needed_models = needed_models + [args.judge]
         fatals, warnings = preflight(args.host, needed_models, headroom_gb=args.headroom)
         for w in warnings:
             print(f"WARNING: {w}")

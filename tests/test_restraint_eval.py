@@ -20,6 +20,7 @@ pytest.importorskip("inspect_ai")
 from inspect_ai.scorer import CORRECT, INCORRECT, NOANSWER  # noqa: E402
 
 from evals.empathysync_restraint import preflight as pf  # noqa: E402
+from evals.empathysync_restraint import run as run_mod  # noqa: E402
 from evals.empathysync_restraint.dataset import load_dataset  # noqa: E402
 from evals.empathysync_restraint.domain_scorer import domain_scorer  # noqa: E402
 from evals.empathysync_restraint.pipeline_solver import (  # noqa: E402
@@ -386,3 +387,54 @@ class TestPreflight:
         )
         _, warnings = pf.preflight("http://x", ["qwen2.5:7b-instruct", "gpt-oss:120b"])
         assert any("some-other-model" in w for w in warnings)
+
+
+class TestPipelineModels:
+    """run.py must hand the preflight every model the pipeline loads (#247)."""
+
+    @pytest.fixture
+    def app_settings(self, monkeypatch):
+        run_mod._pipeline_models("x")  # puts src on the path
+        from config.settings import settings
+
+        monkeypatch.setattr(settings, "OLLAMA_CLASSIFIER_MODEL", "")
+        monkeypatch.setattr(settings, "OLLAMA_SAFETY_MODEL", "")
+        return settings
+
+    def test_classifier_and_guard_are_included(self, app_settings, monkeypatch):
+        monkeypatch.setattr(app_settings, "OLLAMA_CLASSIFIER_MODEL", "mistral:7b-instruct")
+        monkeypatch.setattr(app_settings, "OLLAMA_SAFETY_MODEL", "llama-guard3:1b")
+        assert run_mod._pipeline_models("qwen2.5:7b-instruct") == [
+            "qwen2.5:7b-instruct",
+            "mistral:7b-instruct",
+            "llama-guard3:1b",
+        ]
+
+    def test_classifier_falls_back_to_engine_and_guard_is_optional(self, app_settings):
+        assert run_mod._pipeline_models("qwen2.5:7b-instruct") == ["qwen2.5:7b-instruct"]
+
+    def _run_main(self, monkeypatch, argv):
+        seen = {}
+
+        def fake_preflight(host, models, headroom_gb=8.0, **kwargs):
+            seen["models"] = models
+            return (["stop here"], [])
+
+        monkeypatch.setattr(run_mod, "preflight", fake_preflight)
+        monkeypatch.setattr("sys.argv", ["run.py", *argv])
+        assert run_mod.main() == 1
+        return seen["models"]
+
+    def test_main_passes_guard_and_judge_to_preflight(self, app_settings, monkeypatch):
+        monkeypatch.setattr(app_settings, "OLLAMA_SAFETY_MODEL", "llama-guard3:1b")
+        models = self._run_main(
+            monkeypatch, ["--engine", "qwen2.5:7b-instruct", "--judge", "gpt-oss:120b-eval"]
+        )
+        assert models == ["qwen2.5:7b-instruct", "llama-guard3:1b", "gpt-oss:120b-eval"]
+
+    def test_domain_mode_skips_the_judge(self, app_settings, monkeypatch):
+        monkeypatch.setattr(app_settings, "OLLAMA_SAFETY_MODEL", "llama-guard3:1b")
+        models = self._run_main(
+            monkeypatch, ["--mode", "domain", "--engine", "qwen2.5:7b-instruct"]
+        )
+        assert models == ["qwen2.5:7b-instruct", "llama-guard3:1b"]

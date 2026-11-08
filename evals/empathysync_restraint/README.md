@@ -164,3 +164,7 @@ what it meant / what to do" format, so the next person inherits the context.
   optimistic - true steady state is larger than what it sums. *What to do:* keep
   a generous `--headroom` for restraint mode, or teach preflight to include the
   classifier + safety models. Domain mode is unaffected (no judge, small models).
+  *Resolved (#247):* `run.py` now reads the classifier and safety models from
+  the app's settings and passes them to the preflight. The 1B guard alone can
+  reserve 16 GiB of KV cache uncapped at 4 slots, so "small models" no longer
+  holds for domain mode either.

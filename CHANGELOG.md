@@ -2,6 +2,18 @@
 
 All notable changes to empathySync are documented here.
 
+## [Unreleased]
+
+### Fixed
+- **The eval preflight now sizes every model the pipeline loads** (#247). `run.py`
+  passed only the engine and the judge into `preflight()`; the classifier and
+  the safety guard come from the app's `.env` and were never counted, including
+  the guard whose failed load silently dropped the domain eval to keyword-only
+  classification in #247. `run.py` now reads them through the app's own
+  settings, with the same classifier fallback the pipeline uses. A configured
+  classifier or guard that is not installed is now a preflight failure with a
+  pull hint, rather than a silent fallback mid-run.
+
 ## v1.16.0 (2026-11-04) - Layers That Actually Fire
 
 ### Added
