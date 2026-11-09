@@ -95,9 +95,29 @@ def resolve_slots(override: int | None = None) -> tuple[int, str]:
     value = env_int("OLLAMA_NUM_PARALLEL", 0)
     if value:
         return value, "OLLAMA_NUM_PARALLEL in this shell"
+    if raw.strip() == "0":
+        # 0 is Ollama's "you decide", not a mistake; naming it invalid would send
+        # someone chasing a setting that is doing its job.
+        return 1, "OLLAMA_NUM_PARALLEL=0 in this shell, which is Ollama's auto; assuming 1"
     if raw:
         return 1, f"default; ignored invalid OLLAMA_NUM_PARALLEL={raw!r}"
     return 1, "default; OLLAMA_NUM_PARALLEL is not set in this shell"
+
+
+def resolve_max_loaded(override: int | None = None) -> tuple[int | None, str]:
+    """How many models Ollama keeps resident, and where that number came from.
+
+    None means this shell cannot see the value. Like OLLAMA_NUM_PARALLEL, the
+    service can set it in a systemd drop-in the eval never sees, so an unknown
+    value is reported as an assumption rather than warned about: a warning that
+    fires on every run is one nobody reads.
+    """
+    if override is not None and override > 0:
+        return override, "--max-loaded"
+    value = env_int("OLLAMA_MAX_LOADED_MODELS", 0)
+    if value:
+        return value, "OLLAMA_MAX_LOADED_MODELS in this shell"
+    return None, f"not set in this shell; Ollama defaults to {DEFAULT_MAX_LOADED_MODELS}"
 
 
 def kv_bytes_per_token(model_info: dict) -> int | None:
@@ -205,6 +225,7 @@ def preflight(
     headroom_gb: float = 8.0,
     num_ctx_by_model: dict[str, int] | None = None,
     num_parallel: int | None = None,
+    max_loaded: int | None = None,
 ) -> tuple[list[str], list[str]]:
     """Return (fatals, warnings). A non-empty `fatals` means: do not start.
 
@@ -212,6 +233,7 @@ def preflight(
     models whose requests carry one (the empathySync pipeline does when
     OLLAMA_NUM_CTX is set; the judge, called through Inspect, does not).
     `num_parallel` overrides the slot count; see `resolve_slots`.
+    `max_loaded` overrides the resident-model limit; see `resolve_max_loaded`.
     """
     fatals: list[str] = []
     warnings: list[str] = []
@@ -274,14 +296,15 @@ def preflight(
 
     # Too few load slots does not fail: Ollama evicts and reloads mid-run, so a
     # large judge is reloaded every sample and the run effectively never finishes.
-    max_loaded = env_int("OLLAMA_MAX_LOADED_MODELS", DEFAULT_MAX_LOADED_MODELS)
-    if max_loaded < len(distinct):
+    # Only warn on a value this shell can actually see: assuming the default and
+    # warning on it fired on every run of a correctly configured box (#248).
+    loaded, loaded_source = resolve_max_loaded(max_loaded)
+    if loaded is not None and loaded < len(distinct):
         warnings.append(
-            f"OLLAMA_MAX_LOADED_MODELS is {max_loaded} (read from this shell; "
-            f"{DEFAULT_MAX_LOADED_MODELS} if unset) but this run needs {len(distinct)} "
-            f"models resident ({', '.join(distinct)}). Ollama will evict and reload "
-            f"between calls; set OLLAMA_MAX_LOADED_MODELS>={len(distinct)} on the ollama "
-            f"service."
+            f"OLLAMA_MAX_LOADED_MODELS is {loaded} ({loaded_source}) but this run "
+            f"needs {len(distinct)} models resident ({', '.join(distinct)}). Ollama "
+            f"will evict and reload between calls; set "
+            f"OLLAMA_MAX_LOADED_MODELS>={len(distinct)} on the ollama service."
         )
 
     others = [m for m in resident(host) if m not in set(distinct)]

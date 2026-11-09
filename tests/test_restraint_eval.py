@@ -575,10 +575,27 @@ class TestPreflightKV(_PreflightCase):
         assert any("could not size the KV cache for mystery:1b" in w for w in warnings)
 
     def test_too_few_load_slots_warns(self, monkeypatch):
+        monkeypatch.setenv("OLLAMA_MAX_LOADED_MODELS", "3")
         installed = {m: 1_000_000_000 for m in ("a", "b", "c", "d")}
         self._patch(monkeypatch, installed, avail=500.0, free=500.0, show={})
         _, warnings = pf.preflight("http://x", ["a", "b", "c", "d"])
         assert any("OLLAMA_MAX_LOADED_MODELS is 3" in w and "needs 4" in w for w in warnings)
+
+    def test_unknown_load_slots_is_quiet(self, monkeypatch):
+        """Unset here can still be set on the service, so assume nothing (#248).
+
+        Warning on the assumed default fired on every run of a box whose service
+        was configured correctly, which is how a check stops being read."""
+        installed = {m: 1_000_000_000 for m in ("a", "b", "c", "d")}
+        self._patch(monkeypatch, installed, avail=500.0, free=500.0, show={})
+        _, warnings = pf.preflight("http://x", ["a", "b", "c", "d"])
+        assert not any("OLLAMA_MAX_LOADED_MODELS" in w for w in warnings)
+
+    def test_max_loaded_override_warns(self, monkeypatch):
+        installed = {m: 1_000_000_000 for m in ("a", "b", "c", "d")}
+        self._patch(monkeypatch, installed, avail=500.0, free=500.0, show={})
+        _, warnings = pf.preflight("http://x", ["a", "b", "c", "d"], max_loaded=2)
+        assert any("--max-loaded" in w and "needs 4" in w for w in warnings)
 
     def test_enough_load_slots_is_quiet(self, monkeypatch):
         monkeypatch.setenv("OLLAMA_MAX_LOADED_MODELS", "4")
@@ -612,6 +629,13 @@ class TestSlotAssumption(_PreflightCase):
         monkeypatch.setenv("OLLAMA_NUM_PARALLEL", "four")
         slots, source = pf.resolve_slots()
         assert slots == 1 and "'four'" in source
+
+    def test_zero_is_auto_not_invalid(self, monkeypatch):
+        """0 is Ollama's auto, so the message must not call it a mistake."""
+        monkeypatch.setenv("OLLAMA_NUM_PARALLEL", "0")
+        slots, source = pf.resolve_slots()
+        assert slots == 1
+        assert "auto" in source and "invalid" not in source
 
     def test_override_reaches_the_estimate(self, monkeypatch):
         # The systemd case: the shell sees nothing, the service runs 4 slots.
