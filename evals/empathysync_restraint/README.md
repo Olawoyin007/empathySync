@@ -178,4 +178,7 @@ what it meant / what to do" format, so the next person inherits the context.
   eval shell cannot see how many slots the server runs. *What to do:* the
   preflight now adds each model's KV reservation (from `/api/show`) and prints
   the slot count it assumed on every run. If that line does not match the
-  service, pass `--num-parallel N`.
+  service, pass `--num-parallel N`. `OLLAMA_MAX_LOADED_MODELS` is printed the
+  same way and for the same reason: it is usually set on the service, so the
+  preflight states what it assumed rather than warning about a limit it cannot
+  read, and `--max-loaded N` sets it straight.

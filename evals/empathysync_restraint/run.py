@@ -36,7 +36,7 @@ from .config import (
     DEFAULT_OLLAMA_HOST,
     STARTER_DATASET,
 )
-from .preflight import preflight, resolve_slots
+from .preflight import preflight, resolve_max_loaded, resolve_slots
 
 
 def _pipeline_models(engine: str) -> list[str]:
@@ -218,6 +218,14 @@ def main() -> int:
         "service sets OLLAMA_NUM_PARALLEL somewhere this shell cannot see.",
     )
     parser.add_argument(
+        "--max-loaded",
+        type=int,
+        default=None,
+        help="models the ollama server keeps resident, for the eviction check "
+        "(default: OLLAMA_MAX_LOADED_MODELS in this shell, else unknown). Set it "
+        "when the service sets OLLAMA_MAX_LOADED_MODELS somewhere this shell cannot see.",
+    )
+    parser.add_argument(
         "--result-json",
         default=None,
         help="also write a structured verdict (same shape as intentKeeper) here",
@@ -241,12 +249,19 @@ def main() -> int:
         # visible from here, and a wrong guess must not stay silent (#247).
         slots, slot_source = resolve_slots(args.num_parallel)
         print(f"preflight: sizing KV cache for {slots} parallel slot(s) ({slot_source})")
+        loaded, loaded_source = resolve_max_loaded(args.max_loaded)
+        print(
+            f"preflight: this run needs {len(needed_models)} models resident; "
+            f"OLLAMA_MAX_LOADED_MODELS="
+            f"{loaded if loaded is not None else 'unknown'} ({loaded_source})"
+        )
         fatals, warnings = preflight(
             args.host,
             needed_models,
             headroom_gb=args.headroom,
             num_ctx_by_model=_pipeline_num_ctx(pipeline_models),
             num_parallel=args.num_parallel,
+            max_loaded=args.max_loaded,
         )
         for w in warnings:
             print(f"WARNING: {w}")

@@ -5,6 +5,19 @@ All notable changes to empathySync are documented here.
 ## [Unreleased]
 
 ### Fixed
+- **The eval preflight no longer warns about a resident-model limit it cannot
+  see** (#248). The eviction check read `OLLAMA_MAX_LOADED_MODELS` from the
+  eval's own shell and assumed Ollama's default of 3 when unset. The limit is
+  commonly set on the service instead - a systemd drop-in the eval never sees -
+  so a correctly configured box with the limit at 4 got the warning on every
+  restraint run, telling it to set a value it had already set. A warning that
+  always fires is one nobody reads, which costs the real ones their meaning. It
+  now warns only on a value this shell can actually see, and `run.py` prints the
+  assumption on every run next to the slot count, the same way
+  `OLLAMA_NUM_PARALLEL` is handled. `--max-loaded N` states it explicitly. In the
+  same spirit, `OLLAMA_NUM_PARALLEL=0` is no longer reported as invalid: zero is
+  Ollama's own "you decide", and naming it a mistake sends someone chasing a
+  setting that is doing its job.
 - **The eval preflight now sizes every model the pipeline loads** (#247). `run.py`
   passed only the engine and the judge into `preflight()`; the classifier and
   the safety guard come from the app's `.env` and were never counted, including
