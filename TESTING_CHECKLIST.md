@@ -22,6 +22,9 @@ pytest tests/test_conversation_quality.py -m "not conversation" -v
 # Restraint-memory negative invariant (persisted fields ⊆ allowlist)
 pytest tests/test_restraint_memory.py -v
 
+# Same invariant, generated over every StorageBackend write path (hypothesis)
+pytest tests/test_restraint_memory_property.py -v
+
 # Crisis triage floor (oblique ideation reaches the hard-stop, benign does not)
 pytest tests/classification/test_crisis_triage.py -v
 

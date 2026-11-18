@@ -19,6 +19,7 @@ from typing import Dict, List, Optional
 import random
 
 from config.settings import settings
+from utils.persisted_fields import validate_persisted_fields
 from utils.scenario_loader import get_scenario_loader
 
 logger = logging.getLogger(__name__)
@@ -246,6 +247,7 @@ class TrustedNetwork:
             return self._backend.update_trusted_person(person_id, updates)
 
         # JSON backend
+        validate_persisted_fields("people", updates)
         data = self._load_data()
 
         for person in data["people"]:

@@ -94,6 +94,33 @@ All notable changes to empathySync are documented here.
 
   Point-in-time records in `CHANGELOG.md` and `ROADMAP.md` are left alone; they
   were true when written.
+- **The restraint-memory invariant is now checked across the whole
+  `StorageBackend` write surface** (#236). `tests/test_restraint_memory.py`
+  drives a hand-written list of calls, so it can only ever see fields written by
+  a path somebody remembered to call. The new property test discovers write
+  methods by introspection - a public method whose body calls
+  `_ensure_write_allowed()` - generates their arguments from their type hints
+  with `hypothesis`, and re-checks the allowlist afterwards. A write method
+  added later is covered without editing the test, and an argument type with no
+  strategy fails loudly instead of being skipped.
+
+  It found that `update_task_pattern`, `update_trusted_person` and
+  `update_handoff_event` merged a caller-supplied dict straight into the record.
+  SQLite refuses an unallowlisted key through the column whitelist that backs the
+  no-SQL-injection control; the JSON backend, which is the default, did not - it
+  persisted `conversation_text` and `persona_summary`, the two categories the
+  invariant exists to forbid.
+
+  **Fixed, at all four sites.** `utils/persisted_fields.validate_persisted_fields()`
+  raises on any key outside `restraint_memory.allowed_fields`, which is the same
+  list the invariant test asserts against, so the code enforces the list the
+  invariant is written in terms of rather than a second copy. The fourth site is
+  the one that mattered: `TrustedNetwork.update_person` does its own JSON write
+  and never reaches `JSONBackend`, so guarding only the backend would have left
+  the path the app actually takes wide open. Removing that one guard is caught by
+  `test_update_person_refuses_a_field_that_is_not_persistable`, which exists
+  because the first version of this fix passed its own test suite with the live
+  path unguarded.
 
 ## v1.16.0 (2026-11-04) - Layers That Actually Fire
 
