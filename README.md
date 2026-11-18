@@ -29,13 +29,15 @@ It gives full help on practical tasks - writing, coding, explanations, and every
 
 Everything runs on your hardware via Ollama. No cloud. No external API calls. No telemetry. No engagement optimization.
 
-## Who Uses This
+## Who This Is For
+
+Who it is built for, which is not the same as who uses it. There is no measured user base behind this list.
 
 **Developers** who want a privacy-respecting AI assistant with no API keys, no subscriptions, and no data leaving their hardware.
 
 **Researchers and builders** working on ethical AI tooling who want a reference implementation that optimises for user autonomy. The architecture is documented and the pipeline is embeddable.
 
-**Therapists, counsellors, and domain experts** who want to shape how an AI responds to emotional content - the scenarios, responses, and intervention language are plain YAML files. No programming required. See [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md).
+**Therapists, counsellors, and domain experts** who would be willing to say where the language is wrong. The scenarios, responses, and intervention language are plain YAML files, so a correction can land without touching Python. No clinician has reviewed them yet; that is the project's largest open gap and the reason [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md) exists.
 
 It is a tool, not a companion or an always-on assistant - meant to be used and set aside.
 
@@ -210,7 +212,6 @@ OLLAMA_CLASSIFIER_MODEL=mistral:7b-instruct  # Separate classifier model (faster
 # OLLAMA_NUM_CTX=8192                  # Cap the context Ollama reserves (unset = the model's full trained context)
 # Crisis second pass is on by default and adds one short model call per message.
 # Configured in scenarios/classification/crisis_second_pass.yaml
-STORE_CONVERSATIONS=true               # Local storage only
 USE_SQLITE=false                       # SQLite backend (better concurrency)
 ENABLE_DEVICE_LOCK=false               # Multi-device sync safety
 

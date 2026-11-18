@@ -86,10 +86,6 @@ class Settings:
     # Lock file stale timeout in seconds (default: 5 minutes)
     LOCK_STALE_TIMEOUT: int = int(os.getenv("LOCK_STALE_TIMEOUT", "300"))
 
-    # Privacy & Security
-    STORE_CONVERSATIONS: bool = os.getenv("STORE_CONVERSATIONS", "true").lower() == "true"
-    CONVERSATION_RETENTION_DAYS: int = int(os.getenv("CONVERSATION_RETENTION_DAYS", "30"))
-
     # Data Retention
     # Session data, check-ins, and policy events older than this are pruned on startup
     DATA_RETENTION_DAYS: int = int(os.getenv("DATA_RETENTION_DAYS", "90"))

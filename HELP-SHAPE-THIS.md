@@ -8,6 +8,23 @@ If you're a therapist, counsellor, social worker, UX writer, ethicist, or someon
 
 ---
 
+## The easiest way: just email it
+
+**olawoyinoluwafemi26@gmail.com**
+
+Tell me what the wording should be and I will do the technical part. No GitHub
+account, no files, no tools, nothing to install. A sentence is plenty: *"nobody
+says it like that"* is useful on its own, and so is *"that word would land badly
+on someone already struggling."*
+
+If it is easier to talk than to write, say so and I will come to you - in person
+if you are near Bristol or Somerset, or on a call.
+
+Everything below is the do-it-yourself route, for anyone who would rather edit
+the files directly. It is not the preferred route. It is just the other one.
+
+---
+
 ## What you can improve
 
 ### The words empathySync says when someone is struggling
@@ -64,9 +81,10 @@ Scroll to `regional_resources:` -the format is just a name, a phone number, and 
 
 ---
 
-## How to suggest a change
+## How to suggest a change yourself
 
-You don't need to install anything or learn any tools.
+If you would rather not email, you can edit the files directly. You don't need
+to install anything or learn any tools.
 
 1. Click any of the file links above
 2. You'll see the file on GitHub -the text is plain and readable

@@ -173,6 +173,66 @@ All notable changes to empathySync are documented here.
   `test_update_person_refuses_a_field_that_is_not_persistable`, which exists
   because the first version of this fix passed its own test suite with the live
   path unguarded.
+- **`scripts/eval_oblique_crisis.py`** - the oblique-crisis figure in
+  `docs/model-benchmark.md` was measured by hand on 2026-09-16 and no script
+  existed to re-run it, so nobody could check it against a later pipeline. It now
+  runs the corpus twice, keyword floor alone and full classifier, and reports the
+  split rather than a single number.
+
+  Running it produced a result worth stating carefully. The shipped default now
+  reaches **6 / 6** on the oblique samples with 0 / 32 false escalations, which
+  looks like the gap closing. It is not: the floor alone reaches 6 / 6 and the
+  classifier adds **0 / 6**. The floor's trigger phrases were written from these
+  six samples in #203, so it catches its own source examples and fires before the
+  classifier is consulted. The table's 0 / 6 for `mistral:7b-instruct` is still
+  true; the samples have simply stopped being able to show it, and are a
+  regression guard now. The untrained figure is crisis recall on the 490-sample
+  corpus - 57.0%, up from 27.9% after the crisis second pass (#212), with #218
+  tracking the rest. The doc says which to quote.
+
+  The script also documents a trap it hit: `config.settings` calls `load_dotenv()`
+  at import, and `load_dotenv` does not overwrite a variable that is present but
+  does fill one that is absent. Deleting `OLLAMA_SAFETY_MODEL` to get the shipped
+  default therefore let `.env` put the guard straight back, and the first run
+  silently measured a configuration it had been told not to. It sets the variable
+  empty instead, and prints what `settings` resolved rather than what the
+  environment holds.
+
+### Fixed
+- **The app no longer tells users their conversations are stored.** They are not.
+  Conversation text is never written to disk, and the restraint-memory invariant
+  forbids persisting it. Three places said otherwise, including a one-time notice
+  shown in the UI reading "Conversations are stored **unencrypted**". It now names
+  what is actually kept - check-ins, session counts, policy events and the people
+  you add - and says plainly that conversations are not saved.
+
+  `STORE_CONVERSATIONS` and `CONVERSATION_RETENTION_DAYS` are removed.
+  `STORE_CONVERSATIONS` was read in exactly one place, to decide whether to show
+  that notice; it never gated persistence, so setting it to `false` let someone
+  believe they had turned something off when they had changed nothing.
+  `CONVERSATION_RETENTION_DAYS` was never read by any code at all. Dead settings
+  that contradict the invariant are worse than no settings: an external reviewer
+  read the documented default of `true` and concluded, reasonably, that sensitive
+  conversations persist. `THREAT_MODEL.md` carried the same claim and now carries
+  the correction and the reason.
+
+  An exported transcript is unchanged: the user asks for it and saves it
+  themselves, and where they put it is outside the trust boundary.
+
+### Changed
+- **`README.md` says who the project is *for*, not who uses it** (#235 review
+  follow-up). "Who Uses This" named three audiences with no measured user base
+  behind any of them, in a project whose whole method is catching exactly that
+  kind of claim. It is now "Who This Is For", says so in one line, and the
+  clinician entry states the real position: no clinician has reviewed the
+  language yet, and that is the largest open gap.
+- **`HELP-SHAPE-THIS.md` leads with an email address.** Every route on that page
+  went through GitHub - open `scenarios/domains/emotional.yaml`, find the
+  `redirects:` block, use the pencil icon - and the fallback for people who would
+  rather not was to open a GitHub issue, which still needs an account. The people
+  whose judgement the page asks for were the ones the delivery path filtered out.
+  Emailing the wording now comes first and the file-editing route is labelled as
+  the alternative it always was.
 
 ## v1.16.0 (2026-11-04) - Layers That Actually Fire
 

@@ -88,6 +88,29 @@ goodbye), against 32 intense-but-not-suicidal messages and 6 practical controls:
 
 The 14B result is reproducible and costs nothing in false escalations.
 
+> **Re-measured 2026-11-18 - the table above still stands, and this corpus can no
+> longer show it.** `scripts/eval_oblique_crisis.py` runs the same two sets twice,
+> floor-only and full classifier. On `mistral:7b-instruct` with the guard unset:
+>
+> | | Result |
+> |---|:---:|
+> | Oblique crisis reached | 6 / 6 |
+> | of which the keyword floor alone | **6 / 6** |
+> | what the classifier adds | **0 / 6** |
+> | Benign wrongly escalated | 0 / 32 |
+>
+> A 6/6 headline here would be self-congratulation. The floor's trigger phrases
+> were written *from these six samples* in #203, so it catches its own source
+> examples and fires before the classifier is ever consulted. The classifier's
+> contribution is still zero, exactly as the table says - the samples have stopped
+> being able to measure it. They are a regression guard now, which is how
+> `tests/classification/test_crisis_triage.py` uses them.
+>
+> **The figure that is not trained on its own examples** is crisis recall against
+> the 490-sample adversarial corpus: **57.0%**, up from 27.9% after the crisis
+> second pass (#212). Issue #218 tracks the 43% still missed. Quote that one, not
+> this one.
+
 **The prompt is not the lever.** Adding explicit crisis indicators to the
 classifier prompt - preparation, post-decision calm, means inquiry, pre-emptive
 goodbye, minimised self-harm, plus a rule that a practical request attached to a
@@ -107,10 +130,12 @@ limit. The budget is only shared if the prompt is. Asking the same
 165 crisis samples, so the limit was the shared prompt rather than the model
 (issue #212).
 
-**What this means for a deployment.** On the recommended 7-8 GB classifiers,
-detection of calm, oblique, preparation-stage crisis is close to absent, and the
-keyword floor has reached its lexical ceiling (see
-`docs/crisis-triage-finding.md`). Explicit-language crisis detection is
+**What this means for a deployment.** On the recommended 7-8 GB classifiers, the
+classifier's own detection of calm, oblique, preparation-stage crisis is close to
+absent. The keyword floor covers the phrasings it was written for and has reached
+its lexical ceiling (see `docs/crisis-triage-finding.md`), so a phrasing nobody
+enumerated still escapes both layers; the crisis second pass is what carries the
+unenumerated cases, at 57.0% recall. Explicit-language crisis detection is
 unaffected and remains strong. State this limit rather than assume the floor
 covers it.
 

@@ -41,21 +41,24 @@ apply_custom_css()
 
 
 def display_encryption_notice():
-    """One-time notice that local data is stored unencrypted.
+    """One-time notice that what is kept on disk is unencrypted.
 
     THREAT_MODEL.md is explicit that there is no encryption at rest, but a user
-    running on a shared machine will not read it before their conversation
-    history is written to disk. This surfaces that honesty in the UI itself,
-    matching the transparency philosophy used elsewhere. Only shown when
-    persistence is on; dismissing it writes a marker so it never nags again.
+    on a shared machine will not read it before anything is written. This
+    surfaces that honesty in the UI itself, matching the transparency philosophy
+    used elsewhere. Dismissing it writes a marker so it never nags again.
+
+    It used to say conversations were stored, which was never true: conversation
+    text is not persisted at all, and the restraint-memory invariant forbids it
+    (tests/test_restraint_memory.py). Warning about the wrong thing cost the real
+    warning its meaning, and told users the app keeps something it does not.
     """
-    if not settings.STORE_CONVERSATIONS:
-        return
     ack_marker = settings.DATA_DIR / ".encryption_notice_ack"
     if ack_marker.exists():
         return
     st.caption(
-        f"Conversations are stored **unencrypted** at `{settings.DATA_DIR}`. "
+        f"Your conversations are not saved. What is kept at `{settings.DATA_DIR}` - "
+        "check-ins, session counts and the people you add - is stored **unencrypted**. "
         "On a shared machine, enable full-disk encryption. See `THREAT_MODEL.md`."
     )
     if st.button("Understood - don't show this again"):
