@@ -104,6 +104,7 @@ rename.
 | Engine unavailable | A canned safe reply is returned rather than an error or an empty response | `src/models/ai_wellness_guide.py` (`_get_fallback_response`) | `test_wellness_guide.py::test_generate_response_handles_api_error`, `::test_stream_handles_api_error` |
 | Classifier unavailable | Connection errors and timeouts return `None`; classification falls through to keyword detection, which still reaches crisis and harmful | `src/models/llm_classifier.py`, `src/models/risk_classifier.py` | `test_llm_classifier.py::test_connection_refused`, `::test_timeout` |
 | Corrupt storage file | Unreadable JSON falls back to defaults instead of raising | `src/utils/storage_backend.py` | `test_wellness_tracker.py::test_load_data_corrupted_json`, `test_trusted_network.py::test_corrupted_json_recovers` |
+| Degraded classifier is visible | `classifier_degraded` is set only when the LLM was asked and gave nothing; the response-mode line and transparency panel both say so | `src/models/risk_classifier.py`, `src/ui/panels.py` | `test_classifier_degraded.py::test_an_unreachable_classifier_is_reported`, `::test_a_fast_path_crisis_hit_is_not_degraded`, `::test_a_disabled_classifier_is_not_degraded` |
 
 ## Known gaps
 
@@ -143,10 +144,20 @@ These are open and acknowledged. Contributor help is welcome.
   defaults and the app continues. That keeps it usable, but the records in that
   file are gone without the user being told, which sits awkwardly beside the
   transparency the rest of the design claims. SQLite is less exposed to this.
-- **A missing classifier degrades safety quietly.** With Ollama unreachable or
-  the classifier timing out, detection falls back to keyword matching. Crisis and
-  harmful phrases still route correctly, but the oblique cases the LLM catches do
-  not, and nothing in the UI says the weaker path is in use.
+- **A missing classifier degrades safety, and now says so.** With Ollama
+  unreachable or the classifier timing out, detection falls back to keyword
+  matching. Crisis and harmful phrases still route correctly, but the oblique
+  cases the LLM catches do not. The response-mode line now reads "reduced
+  detection · classifier offline" on any turn where that happened, and the
+  transparency panel explains it in plain words.
+
+  The flag is deliberately narrow. `classification_method == "keyword"` is also
+  how a fast-path crisis hit, a skipped short continuation, and a disabled
+  classifier all read, and none of those is a fault - warning on them would put a
+  technical notice on screen during a crisis hard stop. `classifier_degraded` is
+  set only when the LLM was asked and returned nothing, and
+  `tests/test_classifier_degraded.py` pins all four cases, false positives
+  included.
 
 ### Scope
 

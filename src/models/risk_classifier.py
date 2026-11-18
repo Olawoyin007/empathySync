@@ -122,8 +122,16 @@ class RiskClassifier:
             "dependency_risk": 3.0,
             "risk_weight": 1.5,
             "classification_method": "llm" or "keyword",
+            "classifier_degraded": True,  # only when the LLM was asked and gave nothing
             "intervention": {...}  # if dependency threshold met
         }
+
+        classification_method == "keyword" is not by itself a fault. It is also
+        how a fast-path crisis/harmful hit, a skipped short continuation, and a
+        deliberately disabled classifier all read. classifier_degraded separates
+        the one case that is a fault - the LLM was called and returned nothing or
+        raised - so the UI can say so without crying wolf on a crisis hard stop,
+        which is the worst possible moment to show a technical warning.
 
         Note: emotional_weight is for the TASK, not the user's emotional state.
         A user can calmly ask for a resignation email (low intensity, high weight).
@@ -151,7 +159,9 @@ class RiskClassifier:
                 llm_result = fast_path_result
 
         # Full LLM classification — only when enabled and fast-path didn't already trigger
+        llm_attempted = False
         if self._use_llm and self._llm_classifier and not skip_llm and llm_result is None:
+            llm_attempted = True
             try:
                 llm_result = self._llm_classifier.classify(user_input, conversation_history)
                 if llm_result:
@@ -159,6 +169,12 @@ class RiskClassifier:
                     logger.debug(f"LLM classification: {llm_result}")
             except Exception as e:
                 logger.warning(f"LLM classification failed: {e}")
+
+        # The classifier was asked and gave nothing back, so this turn was routed
+        # on keywords alone. Oblique cases the LLM catches are not being caught
+        # right now, and the user is entitled to know that rather than have the
+        # weaker path look identical to the stronger one.
+        classifier_degraded = llm_attempted and llm_result is None
 
         # Use LLM result for domain and intensity if available, otherwise keyword matching
         if llm_result:
@@ -443,6 +459,9 @@ class RiskClassifier:
             "risk_weight": risk_weight,
             "classification_method": classification_method,
         }
+
+        if classifier_degraded:
+            result["classifier_degraded"] = True
 
         if crisis_second_pass_fired:
             result["crisis_second_pass"] = True

@@ -48,6 +48,27 @@ All notable changes to empathySync are documented here.
   changed.
 
 ### Added
+- **The keyword-only fallback is now visible to the user.** `THREAT_MODEL.md`
+  listed it as a reliability gap: with Ollama unreachable or the classifier timing
+  out, routing falls back to keywords, explicit crisis and harmful wording still
+  lands, the oblique cases the LLM catches do not, and nothing on screen said the
+  weaker path was in use. The response-mode line now reads "reduced detection ·
+  classifier offline" on those turns, and the transparency panel explains it in
+  plain words. Transparency is a stated design constraint; a silent downgrade of
+  the safety path was the clearest violation of it left in the app.
+
+  The signal had to be built before it could be shown, and the reason is the
+  interesting part. `classification_method == "keyword"` could not carry it,
+  because that is also how three healthy situations read: a fast-path crisis or
+  harmful hit that bypasses the LLM by design, a short continuation skipped to
+  save a round-trip, and a classifier switched off by configuration. Warning on
+  all four would have put a technical fault notice on screen during a crisis hard
+  stop - the worst moment available. `classifier_degraded` is therefore set only
+  when the LLM was asked and returned nothing or raised, it is absent rather than
+  `False` on healthy turns, and `tests/test_classifier_degraded.py` pins all four
+  cases with the false positives weighted more heavily than the true one.
+
+### Added
 - **The five THREAT_MODEL controls that nothing was checking now have tests**
   (#235). Adding the "Verified by" column found five controls that were real in
   the code with nothing proving they stayed that way: no-external-calls, the SQL
