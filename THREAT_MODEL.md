@@ -129,11 +129,18 @@ These are open and acknowledged. Contributor help is welcome.
 
 ### Security
 
-- **No encryption at rest.** Conversation history and tracked patterns are stored as plain
-  JSON or SQLite under `data/` (git-ignored). Their confidentiality equals your operating
-  system account and file permissions. On a shared or portable device, use full-disk
-  encryption. Retention defaults prune conversation history after 30 days and other records
-  after 90 (`CONVERSATION_RETENTION_DAYS`, `DATA_RETENTION_DAYS`; set to 0 to disable).
+- **No encryption at rest.** Tracked patterns - check-ins, session counts, policy events,
+  and the people you add - are stored as plain JSON or SQLite under `data/` (git-ignored).
+  Their confidentiality equals your operating system account and file permissions. On a
+  shared or portable device, use full-disk encryption. Records older than 90 days are pruned
+  on startup (`DATA_RETENTION_DAYS`; set to 0 to disable).
+  **Conversation text is not among them.** It is never written to disk, and the
+  restraint-memory invariant forbids persisting it (`tests/test_restraint_memory.py` fails
+  the build on any field carrying conversation content). This section previously said
+  conversation history was stored and pruned after 30 days, via a `STORE_CONVERSATIONS`
+  setting that gated only a UI notice and a `CONVERSATION_RETENTION_DAYS` setting no code
+  ever read. Both are removed. An exported transcript is a file the user asks for and saves
+  themselves; where they put it is outside this boundary.
 - **No access control.** The optional device lock (`ENABLE_DEVICE_LOCK`) prevents two devices
   writing to synced data at once. It is a data-integrity safeguard, not authentication. Anyone
   with access to the running app or the `data/` directory can read and write everything.

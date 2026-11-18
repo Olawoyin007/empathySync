@@ -97,9 +97,8 @@ ENVIRONMENT=development
 DEBUG=false
 LOG_LEVEL=INFO
 
-# Data retention
-STORE_CONVERSATIONS=true
-CONVERSATION_RETENTION_DAYS=30
+# Data retention (conversation text is never stored, so there is no flag for it)
+DATA_RETENTION_DAYS=90
 
 # Intelligent classification (Phase 9)
 # Uses LLM for context-aware domain detection

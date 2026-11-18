@@ -173,6 +173,41 @@ All notable changes to empathySync are documented here.
   `test_update_person_refuses_a_field_that_is_not_persistable`, which exists
   because the first version of this fix passed its own test suite with the live
   path unguarded.
+### Fixed
+- **The app no longer tells users their conversations are stored.** They are not.
+  Conversation text is never written to disk, and the restraint-memory invariant
+  forbids persisting it. Three places said otherwise, including a one-time notice
+  shown in the UI reading "Conversations are stored **unencrypted**". It now names
+  what is actually kept - check-ins, session counts, policy events and the people
+  you add - and says plainly that conversations are not saved.
+
+  `STORE_CONVERSATIONS` and `CONVERSATION_RETENTION_DAYS` are removed.
+  `STORE_CONVERSATIONS` was read in exactly one place, to decide whether to show
+  that notice; it never gated persistence, so setting it to `false` let someone
+  believe they had turned something off when they had changed nothing.
+  `CONVERSATION_RETENTION_DAYS` was never read by any code at all. Dead settings
+  that contradict the invariant are worse than no settings: an external reviewer
+  read the documented default of `true` and concluded, reasonably, that sensitive
+  conversations persist. `THREAT_MODEL.md` carried the same claim and now carries
+  the correction and the reason.
+
+  An exported transcript is unchanged: the user asks for it and saves it
+  themselves, and where they put it is outside the trust boundary.
+
+### Changed
+- **`README.md` says who the project is *for*, not who uses it** (#235 review
+  follow-up). "Who Uses This" named three audiences with no measured user base
+  behind any of them, in a project whose whole method is catching exactly that
+  kind of claim. It is now "Who This Is For", says so in one line, and the
+  clinician entry states the real position: no clinician has reviewed the
+  language yet, and that is the largest open gap.
+- **`HELP-SHAPE-THIS.md` leads with an email address.** Every route on that page
+  went through GitHub - open `scenarios/domains/emotional.yaml`, find the
+  `redirects:` block, use the pencil icon - and the fallback for people who would
+  rather not was to open a GitHub issue, which still needs an account. The people
+  whose judgement the page asks for were the ones the delivery path filtered out.
+  Emailing the wording now comes first and the file-editing route is labelled as
+  the alternative it always was.
 
 ## v1.16.0 (2026-11-04) - Layers That Actually Fire
 
