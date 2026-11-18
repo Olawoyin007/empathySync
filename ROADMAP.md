@@ -604,10 +604,12 @@ That Points Somewhere"). Phases 1-17, 21, 23.1 and **25** complete.
 detection, LLM classification, confidence calibration (17.2), distress routing (17.1),
 sanity check (17.4). Each layer is independent; failure of one does not bypass others.
 
-**Test suite**: 1361 structural tests + 23 conversation-marked tests (20 quality
+**Test suite**: 1480 structural tests + 23 conversation-marked tests (20 quality
 scenarios + 3 safety-guard integration). Distress corpus CI gate: 0% FN rate. Keyword
 FP rate on benign content: 7%. Domain eval baseline: **97/122 on mistral:7b-instruct**,
-measured 2026-11-04 with Ollama alone on the machine. The corpus is versioned with the
+measured 2026-11-18 with `OLLAMA_SAFETY_MODEL` unset - quote the guard state with any
+domain score, because the optional guard escalates legal adult work to `harmful` and the
+corpus has carried four such cases since #221. The corpus is versioned with the
 code and grew to 122 after v1.15.0, so this is **not** comparable to the earlier 96/118
 or 83/94 - each measured a different set, not a better classifier. Always re-measure
 rather than trusting a number written down.
