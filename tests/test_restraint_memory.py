@@ -147,6 +147,7 @@ class TestRestraintMemoryJSON:
         _exercise_all_persistence_apis(tmp_path, use_sqlite=False)
         return tmp_path
 
+    # THREAT_MODEL.md control: Restraint-memory invariant
     def test_every_persisted_field_is_allowlisted(self, data_dir, restraint_config):
         allowed = restraint_config["allowed_fields"]
         checked_records = 0
@@ -193,6 +194,7 @@ class TestRestraintMemoryJSON:
             "if a persistence API was removed, update this test"
         )
 
+    # THREAT_MODEL.md control: Restraint-memory invariant
     def test_no_forbidden_field_anywhere(self, data_dir, restraint_config):
         """Deny-list scan covers free-form dicts (e.g. handoff details) too."""
         forbidden = {f.lower() for f in restraint_config["forbidden_field_names"]}
@@ -212,6 +214,7 @@ class TestRestraintMemorySQLite:
         yield conn
         conn.close()
 
+    # THREAT_MODEL.md control: Restraint-memory invariant
     def test_every_column_is_allowlisted(self, db_conn, restraint_config):
         allowed_columns = restraint_config["allowed_columns"]
         legacy = restraint_config["legacy_deny_named_columns"]

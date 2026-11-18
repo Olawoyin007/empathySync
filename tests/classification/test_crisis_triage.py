@@ -62,6 +62,7 @@ def classifier():
 
 
 @pytest.mark.parametrize("entry", IDEATION_ENTRIES, ids=[e["note"] for e in IDEATION_ENTRIES])
+# THREAT_MODEL.md control: Crisis keyword floor
 def test_oblique_ideation_reaches_crisis(classifier, entry):
     """Oblique ideation must reach the crisis hard-stop, not emotional support."""
     result = classifier.classify(entry["text"], [])
@@ -80,6 +81,7 @@ def test_intense_benign_stays_off_the_hard_stop(classifier, entry):
     ), f"FALSE ESCALATION | note={entry['note']} | text={entry['text']!r}"
 
 
+# THREAT_MODEL.md control: Crisis keyword floor
 def test_apostrophe_variants_do_not_drop_the_floor():
     """
     A curly apostrophe (U+2019 - what phone keyboards emit) must not drop a
@@ -106,6 +108,7 @@ def test_apostrophe_variants_do_not_drop_the_floor():
         ("I want to\tkill myself", "tab instead of space"),
     ],
 )
+# THREAT_MODEL.md control: Crisis keyword floor
 def test_invisible_edits_do_not_drop_the_floor(variant, note):
     """
     A character that renders as nothing must not clear the keyword floor (#233).

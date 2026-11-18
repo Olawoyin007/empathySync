@@ -63,36 +63,43 @@ the quick index for reviewers: a change that weakens one of these is a regressio
 not a refactor. The prose above explains *why* each control exists; this maps
 *where* it lives.
 
+**Verified by** names the test that fails if the control stops working, so an
+entry reads as a tested property rather than a claim. `none` means the control is
+real in the code and nothing checks it - a gap, stated rather than implied.
+`tests/test_threat_model_map.py` parses this column and fails the build if a named
+test no longer exists, which keeps the mapping from rotting silently after a
+rename.
+
 ### Security
 
-| Control | Enforcement | Where |
-|---------|-------------|-------|
-| No external calls | Only outbound traffic is to the local `OLLAMA_HOST` | `src/models/llm_classifier.py`, `src/utils/http_client.py` |
-| Prompt-injection boundary | User message wrapped in `<user_message>` tags, truncated to 5000 chars | `src/models/llm_classifier.py` |
-| No SQL injection via dynamic names | Table and column whitelists; all values parameterized | `src/utils/storage_backend.py` |
-| `OLLAMA_HOST` validation | http(s) scheme checked at config load | `src/config/settings.py` |
-| Non-root container | `gosu` drops root to `PUID:PGID`; Ollama bound to `127.0.0.1` | `docker/entrypoint.sh`, `docker-compose.yml` |
-| Write gate | `_ensure_write_allowed()` at the top of every write method | `src/utils/write_gate.py`, `src/utils/storage_backend.py` |
-| Restraint-memory invariant | Property test serializes every persisted structure (both backends) and fails the build if any field outside the allowlist is written - no conversation content, no preference/persona data, ever | `tests/test_restraint_memory.py`, `scenarios/config/system_defaults.yaml` (`restraint_memory`) |
+| Control | Enforcement | Where | Verified by |
+|---------|-------------|-------|-------------|
+| No external calls | Only outbound traffic is to the local `OLLAMA_HOST` | `src/models/llm_classifier.py`, `src/utils/http_client.py` | none |
+| Prompt-injection boundary | User message wrapped in `<user_message>` tags, truncated to 5000 chars | `src/models/llm_classifier.py` | `test_llm_classifier.py::test_prompt_wraps_message_in_xml_boundary` |
+| No SQL injection via dynamic names | Table and column whitelists; all values parameterized | `src/utils/storage_backend.py` | none |
+| `OLLAMA_HOST` validation | http(s) scheme checked at config load | `src/config/settings.py` | none |
+| Non-root container | `gosu` drops root to `PUID:PGID`; Ollama bound to `127.0.0.1` | `docker/entrypoint.sh`, `docker-compose.yml` | none |
+| Write gate | `_ensure_write_allowed()` at the top of every write method | `src/utils/write_gate.py`, `src/utils/storage_backend.py` | `test_write_gate.py::test_set_read_only_blocks_writes`, `::test_default_state_allows_writes` |
+| Restraint-memory invariant | Property test serializes every persisted structure (both backends) and fails the build if any field outside the allowlist is written - no conversation content, no preference/persona data, ever | `tests/test_restraint_memory.py`, `scenarios/config/system_defaults.yaml` (`restraint_memory`) | `test_restraint_memory.py::test_every_persisted_field_is_allowlisted`, `::test_every_column_is_allowlisted`, `::test_no_forbidden_field_anywhere` |
 
 ### AI safety
 
-| Control | Enforcement | Where |
-|---------|-------------|-------|
-| Crisis keyword floor | `fast_path_crisis` phrases route to crisis without calling the LLM | `scenarios/classification/llm_classifier.yaml` |
-| Crisis second pass | One dedicated yes/no call after classification; escalate-only, skipped when already crisis or harmful, requires an explicit `True` | `src/models/llm_classifier.py`, `scenarios/classification/crisis_second_pass.yaml` |
-| Safety guard escalation | Optional LlamaGuard, additive and escalate-only; never downgrades a domain | `src/models/safety_classifier.py` |
-| Avoidance check | Two-part match, both halves required; fires only on `logistics`, so it can add restraint and never remove it | `scenarios/classification/avoidance.yaml` |
-| Mid-stream output voice check | 200-char rolling buffer scanned for manipulative-language patterns (false intimacy, dependency-encouraging phrasing, `safe_alternatives.yaml`) before tokens reach the UI. Not a dangerous-content scanner - blocking harmful *requests* is the input-side layers' job | `src/models/ai_wellness_guide.py` |
+| Control | Enforcement | Where | Verified by |
+|---------|-------------|-------|-------------|
+| Crisis keyword floor | `fast_path_crisis` phrases route to crisis without calling the LLM | `scenarios/classification/llm_classifier.yaml` | `test_crisis_triage.py::test_oblique_ideation_reaches_crisis`, `::test_apostrophe_variants_do_not_drop_the_floor`, `::test_invisible_edits_do_not_drop_the_floor` |
+| Crisis second pass | One dedicated yes/no call after classification; escalate-only, skipped when already crisis or harmful, requires an explicit `True` | `src/models/llm_classifier.py`, `scenarios/classification/crisis_second_pass.yaml` | `test_wellness_guide.py::test_second_pass_promotes_to_crisis`, `::test_second_pass_is_not_consulted_when_already_terminal`, `::test_second_pass_parses_only_a_leading_yes` |
+| Safety guard escalation | Optional LlamaGuard, additive and escalate-only; never downgrades a domain | `src/models/safety_classifier.py` | `test_safety_classifier.py::test_crisis_verdict_escalates_benign_domain_to_crisis`, `::test_guard_never_downgrades_a_crisis_domain` |
+| Avoidance check | Two-part match, both halves required; fires only on `logistics`, so it can add restraint and never remove it | `scenarios/classification/avoidance.yaml` | `test_wellness_guide.py::test_avoidance_routes_logistics_to_restraint`, `::test_avoidance_never_downgrades_a_sensitive_domain` |
+| Mid-stream output voice check | 200-char rolling buffer scanned for manipulative-language patterns (false intimacy, dependency-encouraging phrasing, `safe_alternatives.yaml`) before tokens reach the UI. Not a dangerous-content scanner - blocking harmful *requests* is the input-side layers' job | `src/models/ai_wellness_guide.py` | `test_wellness_guide.py::test_stream_buffer_catches_phrase_split_across_chunk_boundary`, `::test_voice_violations_are_caught` |
 
 ### Reliability
 
-| Control | Enforcement | Where |
-|---------|-------------|-------|
-| Atomic writes | `mkstemp` + `fsync` + `os.replace` (no torn files on crash) | `src/utils/storage_backend.py` |
-| Engine unavailable | A canned safe reply is returned rather than an error or an empty response | `src/models/ai_wellness_guide.py` (`_get_fallback_response`) |
-| Classifier unavailable | Connection errors and timeouts return `None`; classification falls through to keyword detection, which still reaches crisis and harmful | `src/models/llm_classifier.py`, `src/models/risk_classifier.py` |
-| Corrupt storage file | Unreadable JSON falls back to defaults instead of raising | `src/utils/storage_backend.py` |
+| Control | Enforcement | Where | Verified by |
+|---------|-------------|-------|-------------|
+| Atomic writes | `mkstemp` + `fsync` + `os.replace` (no torn files on crash) | `src/utils/storage_backend.py` | none |
+| Engine unavailable | A canned safe reply is returned rather than an error or an empty response | `src/models/ai_wellness_guide.py` (`_get_fallback_response`) | `test_wellness_guide.py::test_generate_response_handles_api_error`, `::test_stream_handles_api_error` |
+| Classifier unavailable | Connection errors and timeouts return `None`; classification falls through to keyword detection, which still reaches crisis and harmful | `src/models/llm_classifier.py`, `src/models/risk_classifier.py` | `test_llm_classifier.py::test_connection_refused`, `::test_timeout` |
+| Corrupt storage file | Unreadable JSON falls back to defaults instead of raising | `src/utils/storage_backend.py` | `test_wellness_tracker.py::test_load_data_corrupted_json`, `test_trusted_network.py::test_corrupted_json_recovers` |
 
 ## Known gaps
 

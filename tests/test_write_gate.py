@@ -31,10 +31,12 @@ def reset_write_gate():
 class TestWriteGateState:
     """Tests for read-only mode state management."""
 
+    # THREAT_MODEL.md control: Write gate
     def test_default_state_allows_writes(self):
         assert is_write_allowed() is True
         assert is_read_only() is False
 
+    # THREAT_MODEL.md control: Write gate
     def test_set_read_only_blocks_writes(self):
         set_read_only(True)
         assert is_write_allowed() is False

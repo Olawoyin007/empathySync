@@ -217,6 +217,7 @@ class TestPromptBuilding:
         prompt = classifier._build_prompt("Test message", "")
         assert "Test message" in prompt
 
+    # THREAT_MODEL.md control: Prompt-injection boundary
     def test_prompt_wraps_message_in_xml_boundary(self):
         classifier = LLMClassifier()
         prompt = classifier._build_prompt("Test message", "")
@@ -338,6 +339,7 @@ class TestEdgeCases:
 class TestErrorInjection:
     """Tests for Ollama error scenarios — classifier should fail gracefully."""
 
+    # THREAT_MODEL.md control: Classifier unavailable
     def test_connection_refused(self):
         """Connection refused should return None, not crash."""
         import httpx
@@ -349,6 +351,7 @@ class TestErrorInjection:
             result = classifier._call_ollama("test prompt")
         assert result is None
 
+    # THREAT_MODEL.md control: Classifier unavailable
     def test_timeout(self):
         """Timeout should return None, not crash."""
         import httpx

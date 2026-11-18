@@ -175,6 +175,7 @@ class TestSafetyGuardIntegration:
         assert "safety_guard_override" not in result
         rc._safety_classifier.classify.assert_not_called()
 
+    # THREAT_MODEL.md control: Safety guard escalation
     def test_crisis_verdict_escalates_benign_domain_to_crisis(self):
         rc = _rc_with_guard(SafetyAction.CRISIS)
         result = rc.classify("help me write an email", [])
@@ -201,6 +202,7 @@ class TestSafetyGuardIntegration:
         assert result["domain"] == "logistics"
         assert "safety_guard_override" not in result
 
+    # THREAT_MODEL.md control: Safety guard escalation
     def test_guard_never_downgrades_a_crisis_domain(self):
         # Base pipeline already found crisis; a REFUSE verdict must not pull it lower.
         rc = _rc_with_guard(SafetyAction.REFUSE)
