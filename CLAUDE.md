@@ -34,7 +34,7 @@ empathysync --log-level DEBUG            # Override log verbosity
 docker compose up
 
 # Tests
-pytest tests/                            # Full suite (1440 unit + 23 conversation)
+pytest tests/                            # Full suite (1480 unit + 23 conversation)
 pytest tests/ --cov=src                  # With coverage
 pytest tests/ -m "not conversation"      # Skip Ollama-dependent tests
 python tests/classification/run_domain_eval.py          # Domain accuracy eval
@@ -122,6 +122,8 @@ tests/
 ├── test_restraint_memory.py        # Negative invariant: persisted fields ⊆ allowlist
 ├── test_threat_model_map.py        # THREAT_MODEL controls resolve to real tests
 ├── test_restraint_memory_property.py  # Same invariant, generated over every write path
+├── test_threat_model_controls.py   # The five controls nothing used to check
+├── test_classifier_degraded.py     # Keyword fallback is visible, and only when real
 └── classification/
     ├── domain_corpus.yaml          # 122 labeled examples for accuracy eval
     ├── crisis_triage_corpus.yaml   # Oblique ideation vs intense-benign
@@ -129,7 +131,7 @@ tests/
     └── run_domain_eval.py          # Per-domain accuracy report
 ```
 
-Current counts: ~1440 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
+Current counts: ~1480 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
 
 Pre-existing known failure: `stress_test_001` conversation tier is
 non-deterministic (LLM output varies); the structural tier always passes.

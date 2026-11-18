@@ -48,6 +48,58 @@ All notable changes to empathySync are documented here.
   changed.
 
 ### Added
+- **The keyword-only fallback is now visible to the user.** `THREAT_MODEL.md`
+  listed it as a reliability gap: with Ollama unreachable or the classifier timing
+  out, routing falls back to keywords, explicit crisis and harmful wording still
+  lands, the oblique cases the LLM catches do not, and nothing on screen said the
+  weaker path was in use. The response-mode line now reads "reduced detection ·
+  classifier offline" on those turns, and the transparency panel explains it in
+  plain words. Transparency is a stated design constraint; a silent downgrade of
+  the safety path was the clearest violation of it left in the app.
+
+  The signal had to be built before it could be shown, and the reason is the
+  interesting part. `classification_method == "keyword"` could not carry it,
+  because that is also how three healthy situations read: a fast-path crisis or
+  harmful hit that bypasses the LLM by design, a short continuation skipped to
+  save a round-trip, and a classifier switched off by configuration. Warning on
+  all four would have put a technical fault notice on screen during a crisis hard
+  stop - the worst moment available. `classifier_degraded` is therefore set only
+  when the LLM was asked and returned nothing or raised, it is absent rather than
+  `False` on healthy turns, and `tests/test_classifier_degraded.py` pins all four
+  cases with the false positives weighted more heavily than the true one.
+
+### Added
+- **The five THREAT_MODEL controls that nothing was checking now have tests**
+  (#235). Adding the "Verified by" column found five controls that were real in
+  the code with nothing proving they stayed that way: no-external-calls, the SQL
+  name whitelists, the `OLLAMA_HOST` scheme check, the non-root container, and
+  atomic writes. `tests/test_threat_model_controls.py` covers all five, and the
+  column has no `none` entries left.
+
+  Each test says in its own docstring how much it actually proves, because they
+  are not equally strong. No-external-calls asserts every request the pipeline
+  makes goes to `OLLAMA_HOST`, and separately that no module outside
+  `utils/http_client.py` builds its own HTTP client - that second one is how a
+  call skipping the check would get added later. Atomic writes interrupts a real
+  write and asserts the previous file survived with no temp file left behind,
+  rather than asserting which calls were made. The SQL check asserts the property
+  the control actually claims: a method that builds SQL from a caller's dict
+  validates it first. Most tables need no column whitelist because their writes
+  use literal column names, so an earlier draft demanding one for every table was
+  asserting something stronger than the design claims and was replaced.
+
+  The `OLLAMA_HOST` and non-root entries are honest about their reach. The first
+  exercises the validator rather than process startup, since settings are read
+  from the environment once at import. The second is a file contract: proving a
+  running container is unprivileged needs Docker, so what it catches is the
+  `gosu` privilege drop or the loopback binding being edited away.
+
+  Every test was checked by breaking its control: pointing the classifier at
+  `api.openai.com`, removing `os.replace` from the save path, and adding an
+  unguarded dynamic-SQL update method. Each failed, naming the cause, and passed
+  again on revert.
+
+### Added
 - **Every engineering control in `THREAT_MODEL.md` now names the test that
   proves it** (#235). The document listed what each control is and where it
   lives, but nothing failed when one stopped working, and no test pointed back at

@@ -62,6 +62,13 @@ def display_response_mode_label(
     if steering_active:
         parts.append("connection awareness active")
 
+    # The weaker routing path must not look identical to the stronger one. Only
+    # set when the classifier was asked and gave nothing back - a fast-path
+    # crisis hit also routes on keywords, and saying "reduced detection" there
+    # would be both wrong and badly timed.
+    if risk_assessment.get("classifier_degraded"):
+        parts.append("reduced detection · classifier offline")
+
     st.caption("  ·  ".join(parts))
 
 
@@ -147,6 +154,14 @@ def display_transparency_panel():
         if risk_label:
             tag = f"{tag} · {risk_label}"
         st.caption(tag)
+
+        if assessment.get("classifier_degraded"):
+            st.warning(
+                "**The classifier did not answer, so this reply was sorted by keywords "
+                "alone.** Clear crisis and harmful wording is still caught. Indirect "
+                "phrasing may not be. Check that Ollama is running if you want the "
+                "stronger path back."
+            )
 
 
 def display_session_summary():
