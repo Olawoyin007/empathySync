@@ -48,6 +48,37 @@ All notable changes to empathySync are documented here.
   changed.
 
 ### Added
+- **The five THREAT_MODEL controls that nothing was checking now have tests**
+  (#235). Adding the "Verified by" column found five controls that were real in
+  the code with nothing proving they stayed that way: no-external-calls, the SQL
+  name whitelists, the `OLLAMA_HOST` scheme check, the non-root container, and
+  atomic writes. `tests/test_threat_model_controls.py` covers all five, and the
+  column has no `none` entries left.
+
+  Each test says in its own docstring how much it actually proves, because they
+  are not equally strong. No-external-calls asserts every request the pipeline
+  makes goes to `OLLAMA_HOST`, and separately that no module outside
+  `utils/http_client.py` builds its own HTTP client - that second one is how a
+  call skipping the check would get added later. Atomic writes interrupts a real
+  write and asserts the previous file survived with no temp file left behind,
+  rather than asserting which calls were made. The SQL check asserts the property
+  the control actually claims: a method that builds SQL from a caller's dict
+  validates it first. Most tables need no column whitelist because their writes
+  use literal column names, so an earlier draft demanding one for every table was
+  asserting something stronger than the design claims and was replaced.
+
+  The `OLLAMA_HOST` and non-root entries are honest about their reach. The first
+  exercises the validator rather than process startup, since settings are read
+  from the environment once at import. The second is a file contract: proving a
+  running container is unprivileged needs Docker, so what it catches is the
+  `gosu` privilege drop or the loopback binding being edited away.
+
+  Every test was checked by breaking its control: pointing the classifier at
+  `api.openai.com`, removing `os.replace` from the save path, and adding an
+  unguarded dynamic-SQL update method. Each failed, naming the cause, and passed
+  again on revert.
+
+### Added
 - **Every engineering control in `THREAT_MODEL.md` now names the test that
   proves it** (#235). The document listed what each control is and where it
   lives, but nothing failed when one stopped working, and no test pointed back at

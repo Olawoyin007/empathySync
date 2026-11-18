@@ -122,6 +122,7 @@ tests/
 ├── test_restraint_memory.py        # Negative invariant: persisted fields ⊆ allowlist
 ├── test_threat_model_map.py        # THREAT_MODEL controls resolve to real tests
 ├── test_restraint_memory_property.py  # Same invariant, generated over every write path
+├── test_threat_model_controls.py   # The five controls nothing used to check
 └── classification/
     ├── domain_corpus.yaml          # 122 labeled examples for accuracy eval
     ├── crisis_triage_corpus.yaml   # Oblique ideation vs intense-benign

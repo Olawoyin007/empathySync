@@ -64,8 +64,12 @@ not a refactor. The prose above explains *why* each control exists; this maps
 *where* it lives.
 
 **Verified by** names the test that fails if the control stops working, so an
-entry reads as a tested property rather than a claim. `none` means the control is
-real in the code and nothing checks it - a gap, stated rather than implied.
+entry reads as a tested property rather than a claim. `none` would mean the
+control is real in the code and nothing checks it - a gap, stated rather than
+implied. There are none left: the five that read `none` when this column was
+added are covered by `tests/test_threat_model_controls.py`, which says in each
+docstring how much it actually proves. Two of them are file contracts rather than
+runtime checks, and are labelled as such instead of being left to read stronger.
 `tests/test_threat_model_map.py` parses this column and fails the build if a named
 test no longer exists, which keeps the mapping from rotting silently after a
 rename.
@@ -74,11 +78,11 @@ rename.
 
 | Control | Enforcement | Where | Verified by |
 |---------|-------------|-------|-------------|
-| No external calls | Only outbound traffic is to the local `OLLAMA_HOST` | `src/models/llm_classifier.py`, `src/utils/http_client.py` | none |
+| No external calls | Only outbound traffic is to the local `OLLAMA_HOST` | `src/models/llm_classifier.py`, `src/utils/http_client.py` | `test_threat_model_controls.py::test_every_request_goes_to_the_configured_ollama_host`, `::test_only_the_shared_client_module_constructs_an_http_client` |
 | Prompt-injection boundary | User message wrapped in `<user_message>` tags, truncated to 5000 chars | `src/models/llm_classifier.py` | `test_llm_classifier.py::test_prompt_wraps_message_in_xml_boundary` |
-| No SQL injection via dynamic names | Table and column whitelists; all values parameterized | `src/utils/storage_backend.py` | none |
-| `OLLAMA_HOST` validation | http(s) scheme checked at config load | `src/config/settings.py` | none |
-| Non-root container | `gosu` drops root to `PUID:PGID`; Ollama bound to `127.0.0.1` | `docker/entrypoint.sh`, `docker-compose.yml` | none |
+| No SQL injection via dynamic names | Table and column whitelists; all values parameterized | `src/utils/storage_backend.py` | `test_threat_model_controls.py::test_unknown_column_is_rejected`, `::test_every_method_building_sql_from_caller_keys_validates_first`, `::test_every_interpolated_table_name_is_checked_or_literal` |
+| `OLLAMA_HOST` validation | http(s) scheme checked at config load | `src/config/settings.py` | `test_threat_model_controls.py::test_a_non_http_host_is_reported`, `::test_an_http_host_passes` |
+| Non-root container | `gosu` drops root to `PUID:PGID`; Ollama bound to `127.0.0.1` | `docker/entrypoint.sh`, `docker-compose.yml` | `test_threat_model_controls.py::test_the_entrypoint_drops_root_to_puid_pgid`, `::test_ollama_is_published_only_on_loopback` (file contract, not a running container) |
 | Write gate | `_ensure_write_allowed()` at the top of every write method | `src/utils/write_gate.py`, `src/utils/storage_backend.py` | `test_write_gate.py::test_set_read_only_blocks_writes`, `::test_default_state_allows_writes` |
 | Restraint-memory invariant | Property test serializes every persisted structure (both backends) and fails the build if any field outside the allowlist is written - no conversation content, no preference/persona data, ever | `tests/test_restraint_memory.py`, `scenarios/config/system_defaults.yaml` (`restraint_memory`) | `test_restraint_memory.py::test_every_persisted_field_is_allowlisted`, `::test_every_column_is_allowlisted`, `::test_no_forbidden_field_anywhere` |
 
@@ -96,7 +100,7 @@ rename.
 
 | Control | Enforcement | Where | Verified by |
 |---------|-------------|-------|-------------|
-| Atomic writes | `mkstemp` + `fsync` + `os.replace` (no torn files on crash) | `src/utils/storage_backend.py` | none |
+| Atomic writes | `mkstemp` + `fsync` + `os.replace` (no torn files on crash) | `src/utils/storage_backend.py` | `test_threat_model_controls.py::test_a_crash_mid_write_leaves_the_previous_file_intact`, `::test_the_target_file_is_never_opened_for_writing_directly` |
 | Engine unavailable | A canned safe reply is returned rather than an error or an empty response | `src/models/ai_wellness_guide.py` (`_get_fallback_response`) | `test_wellness_guide.py::test_generate_response_handles_api_error`, `::test_stream_handles_api_error` |
 | Classifier unavailable | Connection errors and timeouts return `None`; classification falls through to keyword detection, which still reaches crisis and harmful | `src/models/llm_classifier.py`, `src/models/risk_classifier.py` | `test_llm_classifier.py::test_connection_refused`, `::test_timeout` |
 | Corrupt storage file | Unreadable JSON falls back to defaults instead of raising | `src/utils/storage_backend.py` | `test_wellness_tracker.py::test_load_data_corrupted_json`, `test_trusted_network.py::test_corrupted_json_recovers` |

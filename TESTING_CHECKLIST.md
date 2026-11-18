@@ -31,6 +31,10 @@ pytest tests/classification/test_crisis_triage.py -v
 # THREAT_MODEL.md controls still point at tests that exist
 pytest tests/test_threat_model_map.py -v
 
+# The controls themselves: no external calls, SQL whitelists, host scheme,
+# non-root container, atomic writes
+pytest tests/test_threat_model_controls.py -v
+
 # Adversarial restraint eval logic (skips unless the `evals` extra is installed)
 pytest tests/test_restraint_eval.py -v
 
