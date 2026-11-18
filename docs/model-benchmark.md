@@ -30,11 +30,31 @@ _Last run: 2026-04-26 15:20 UTC_
 > FP rate columns from the table below were not re-measured; treat this as
 > domain-accuracy-only until a follow-up covers distress.
 
+> **2026-11-18 re-measure on the 122-example corpus (#239).** One model only,
+> in the shipped default configuration:
+>
+> | Model | Min VRAM | Domain Acc | Config |
+> |-------|:--------:|:----------:|--------|
+> | `mistral:7b-instruct` | 8 GB | 80% (97/122) | `OLLAMA_SAFETY_MODEL` unset, `OLLAMA_NUM_CTX=8192` |
+>
+> The configuration matters more than the number: with the optional LlamaGuard
+> model enabled this run is not reproducible, because the guard escalates legal
+> adult work to `harmful` (see the known limit in `CLAUDE.md`), and the corpus
+> carries four such cases since #221. Quote a domain score with the guard state
+> next to it or it cannot be compared to anything.
+>
+> Per-domain: `spirituality` 94%, `logistics` 90%, `health` 86%,
+> `relationships` 80%, `crisis` 77%, `harmful` 75%, `emotional` 73%,
+> `money` 59%. The 25 misses are dominated by `emotional` against
+> `relationships` boundary cases in both directions.
+
 ---
 
 ## Classifier
 
-Runs on every user message to detect domain and distress signals. Domain accuracy measured on 118 labeled examples (`tests/classification/domain_corpus.yaml`; was 94 before the #171 boundary expansion - scores across those versions are not comparable). Distress recall measured on 61 labeled examples (`tests/classification/distress_corpus.yaml`).
+Runs on every user message to detect domain and distress signals. The domain corpus (`tests/classification/domain_corpus.yaml`) is **122 labeled examples** as of #221; it was 94 before the #171 boundary expansion and 118 before #221, and scores are not comparable across those versions. Get the count from `load_corpus()`, never by grepping the file. Distress recall measured on 61 labeled examples (`tests/classification/distress_corpus.yaml`).
+
+**The Domain Acc column in the table below was measured on the 94-example corpus, before the classifier fixes in #199 to #203.** It is kept as a record of that run, not as a current reading - which is why it shows 44-47% where the same models now score around 80%. Re-measuring the whole table is a separate job; the dated block above and the one below are the current readings.
 
 **Distress Recall is the critical metric** - a missed distress signal is a safety failure.
 

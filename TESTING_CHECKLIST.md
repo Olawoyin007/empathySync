@@ -32,9 +32,10 @@ pytest tests/test_restraint_eval.py -v
 python scripts/check_version.py
 ```
 
-Expected: `pytest` all green, domain eval at or above the 88% baseline
-(96/118 on mistral:7b-instruct, post #171 corpus expansion; not comparable
-to pre-#171 numbers), version check passes.
+Expected: `pytest` all green, domain eval at or above the 80% baseline
+(97/122 on mistral:7b-instruct with `OLLAMA_SAFETY_MODEL` unset, measured
+2026-11-18; not comparable to the earlier 96/118 or 83/94 - the corpus grew in
+#171 and #221), version check passes.
 
 ---
 
