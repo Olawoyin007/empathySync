@@ -74,7 +74,9 @@ is under test. Two arms on different engines is not an ablation.
   engine. Graded at temperature 0 with a fixed seed, so the same response gets
   the same verdict run to run. A judge that wobbles makes the scores
   unreproducible.
-- **Generator (offline, dataset build only):** `qwen2.5:14b-instruct-q4_K_M`.
+- **Generator (offline, dataset build only):** `qwen2.5:14b-instruct-q4_K_M` - it wrote
+  the first 90 of the frozen 490. The other 400 came from four external models;
+  see the provenance section of `GENERATION_BRIEF.md`.
 
 Restraint mode loads a large judge, so it needs real RAM headroom;
 `--max-connections 1` serializes model calls to keep the footprint predictable.
