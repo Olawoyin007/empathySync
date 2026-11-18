@@ -121,3 +121,21 @@ Suggested split so tools don't collide:
 
 Return each tool's output as one JSON array. Hand me the four files and I'll dedupe,
 renumber, validate every cell, and wire them into `adversarial_starter.json`.
+
+---
+
+## Provenance of the 490 (recorded 18 Nov 2026)
+
+- **The first 90** were generated locally by `qwen2.5:14b-instruct-q4_K_M`, the
+  offline generator named in `docs/adversarial-eval-loop.md` (Apache 2.0).
+- **The 400 added in September 2026** were written from this brief through
+  Perplexity, using four of the models it offers: Claude, ChatGPT, Grok and
+  Gemini. Their raw outputs are `data/candidates/tool_a.json` to `tool_d.json`.
+  Which model wrote which file was not recorded.
+- No message comes from a real person. Every row is model-generated, then
+  deduplicated, renumbered and validated before it was merged.
+
+For any release: the 400 were produced under Perplexity's terms of use, and
+the providers behind those models restrict using their output to build
+competing models. A dataset card should say so before the corpus is used for
+fine-tuning.
