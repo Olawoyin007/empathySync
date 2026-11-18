@@ -94,6 +94,26 @@ All notable changes to empathySync are documented here.
 
   Point-in-time records in `CHANGELOG.md` and `ROADMAP.md` are left alone; they
   were true when written.
+- **The restraint-memory invariant is now checked across the whole
+  `StorageBackend` write surface** (#236). `tests/test_restraint_memory.py`
+  drives a hand-written list of calls, so it can only ever see fields written by
+  a path somebody remembered to call. The new property test discovers write
+  methods by introspection - a public method whose body calls
+  `_ensure_write_allowed()` - generates their arguments from their type hints
+  with `hypothesis`, and re-checks the allowlist afterwards. A write method
+  added later is covered without editing the test, and an argument type with no
+  strategy fails loudly instead of being skipped.
+
+  It found that `update_task_pattern`, `update_trusted_person` and
+  `update_handoff_event` merge a caller-supplied dict straight into the record.
+  SQLite refuses an unallowlisted key through the column whitelist that backs the
+  no-SQL-injection control; the JSON backend, which is the default, does not - it
+  persisted `conversation_text` and `persona_summary`, the two categories the
+  invariant exists to forbid. Nothing in `src/` passes arbitrary keys down those
+  paths today, so no field is being persisted wrongly; the guarantee on the
+  default backend rests on callers choosing allowlisted keys rather than on the
+  boundary enforcing them. Recorded as a strict xfail that flips to a pass when
+  the JSON path filters its keys, rather than quietly left out of the test.
 
 ## v1.16.0 (2026-11-04) - Layers That Actually Fire
 
