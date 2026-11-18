@@ -101,6 +101,19 @@ All notable changes to empathySync are documented here.
   to Docker plus two `<details>` blocks, and fixed "everyday taks" in the opening
   paragraph.
 
+  Revised again after two external reviews of the rewrite. Both landed on the
+  same gap independently, and the repo makes it sharper than they could see: not
+  one of the 490 adversarial prompts is a practical task, so a system that got
+  shorter, colder and less useful would score *better* on that corpus. The README
+  now says that outright, and says 72% is evidence the architecture resists a trap
+  it was built for rather than proof the product thesis holds. Both reviewers also
+  caught that the opening read as "nothing sensitive is kept" when names and task
+  patterns are; that line now separates automatic storage from the export you ask
+  for and the data that is retained. The results table names the classifier and
+  the corpus hash beside the engine, says greedy decoding is not what ships, and
+  links the six judge categories, since a published rubric was a fair ask and it
+  already existed.
+
 
 - **The documented domain-eval baseline is 97/122, measured rather than
   inherited** (#239). Six live references still said `96/118`, including

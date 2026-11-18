@@ -25,7 +25,7 @@ A local AI assistant that helps you finish what you came for and then gets out o
 
 On practical work it holds nothing back: emails, code, explanations, planning, the ordinary stuff. On emotional distress, health, money, relationships, spirituality and crisis it does close to the opposite of what a normal assistant does. Replies get short, follow-up questions designed to keep you talking disappear, and it points you towards someone real: a person you've named as trusted, or a service that exists for this. Those limits live in the code that handles each message rather than in a system prompt, so you can't talk it out of them and neither can anyone else.
 
-Everything runs on your machine through Ollama. No accounts, no cloud, no telemetry. Your conversations are never written to disk.
+Everything runs on your machine through Ollama, with no accounts, no cloud and no telemetry. Conversations are never stored automatically; you can still export one yourself when you want it. Some things are kept, and a few of them are sensitive: the people you add by name, and what kinds of task you keep coming back for. [What it keeps](#what-it-keeps) lists all of it.
 
 ## We optimise for exit, not engagement
 
@@ -38,7 +38,12 @@ Here it is against the same model on the same 490 adversarial prompts, each one 
 | `qwen2.5:7b-instruct` alone, no pipeline | **188 / 490** (38%) |
 | The same model, full empathySync pipeline | **353 / 490** (72%) |
 
-Measured 18 Nov 2026 with the optional safety guard off, greedy decoding, fixed seed. Where it helps most, counting failures:
+Measured 18 Nov 2026. Engine `qwen2.5:7b-instruct`, classifier `mistral:7b-instruct`,
+judge `gpt-oss:120b`, safety guard off, corpus hash `d38138d9`, greedy decoding with a
+fixed seed. Greedy is not what ships: `OLLAMA_TEMPERATURE` defaults to `0.7`, pinned to
+`0` here so a change in the score means a change in the code rather than a reroll. The
+example `.env` further down also runs a larger engine, so an out-of-the-box install is
+not the configuration in this table. Where it helps most, counting failures:
 
 | Trap | Model alone | With pipeline |
 |---|---:|---:|
@@ -48,7 +53,7 @@ Measured 18 Nov 2026 with the optional safety guard off, greedy decoding, fixed 
 | Over-engagement | 69 | 38 |
 | Specialist overreach | 31 | 23 |
 
-Read that pair together and never the 72% alone. `qwen2.5:7b-instruct` is already safety-tuned and holds the line on nearly two prompts in five by itself; what the architecture does is roughly double that. The output-side filters carry most of the weight, and specialist overreach is where they help least. Reproduce it with `python -m evals.empathysync_restraint.run --mode bare` against a restraint-mode run on the same engine; the method sits in [`evals/empathysync_restraint/README.md`](evals/empathysync_restraint/README.md).
+Read that pair together and never the 72% alone. `qwen2.5:7b-instruct` is already safety-tuned and holds the line on nearly two prompts in five by itself; what the architecture does is roughly double that. The output-side filters carry most of the weight, and specialist overreach is where they help least. Reproduce it with `python -m evals.empathysync_restraint.run --mode bare` against a restraint-mode run on the same engine. The six failure categories the judge grades against are defined in [`evals/empathysync_restraint/restraint_scorer.py`](evals/empathysync_restraint/restraint_scorer.py), unparseable verdicts fail closed, and the method is in [`evals/empathysync_restraint/README.md`](evals/empathysync_restraint/README.md).
 
 ## What it won't do, and what it still gets wrong
 
@@ -61,6 +66,8 @@ Read that pair together and never the 72% alone. `qwen2.5:7b-instruct` is alread
 **No clinician has reviewed the language.** Every redirect, every refusal, every word it says to someone having a bad night was written by an engineer. That's the largest open gap in the project, and [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md) exists because of it.
 
 **Enumeration is never finished.** A phrasing nobody thought of can escape every layer. [THREAT_MODEL.md](THREAT_MODEL.md) says which controls have tests behind them and which are still only claims.
+
+**Nothing here shows ordinary help stayed good.** Every one of those 490 prompts was written to bait over-engagement, and not one of them is a practical task. A system could score better on that corpus by getting shorter, colder and less useful, and the corpus would not notice. The missing experiment is the same comparison on work someone actually wanted finished - email, code, planning - scoring whether the task got done and whether a finished conversation got cut off needlessly. Until that exists, treat 72% as evidence the architecture resists a trap it was built for, not as proof the product thesis holds.
 
 ## Who this is for
 
