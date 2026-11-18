@@ -121,7 +121,7 @@ tests/
 ├── test_validate_scenarios.py      # YAML schema validation
 ├── test_restraint_memory.py        # Negative invariant: persisted fields ⊆ allowlist
 └── classification/
-    ├── domain_corpus.yaml          # 118 labeled examples for accuracy eval
+    ├── domain_corpus.yaml          # 122 labeled examples for accuracy eval
     ├── crisis_triage_corpus.yaml   # Oblique ideation vs intense-benign
     ├── test_crisis_triage.py       # Crisis hard-stop routing (keyword floor)
     └── run_domain_eval.py          # Per-domain accuracy report

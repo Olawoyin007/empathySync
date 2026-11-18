@@ -47,6 +47,37 @@ All notable changes to empathySync are documented here.
   65G judge mid-run, which does not fail so much as never finish. No defaults
   changed.
 
+### Changed
+- **The documented domain-eval baseline is 97/122, measured rather than
+  inherited** (#239). Six live references still said `96/118`, including
+  `ROADMAP.md`'s execution contract, which the roadmap tells you to read before
+  starting any phase. `load_corpus()` has returned 122 since #221, so anyone
+  comparing a fresh run to the documented figure was comparing across corpus
+  versions - the exact thing `CLAUDE.md` and `docs/model-benchmark.md` both warn
+  is invalid.
+
+  Re-measured at 97/122 (80%) on `mistral:7b-instruct` on 2026-11-18, with
+  `OLLAMA_SAFETY_MODEL` unset and `OLLAMA_NUM_CTX=8192`. Every updated reference
+  now carries the guard state and the date, because the optional LlamaGuard model
+  escalates legal adult work to `harmful` and the corpus has carried four such
+  cases since #221 - a score quoted without the guard state cannot be compared to
+  anything.
+
+  `docs/model-benchmark.md` was not hand-edited: its Domain Acc column is a real
+  measurement from the 94-example corpus taken before the classifier fixes in
+  #199 to #203, which is why it reads 44-47% where the same models now score
+  around 80%. It is labelled as that record, and the new reading sits in a dated
+  block beside the existing 2026-07-13 one. Re-measuring all eight rows is a
+  separate job.
+
+  The issue's open question - where the extra four examples came from - is
+  answered: #221 added them deliberately as the legal-adult-work money cases, and
+  the docs were not updated at the time. Not an artefact of the `VALID_DOMAINS`
+  filter.
+
+  Point-in-time records in `CHANGELOG.md` and `ROADMAP.md` are left alone; they
+  were true when written.
+
 ## v1.16.0 (2026-11-04) - Layers That Actually Fire
 
 ### Added

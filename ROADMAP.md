@@ -76,8 +76,10 @@ phase without guessing:
 4. Verify before declaring done: `pytest tests/ -m "not conversation"` (all
    ~1229 must pass) plus the sub-phase's own **Verify** line. Run
    `python tests/classification/run_domain_eval.py` only when classification
-   code or scenario YAML changed (baseline: 96/118 on mistral:7b-instruct;
-   not comparable to the pre-#171 83/94 - different corpus difficulty).
+   code or scenario YAML changed (baseline: 97/122 on mistral:7b-instruct with
+   the safety guard unset, measured 2026-11-18; not comparable to the earlier
+   96/118 or 83/94 - the corpus grew in #171 and #221. Take the count from
+   `load_corpus()`, and record the guard state with any score).
 5. When a step is ambiguous, take the smallest interpretation that satisfies
    the **Done when** line and record the choice in the PR body.
 
@@ -123,7 +125,7 @@ difference is whether a door is opened on the way out.
 crisis path output is byte-identical; a test fails if a sensitive reply refuses
 without a route.
 **Verify**: restraint eval against the 46.9% baseline (2026.09-r2);
-`run_domain_eval.py` still 96/118; the 490 domain run still 96.3%.
+`run_domain_eval.py` still 97/122; the 490 domain run still 96.3%.
 **Pitfalls**: referrals belong in YAML, not Python - this is exactly the
 language Phase 24 lets a clinician shape. Do not touch the crisis path: it
 already passes, and it is the pattern being copied.
@@ -465,7 +467,7 @@ and silently leave the other half English-only.
 
 **Files**: `src/models/ai_wellness_guide.py`, `src/models/risk_classifier.py`, `src/models/conversation_session.py` → new YAML under `scenarios/` (follow existing file shapes; see `scenarios/README.md`).
 **Done when**: none of the pattern lists named above remain as Python literals in those three files, and behaviour is byte-identical - the full suite passes **without modifying any test expectations**.
-**Verify**: `pytest tests/ -m "not conversation"`; `python tests/classification/run_domain_eval.py` (these strings feed classification - must not regress from the 96/118 baseline).
+**Verify**: `pytest tests/ -m "not conversation"`; `python tests/classification/run_domain_eval.py` (these strings feed classification - must not regress from the 97/122 baseline).
 **Pitfalls**: load through the `get_scenario_loader()` singleton (it holds the cache - never instantiate the loader directly); update `scenarios/README.md` per the MERGE_CHECKLIST YAML row; do not rename existing YAML keys or files in the same PR.
 
 ### 19.1 Locale Detection 🔜 PLANNED
