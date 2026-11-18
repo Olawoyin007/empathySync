@@ -280,11 +280,19 @@ def main() -> int:
         args.log_dir = str(by_mode[args.mode])
 
     if not args.no_preflight:
-        # Domain mode never loads the judge, so it does not need judge headroom.
+        # Each mode loads a different set, and sizing for models a mode never
+        # loads refuses runs that would have fit. Domain mode never loads the
+        # judge. Bare mode runs no pipeline at all, so it loads neither the
+        # classifier nor the safety guard - only the engine it prompts directly
+        # and the judge that grades it.
         pipeline_models = _pipeline_models(args.engine)
-        needed_models = pipeline_models
-        if args.mode != "domain":
-            needed_models = needed_models + [args.judge]
+        if args.mode == "bare":
+            needed_models = [args.engine, args.judge]
+            pipeline_models = [args.engine]
+        elif args.mode == "domain":
+            needed_models = pipeline_models
+        else:
+            needed_models = pipeline_models + [args.judge]
         # Print the slot assumption on every run: the server's own value is not
         # visible from here, and a wrong guess must not stay silent (#247).
         slots, slot_source = resolve_slots(args.num_parallel)

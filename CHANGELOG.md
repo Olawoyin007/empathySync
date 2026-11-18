@@ -281,6 +281,13 @@ All notable changes to empathySync are documented here.
   writes to its own log directory, since `eval_set` resumes from the log dir and
   two modes sharing one would resume each other's samples.
 
+  The preflight now sizes memory per mode. It was sizing every run for the whole
+  pipeline, so bare mode asked for headroom to hold the classifier and the safety
+  guard - two models it never loads, because it runs no pipeline. On a box with
+  the previous arm's models still resident that refused a run which would have
+  fitted comfortably. Bare mode now sizes only the engine it prompts and the judge
+  that grades it.
+
 ## v1.16.0 (2026-11-04) - Layers That Actually Fire
 
 ### Added
