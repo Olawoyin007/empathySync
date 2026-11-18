@@ -4,69 +4,8 @@ All notable changes to empathySync are documented here.
 
 ## [Unreleased]
 
-### Fixed
-- **The eval preflight no longer warns about a resident-model limit it cannot
-  see** (#248). The eviction check read `OLLAMA_MAX_LOADED_MODELS` from the
-  eval's own shell and assumed Ollama's default of 3 when unset. The limit is
-  commonly set on the service instead - a systemd drop-in the eval never sees -
-  so a correctly configured box with the limit at 4 got the warning on every
-  restraint run, telling it to set a value it had already set. A warning that
-  always fires is one nobody reads, which costs the real ones their meaning. It
-  now warns only on a value this shell can actually see, and `run.py` prints the
-  assumption on every run next to the slot count, the same way
-  `OLLAMA_NUM_PARALLEL` is handled. `--max-loaded N` states it explicitly. In the
-  same spirit, `OLLAMA_NUM_PARALLEL=0` is no longer reported as invalid: zero is
-  Ollama's own "you decide", and naming it a mistake sends someone chasing a
-  setting that is doing its job.
-- **The eval preflight now sizes every model the pipeline loads** (#247). `run.py`
-  passed only the engine and the judge into `preflight()`; the classifier and
-  the safety guard come from the app's `.env` and were never counted, including
-  the guard whose failed load silently dropped the domain eval to keyword-only
-  classification in #247. `run.py` now reads them through the app's own
-  settings, with the same classifier fallback the pipeline uses. A configured
-  classifier or guard that is not installed is now a preflight failure with a
-  pull hint, rather than a silent fallback mid-run.
-- **The eval preflight counts the KV cache, not just the weights** (closes #247).
-  It summed model sizes plus a fixed headroom, so `llama-guard3:1b` (1.3G of
-  weights, 131072-token default context, nothing baked) passed the check while
-  Ollama reserved 16 GiB of KV cache for it at `OLLAMA_NUM_PARALLEL=4`. The
-  budget is now weights plus each model's KV reservation: `2 x block_count x
-  head_count_kv x head_dim x 2 bytes` per token from `/api/show`, times
-  `num_ctx`, times the slot count. `num_ctx` is the first of `OLLAMA_NUM_CTX`
-  (for the pipeline models, which send it), the model's baked `num_ctx`, or its
-  `context_length`. The estimate assumes an f16 cache, so it errs high. A
-  failure states the arithmetic per model: context and where it came from,
-  slots, bytes per token, and the total.
-- **The preflight prints the slot count it assumed on every run, pass or fail.**
-  The server's `OLLAMA_NUM_PARALLEL` is not visible over the API, and in #247 it
-  was set in a systemd drop-in the eval shell never saw. New `--num-parallel N`
-  sets it explicitly; otherwise it comes from this shell, else 1, and the
-  output says which.
-- **Warns when `OLLAMA_MAX_LOADED_MODELS` is below the models a run needs.**
-  Restraint mode needs four resident; with fewer, Ollama evicts and reloads the
-  65G judge mid-run, which does not fail so much as never finish. No defaults
-  changed.
-
-### Fixed
-- **The eval can no longer report a pass having measured nothing.** `eval_set`
-  resumes from its log directory, which is the point - a Ctrl-C'd run picks up
-  where it stopped. But when the directory already holds a *complete* run,
-  nothing executes and Inspect still prints `Completed all tasks successfully` and
-  returns the older log, so the score on screen belongs to a previous run under
-  whatever engine, guard and corpus it used.
-
-  Found by walking into it: a restraint run "succeeded" in under a second while
-  reporting a log from 22 September. `run.py` now compares each returned log's
-  `completed_at` against the moment the run started and prints a `NOTHING WAS
-  MEASURED` block naming the stale log. A silent no-op dressed as a pass, in the
-  harness this project's headline numbers come from, is the one failure mode it
-  can least afford.
-
-  The nightlies were never exposed: they write a timestamped subdirectory per
-  run, so each gets a fresh directory. The exposure was manual runs reusing
-  `logs/restraint`, which held exactly one stale log.
-
 ### Added
+
 - **The keyword-only fallback is now visible to the user.** `THREAT_MODEL.md`
   listed it as a reliability gap: with Ollama unreachable or the classifier timing
   out, routing falls back to keywords, explicit crisis and harmful wording still
@@ -87,7 +26,6 @@ All notable changes to empathySync are documented here.
   `False` on healthy turns, and `tests/test_classifier_degraded.py` pins all four
   cases with the false positives weighted more heavily than the true one.
 
-### Added
 - **The five THREAT_MODEL controls that nothing was checking now have tests**
   (#235). Adding the "Verified by" column found five controls that were real in
   the code with nothing proving they stayed that way: no-external-calls, the SQL
@@ -118,7 +56,6 @@ All notable changes to empathySync are documented here.
   unguarded dynamic-SQL update method. Each failed, naming the cause, and passed
   again on revert.
 
-### Added
 - **Every engineering control in `THREAT_MODEL.md` now names the test that
   proves it** (#235). The document listed what each control is and where it
   lives, but nothing failed when one stopped working, and no test pointed back at
@@ -136,6 +73,7 @@ All notable changes to empathySync are documented here.
   `none`: an untested control is acknowledged, not broken.
 
 ### Changed
+
 - **The documented domain-eval baseline is 97/122, measured rather than
   inherited** (#239). Six live references still said `96/118`, including
   `ROADMAP.md`'s execution contract, which the roadmap tells you to read before
@@ -217,28 +155,6 @@ All notable changes to empathySync are documented here.
   empty instead, and prints what `settings` resolved rather than what the
   environment holds.
 
-### Fixed
-- **The app no longer tells users their conversations are stored.** They are not.
-  Conversation text is never written to disk, and the restraint-memory invariant
-  forbids persisting it. Three places said otherwise, including a one-time notice
-  shown in the UI reading "Conversations are stored **unencrypted**". It now names
-  what is actually kept - check-ins, session counts, policy events and the people
-  you add - and says plainly that conversations are not saved.
-
-  `STORE_CONVERSATIONS` and `CONVERSATION_RETENTION_DAYS` are removed.
-  `STORE_CONVERSATIONS` was read in exactly one place, to decide whether to show
-  that notice; it never gated persistence, so setting it to `false` let someone
-  believe they had turned something off when they had changed nothing.
-  `CONVERSATION_RETENTION_DAYS` was never read by any code at all. Dead settings
-  that contradict the invariant are worse than no settings: an external reviewer
-  read the documented default of `true` and concluded, reasonably, that sensitive
-  conversations persist. `THREAT_MODEL.md` carried the same claim and now carries
-  the correction and the reason.
-
-  An exported transcript is unchanged: the user asks for it and saves it
-  themselves, and where they put it is outside the trust boundary.
-
-### Changed
 - **`README.md` says who the project is *for*, not who uses it** (#235 review
   follow-up). "Who Uses This" named three audiences with no measured user base
   behind any of them, in a project whose whole method is catching exactly that
@@ -287,6 +203,88 @@ All notable changes to empathySync are documented here.
   the previous arm's models still resident that refused a run which would have
   fitted comfortably. Bare mode now sizes only the engine it prompts and the judge
   that grades it.
+
+### Fixed
+
+- **The eval preflight no longer warns about a resident-model limit it cannot
+  see** (#248). The eviction check read `OLLAMA_MAX_LOADED_MODELS` from the
+  eval's own shell and assumed Ollama's default of 3 when unset. The limit is
+  commonly set on the service instead - a systemd drop-in the eval never sees -
+  so a correctly configured box with the limit at 4 got the warning on every
+  restraint run, telling it to set a value it had already set. A warning that
+  always fires is one nobody reads, which costs the real ones their meaning. It
+  now warns only on a value this shell can actually see, and `run.py` prints the
+  assumption on every run next to the slot count, the same way
+  `OLLAMA_NUM_PARALLEL` is handled. `--max-loaded N` states it explicitly. In the
+  same spirit, `OLLAMA_NUM_PARALLEL=0` is no longer reported as invalid: zero is
+  Ollama's own "you decide", and naming it a mistake sends someone chasing a
+  setting that is doing its job.
+- **The eval preflight now sizes every model the pipeline loads** (#247). `run.py`
+  passed only the engine and the judge into `preflight()`; the classifier and
+  the safety guard come from the app's `.env` and were never counted, including
+  the guard whose failed load silently dropped the domain eval to keyword-only
+  classification in #247. `run.py` now reads them through the app's own
+  settings, with the same classifier fallback the pipeline uses. A configured
+  classifier or guard that is not installed is now a preflight failure with a
+  pull hint, rather than a silent fallback mid-run.
+- **The eval preflight counts the KV cache, not just the weights** (closes #247).
+  It summed model sizes plus a fixed headroom, so `llama-guard3:1b` (1.3G of
+  weights, 131072-token default context, nothing baked) passed the check while
+  Ollama reserved 16 GiB of KV cache for it at `OLLAMA_NUM_PARALLEL=4`. The
+  budget is now weights plus each model's KV reservation: `2 x block_count x
+  head_count_kv x head_dim x 2 bytes` per token from `/api/show`, times
+  `num_ctx`, times the slot count. `num_ctx` is the first of `OLLAMA_NUM_CTX`
+  (for the pipeline models, which send it), the model's baked `num_ctx`, or its
+  `context_length`. The estimate assumes an f16 cache, so it errs high. A
+  failure states the arithmetic per model: context and where it came from,
+  slots, bytes per token, and the total.
+- **The preflight prints the slot count it assumed on every run, pass or fail.**
+  The server's `OLLAMA_NUM_PARALLEL` is not visible over the API, and in #247 it
+  was set in a systemd drop-in the eval shell never saw. New `--num-parallel N`
+  sets it explicitly; otherwise it comes from this shell, else 1, and the
+  output says which.
+- **Warns when `OLLAMA_MAX_LOADED_MODELS` is below the models a run needs.**
+  Restraint mode needs four resident; with fewer, Ollama evicts and reloads the
+  65G judge mid-run, which does not fail so much as never finish. No defaults
+  changed.
+
+- **The eval can no longer report a pass having measured nothing.** `eval_set`
+  resumes from its log directory, which is the point - a Ctrl-C'd run picks up
+  where it stopped. But when the directory already holds a *complete* run,
+  nothing executes and Inspect still prints `Completed all tasks successfully` and
+  returns the older log, so the score on screen belongs to a previous run under
+  whatever engine, guard and corpus it used.
+
+  Found by walking into it: a restraint run "succeeded" in under a second while
+  reporting a log from 22 September. `run.py` now compares each returned log's
+  `completed_at` against the moment the run started and prints a `NOTHING WAS
+  MEASURED` block naming the stale log. A silent no-op dressed as a pass, in the
+  harness this project's headline numbers come from, is the one failure mode it
+  can least afford.
+
+  The nightlies were never exposed: they write a timestamped subdirectory per
+  run, so each gets a fresh directory. The exposure was manual runs reusing
+  `logs/restraint`, which held exactly one stale log.
+
+- **The app no longer tells users their conversations are stored.** They are not.
+  Conversation text is never written to disk, and the restraint-memory invariant
+  forbids persisting it. Three places said otherwise, including a one-time notice
+  shown in the UI reading "Conversations are stored **unencrypted**". It now names
+  what is actually kept - check-ins, session counts, policy events and the people
+  you add - and says plainly that conversations are not saved.
+
+  `STORE_CONVERSATIONS` and `CONVERSATION_RETENTION_DAYS` are removed.
+  `STORE_CONVERSATIONS` was read in exactly one place, to decide whether to show
+  that notice; it never gated persistence, so setting it to `false` let someone
+  believe they had turned something off when they had changed nothing.
+  `CONVERSATION_RETENTION_DAYS` was never read by any code at all. Dead settings
+  that contradict the invariant are worse than no settings: an external reviewer
+  read the documented default of `true` and concluded, reasonably, that sensitive
+  conversations persist. `THREAT_MODEL.md` carried the same claim and now carries
+  the correction and the reason.
+
+  An exported transcript is unchanged: the user asks for it and saves it
+  themselves, and where they put it is outside the trust boundary.
 
 ## v1.16.0 (2026-11-04) - Layers That Actually Fire
 
