@@ -173,6 +173,31 @@ All notable changes to empathySync are documented here.
   `test_update_person_refuses_a_field_that_is_not_persistable`, which exists
   because the first version of this fix passed its own test suite with the live
   path unguarded.
+- **`scripts/eval_oblique_crisis.py`** - the oblique-crisis figure in
+  `docs/model-benchmark.md` was measured by hand on 2026-09-16 and no script
+  existed to re-run it, so nobody could check it against a later pipeline. It now
+  runs the corpus twice, keyword floor alone and full classifier, and reports the
+  split rather than a single number.
+
+  Running it produced a result worth stating carefully. The shipped default now
+  reaches **6 / 6** on the oblique samples with 0 / 32 false escalations, which
+  looks like the gap closing. It is not: the floor alone reaches 6 / 6 and the
+  classifier adds **0 / 6**. The floor's trigger phrases were written from these
+  six samples in #203, so it catches its own source examples and fires before the
+  classifier is consulted. The table's 0 / 6 for `mistral:7b-instruct` is still
+  true; the samples have simply stopped being able to show it, and are a
+  regression guard now. The untrained figure is crisis recall on the 490-sample
+  corpus - 57.0%, up from 27.9% after the crisis second pass (#212), with #218
+  tracking the rest. The doc says which to quote.
+
+  The script also documents a trap it hit: `config.settings` calls `load_dotenv()`
+  at import, and `load_dotenv` does not overwrite a variable that is present but
+  does fill one that is absent. Deleting `OLLAMA_SAFETY_MODEL` to get the shipped
+  default therefore let `.env` put the guard straight back, and the first run
+  silently measured a configuration it had been told not to. It sets the variable
+  empty instead, and prints what `settings` resolved rather than what the
+  environment holds.
+
 ### Fixed
 - **The app no longer tells users their conversations are stored.** They are not.
   Conversation text is never written to disk, and the restraint-memory invariant
