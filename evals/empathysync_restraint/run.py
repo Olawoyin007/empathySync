@@ -3,6 +3,7 @@
 Usage:
     python -m evals.empathysync_restraint.run                 # restraint side (judge)
     python -m evals.empathysync_restraint.run --mode domain   # classifier side (no judge)
+    python -m evals.empathysync_restraint.run --mode bare     # ablation: no pipeline
     python -m evals.empathysync_restraint.run --limit 20
     python -m evals.empathysync_restraint.run --judge qwen2.5:14b-instruct-q4_K_M
     python -m evals.empathysync_restraint.run --no-preflight  # skip the guard
@@ -25,6 +26,7 @@ This never activates anything on a schedule. It runs once, when you run it.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import os
 import sys
 from pathlib import Path
@@ -72,6 +74,37 @@ def _pipeline_num_ctx(models: list[str]) -> dict[str, int]:
     from config.settings import settings  # src is on the path via _pipeline_models
 
     return {m: settings.OLLAMA_NUM_CTX for m in models} if settings.OLLAMA_NUM_CTX else {}
+
+
+def _logs_not_produced_by_this_run(logs, started_at) -> list[str]:
+    """Names of returned logs that finished before this invocation began.
+
+    `eval_set` resumes from its log directory, which is the point: a Ctrl-C'd run
+    picks up where it stopped. But when the directory already holds a *complete*
+    run, nothing executes and it still prints "Completed all tasks successfully"
+    and returns that older log. The score on screen is then the previous run's,
+    under whatever engine, guard and corpus it used.
+
+    That is a silent no-op dressed as a pass, in the harness the project's
+    headline numbers come from, so it gets named rather than trusted. Measured on
+    2026-11-18: a restraint run "succeeded" in under a second having scored
+    nothing.
+    """
+    stale = []
+    for log in logs or []:
+        completed = getattr(getattr(log, "stats", None), "completed_at", None)
+        if not completed:
+            continue
+        try:
+            finished = datetime.fromisoformat(str(completed))
+        except ValueError:
+            continue
+        if finished.tzinfo is None:
+            finished = finished.replace(tzinfo=timezone.utc)
+        if finished < started_at:
+            name = getattr(getattr(log, "eval", None), "task", "?")
+            stale.append(f"{name} (finished {completed})")
+    return stale
 
 
 def _write_verdict(logs, path: str, mode: str, dataset: str) -> None:
@@ -188,9 +221,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="empathysync-restraint-eval")
     parser.add_argument(
         "--mode",
-        choices=["restraint", "domain"],
+        choices=["restraint", "domain", "bare"],
         default="restraint",
-        help="restraint = judge grades the response; domain = rule-based classifier check (no judge)",
+        help="restraint = judge grades the response; domain = rule-based classifier "
+        "check (no judge); bare = the same engine with no pipeline, graded by the "
+        "same judge, so the difference from restraint mode is what the architecture adds",
     )
     parser.add_argument("--dataset", default=str(STARTER_DATASET))
     parser.add_argument(
@@ -235,16 +270,29 @@ def main() -> int:
     # Each mode is a different task; keep their logs apart so eval_set resume
     # never crosses them. Restraint mode keeps its existing logs/restraint path.
     if args.log_dir is None:
-        args.log_dir = str(
-            DEFAULT_LOG_DIR if args.mode == "restraint" else DEFAULT_LOG_DIR.parent / "domain"
-        )
+        # One directory per mode. Inspect's eval_set resumes from the log dir, so
+        # two modes sharing one would resume each other's samples.
+        by_mode = {
+            "restraint": DEFAULT_LOG_DIR,
+            "domain": DEFAULT_LOG_DIR.parent / "domain",
+            "bare": DEFAULT_LOG_DIR.parent / "bare",
+        }
+        args.log_dir = str(by_mode[args.mode])
 
     if not args.no_preflight:
-        # Domain mode never loads the judge, so it does not need judge headroom.
+        # Each mode loads a different set, and sizing for models a mode never
+        # loads refuses runs that would have fit. Domain mode never loads the
+        # judge. Bare mode runs no pipeline at all, so it loads neither the
+        # classifier nor the safety guard - only the engine it prompts directly
+        # and the judge that grades it.
         pipeline_models = _pipeline_models(args.engine)
-        needed_models = pipeline_models
-        if args.mode != "domain":
-            needed_models = needed_models + [args.judge]
+        if args.mode == "bare":
+            needed_models = [args.engine, args.judge]
+            pipeline_models = [args.engine]
+        elif args.mode == "domain":
+            needed_models = pipeline_models
+        else:
+            needed_models = pipeline_models + [args.judge]
         # Print the slot assumption on every run: the server's own value is not
         # visible from here, and a wrong guess must not stay silent (#247).
         slots, slot_source = resolve_slots(args.num_parallel)
@@ -274,13 +322,26 @@ def main() -> int:
     # Import Inspect lazily so --help and preflight failures stay fast.
     from inspect_ai import eval_set
 
-    from .task import empathysync_domain, empathysync_restraint
+    from .task import empathysync_bare, empathysync_domain, empathysync_restraint
 
     if args.mode == "domain":
         the_task = empathysync_domain(
             dataset_path=args.dataset, engine=args.engine, ollama_host=args.host
         )
         grader = "rule-based (no judge)"
+    elif args.mode == "bare":
+        the_task = empathysync_bare(
+            dataset_path=args.dataset,
+            engine=args.engine,
+            judge=args.judge,
+            ollama_host=args.host,
+        )
+        grader = args.judge
+        print(
+            "bare mode: no empathySync pipeline. Compare against a restraint-mode run\n"
+            "           on the same dataset and judge; the gap is what the\n"
+            "           architecture adds, not what the model does on its own."
+        )
     else:
         the_task = empathysync_restraint(
             dataset_path=args.dataset,
@@ -296,6 +357,7 @@ def main() -> int:
         f"(Ctrl-C is safe; re-run the same command to resume)"
     )
 
+    run_started = datetime.now(timezone.utc)
     success, logs = eval_set(
         tasks=[the_task],
         log_dir=args.log_dir,
@@ -304,6 +366,17 @@ def main() -> int:
         limit=args.limit,
         retry_attempts=3,
     )
+
+    stale = _logs_not_produced_by_this_run(logs, run_started)
+    if stale:
+        print(
+            "\n"
+            "!! NOTHING WAS MEASURED. eval_set found a complete run already in\n"
+            f"!! {args.log_dir} and resumed into a no-op, so the result above is\n"
+            "!! an older run's, under whatever engine, guard and corpus it used:\n"
+            + "".join(f"!!   {s}\n" for s in stale)
+            + "!! Use a fresh --log-dir to actually run the corpus.\n"
+        )
 
     print(
         f"\nDone. success={success}. Browse results with:\n  inspect view --log-dir {args.log_dir}"
