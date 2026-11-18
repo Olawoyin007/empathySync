@@ -25,6 +25,9 @@ pytest tests/test_restraint_memory.py -v
 # Crisis triage floor (oblique ideation reaches the hard-stop, benign does not)
 pytest tests/classification/test_crisis_triage.py -v
 
+# THREAT_MODEL.md controls still point at tests that exist
+pytest tests/test_threat_model_map.py -v
+
 # Adversarial restraint eval logic (skips unless the `evals` extra is installed)
 pytest tests/test_restraint_eval.py -v
 

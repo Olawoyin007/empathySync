@@ -47,6 +47,23 @@ All notable changes to empathySync are documented here.
   65G judge mid-run, which does not fail so much as never finish. No defaults
   changed.
 
+### Added
+- **Every engineering control in `THREAT_MODEL.md` now names the test that
+  proves it** (#235). The document listed what each control is and where it
+  lives, but nothing failed when one stopped working, and no test pointed back at
+  the threat it covered. Each row in the three control tables carries a
+  "Verified by" column, and each named test carries a comment naming its control.
+
+  Five controls read `none`: no-external-calls, the SQL table and column
+  whitelists, the `OLLAMA_HOST` scheme check, the non-root container, and atomic
+  writes. They are real in the code and nothing checks them, which is the point
+  of the exercise rather than a side effect of it - stated as gaps instead of
+  implied as tested.
+
+  `tests/test_threat_model_map.py` parses the column and fails if a named test no
+  longer exists, or if a control row leaves the verdict blank. It does not fail on
+  `none`: an untested control is acknowledged, not broken.
+
 ### Changed
 - **The documented domain-eval baseline is 97/122, measured rather than
   inherited** (#239). Six live references still said `96/118`, including
