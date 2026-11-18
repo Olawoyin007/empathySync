@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 
 from config.settings import settings
+from utils.persisted_fields import validate_persisted_fields
 from utils.write_gate import check_write_permission, WriteBlockedError
 
 logger = logging.getLogger(__name__)
@@ -572,6 +573,7 @@ class JSONBackend(StorageBackend):
 
     def update_task_pattern(self, pattern_type: str, updates: Dict) -> None:
         self._ensure_write_allowed()
+        validate_persisted_fields("task_patterns", updates)
         data = self._load_wellness()
         if "task_patterns" in data and pattern_type in data["task_patterns"]:
             data["task_patterns"][pattern_type].update(updates)
@@ -648,6 +650,7 @@ class JSONBackend(StorageBackend):
 
     def update_handoff_event(self, event_id: int, updates: Dict) -> Optional[Dict]:
         self._ensure_write_allowed()
+        validate_persisted_fields("handoff_events", updates)
         data = self._load_wellness()
         for event in data.get("handoff_events", []):
             if event.get("id") == event_id:
@@ -714,6 +717,7 @@ class JSONBackend(StorageBackend):
 
     def update_trusted_person(self, person_id: int, updates: Dict) -> Optional[Dict]:
         self._ensure_write_allowed()
+        validate_persisted_fields("people", updates)
         data = self._load_network()
         for person in data["people"]:
             if person["id"] == person_id:

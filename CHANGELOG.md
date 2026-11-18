@@ -105,15 +105,22 @@ All notable changes to empathySync are documented here.
   strategy fails loudly instead of being skipped.
 
   It found that `update_task_pattern`, `update_trusted_person` and
-  `update_handoff_event` merge a caller-supplied dict straight into the record.
+  `update_handoff_event` merged a caller-supplied dict straight into the record.
   SQLite refuses an unallowlisted key through the column whitelist that backs the
-  no-SQL-injection control; the JSON backend, which is the default, does not - it
+  no-SQL-injection control; the JSON backend, which is the default, did not - it
   persisted `conversation_text` and `persona_summary`, the two categories the
-  invariant exists to forbid. Nothing in `src/` passes arbitrary keys down those
-  paths today, so no field is being persisted wrongly; the guarantee on the
-  default backend rests on callers choosing allowlisted keys rather than on the
-  boundary enforcing them. Recorded as a strict xfail that flips to a pass when
-  the JSON path filters its keys, rather than quietly left out of the test.
+  invariant exists to forbid.
+
+  **Fixed, at all four sites.** `utils/persisted_fields.validate_persisted_fields()`
+  raises on any key outside `restraint_memory.allowed_fields`, which is the same
+  list the invariant test asserts against, so the code enforces the list the
+  invariant is written in terms of rather than a second copy. The fourth site is
+  the one that mattered: `TrustedNetwork.update_person` does its own JSON write
+  and never reaches `JSONBackend`, so guarding only the backend would have left
+  the path the app actually takes wide open. Removing that one guard is caught by
+  `test_update_person_refuses_a_field_that_is_not_persistable`, which exists
+  because the first version of this fix passed its own test suite with the live
+  path unguarded.
 
 ## v1.16.0 (2026-11-04) - Layers That Actually Fire
 

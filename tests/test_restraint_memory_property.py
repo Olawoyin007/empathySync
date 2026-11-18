@@ -40,11 +40,14 @@ from tests.test_restraint_memory import ALLOWLIST_PATH, STRUCTURE_MAP  # noqa: E
 # clear_all_data would delete the evidence this test is about to inspect.
 NOT_GENERATED = {"clear_all_data"}
 
-# These three merge a caller-supplied dict straight into a persisted record.
-# SQLite rejects an unallowlisted key through its column whitelist; the JSON
-# backend - the default - does not, so generated keys land in the file. They are
-# driven by their own test below rather than silently left out of this one.
-UNFILTERED_UPDATE_PATHS = {
+# These three merge a caller-supplied dict straight into a persisted record, so
+# they are the paths where a generated key could reach disk. Both backends now
+# reject an unallowlisted name - SQLite through its column whitelist, JSON
+# through validate_persisted_fields - and test_update_paths_reject_an_unallowlisted_key
+# below holds that. They stay out of the generated sweep because a generated
+# `updates` dict is almost always rejected outright, which measures the guard
+# rather than the write surface the sweep is for.
+UPDATE_PATHS = {
     "update_task_pattern",
     "update_trusted_person",
     "update_handoff_event",
@@ -264,7 +267,7 @@ def test_the_write_surface_was_actually_discovered(tmp_path):
         _teardown_backend(patches, use_sqlite=False)
 
     assert len(methods) >= 16, f"only found {len(methods)} write methods: {sorted(methods)}"
-    for excluded in (NOT_GENERATED, UNFILTERED_UPDATE_PATHS):
+    for excluded in (NOT_GENERATED, UPDATE_PATHS):
         assert excluded <= set(methods), (
             f"{sorted(excluded - set(methods))} is named in an exclusion set but is no "
             "longer a write method - drop it from that set rather than leaving a stale name"
@@ -288,7 +291,7 @@ def test_generated_writes_never_persist_an_unallowlisted_field(restraint_config,
         try:
             overrides = _seed(backend)
             for name, method in sorted(_write_methods(backend).items()):
-                if name in NOT_GENERATED or name in UNFILTERED_UPDATE_PATHS:
+                if name in NOT_GENERATED or name in UPDATE_PATHS:
                     continue
                 kwargs = _draw_kwargs(data, method, overrides)
                 try:
@@ -312,24 +315,22 @@ def test_update_paths_reject_an_unallowlisted_key(use_sqlite, key):
     """
     The write boundary itself should refuse a field outside the allowlist.
 
-    SQLite does, through the column whitelist that backs the no-SQL-injection
-    control. The JSON backend - the default - calls `.update(updates)` and
-    persists whatever it is handed, so the invariant there rests on every caller
-    choosing allowlisted keys rather than on the boundary enforcing them.
+    SQLite does it through the column whitelist that backs the no-SQL-injection
+    control. The JSON backend did not: it called `.update(updates)` and persisted
+    whatever it was handed, so the invariant rested on every caller choosing
+    allowlisted keys rather than on the boundary enforcing anything.
 
-    Nothing in `src/` currently passes arbitrary keys down these three paths, so
-    no field is being persisted wrongly today. The xfail below records that the
-    guarantee is held by convention on the default backend, and will turn into an
-    XPASS the moment the JSON path filters its keys.
+    `utils/persisted_fields.validate_persisted_fields` now guards all four sites
+    that merge a caller's dict - the three `JSONBackend.update_*` methods and
+    `TrustedNetwork.update_person`, which is the one the app actually reaches when
+    SQLite is off. It checks the same `restraint_memory.allowed_fields` the
+    invariant test asserts against, so there is no second copy to drift.
     """
-    if not use_sqlite:
-        pytest.xfail("JSON backend merges caller dicts unfiltered (found by #236)")
-
     with tempfile.TemporaryDirectory() as tmp:
         backend, patches = _fresh_backend(Path(tmp), use_sqlite)
         try:
             overrides = _seed(backend)
-            for name in sorted(UNFILTERED_UPDATE_PATHS):
+            for name in sorted(UPDATE_PATHS):
                 method = getattr(backend, name)
                 arg = {
                     "update_task_pattern": {"pattern_type": overrides["pattern_type"]},
@@ -369,7 +370,7 @@ def test_recorded_drift_is_still_real(restraint_config):
         backend, patches = _fresh_backend(tmp_path, use_sqlite=False)
         try:
             for name, method in sorted(_write_methods(backend).items()):
-                if name in NOT_GENERATED or name in UNFILTERED_UPDATE_PATHS:
+                if name in NOT_GENERATED or name in UPDATE_PATHS:
                     continue
                 hints = typing.get_type_hints(method)
                 kwargs = {

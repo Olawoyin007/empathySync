@@ -188,6 +188,27 @@ class TestPersonManagement:
     def test_update_person_not_found(self, network):
         assert network.update_person(999, {"name": "Ghost"}) is None
 
+    @pytest.mark.parametrize(
+        "field", ["persona_summary", "conversation", "message", "last_prompt", "preferences"]
+    )
+    def test_update_person_refuses_a_field_that_is_not_persistable(self, network, field):
+        """
+        This is the path the app actually takes when SQLite is off, and it used
+        to merge whatever dict it was handed into the person record. A caller
+        passing conversation content or an inferred persona could persist it,
+        which the restraint-memory invariant forbids (#236).
+
+        The guard is in TrustedNetwork itself rather than only in JSONBackend
+        because this method does its own JSON write and never reaches the
+        backend's version.
+        """
+        person = network.add_person("Alice")
+        with pytest.raises(ValueError, match="not persistable"):
+            network.update_person(person["id"], {field: "something the user said"})
+
+        reloaded = network.get_person_by_name("Alice")
+        assert field not in reloaded, f"{field} reached the file despite the refusal"
+
     def test_remove_person(self, network):
         person = network.add_person("Alice")
         assert network.remove_person(person["id"]) is True

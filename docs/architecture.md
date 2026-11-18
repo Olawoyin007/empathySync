@@ -659,6 +659,16 @@ data/
 3. All 31 write methods check `_ensure_write_allowed()`
 4. Checkpoint skipped in read-only mode
 
+**Field names (defense-in-depth, #236):** the write gate decides *whether* a
+write happens; it says nothing about *what* the write contains. Four methods
+merge a caller-supplied dict into a record - the three `JSONBackend.update_*`
+methods and `TrustedNetwork.update_person`, which does its own JSON write and
+never reaches the backend. SQLite rejects an unknown name through the column
+whitelist; the JSON side now calls
+`persisted_fields.validate_persisted_fields()`, which raises on any key outside
+`restraint_memory.allowed_fields` - the same list `tests/test_restraint_memory.py`
+asserts against, so there is no second copy to drift from it.
+
 ## Key Design Principles
 
 ```
@@ -732,6 +742,7 @@ empathySync/
 │       ├── database.py          # SQLite layer (Phase 11)
 │       ├── storage_backend.py   # JSON/SQLite + SQL injection prevention (Phase 11, 16.7)
 │       ├── lockfile.py          # Atomic lock file with O_CREAT|O_EXCL (Phase 11, 16.7)
+│       ├── persisted_fields.py  # Rejects caller field names outside the allowlist (#236)
 │       └── write_gate.py        # Write permission control (Phase 11)
 │
 ├── scenarios/                    # Knowledge base (YAML)
