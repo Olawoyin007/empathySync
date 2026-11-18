@@ -347,6 +347,7 @@ class TestRiskClassifier:
                 "As long as we're chatting I don't have to call the landlord."
             )
 
+    # THREAT_MODEL.md control: Avoidance check
     def test_avoidance_routes_logistics_to_restraint(self, classifier):
         """The whole point: risk 1.6 full-help mode becomes a restraint domain."""
         llm = {
@@ -368,6 +369,7 @@ class TestRiskClassifier:
             assert result["domain"] != "logistics"
             assert result["risk_weight"] > 1.9
 
+    # THREAT_MODEL.md control: Avoidance check
     def test_avoidance_never_downgrades_a_sensitive_domain(self, classifier):
         """Gated on logistics, so it can only add restraint, never remove it."""
         llm = {
@@ -405,6 +407,7 @@ class TestRiskClassifier:
             "classification_method": "llm",
         }
 
+    # THREAT_MODEL.md control: Crisis second pass
     def test_second_pass_promotes_to_crisis(self, classifier):
         with (
             patch.object(classifier._llm_classifier, "classify", return_value=self._plain_llm()),
@@ -439,6 +442,7 @@ class TestRiskClassifier:
             assert result["domain"] == "money"
 
     @pytest.mark.parametrize("already", ["crisis", "harmful"])
+    # THREAT_MODEL.md control: Crisis second pass
     def test_second_pass_is_not_consulted_when_already_terminal(self, classifier, already):
         """No point asking, and it must not be able to rewrite `harmful`."""
         called = []
@@ -480,6 +484,7 @@ class TestRiskClassifier:
         with patch("models.llm_classifier.get_scenario_loader", return_value=fake):
             assert classifier._llm_classifier.crisis_second_pass("i want to die") is False
 
+    # THREAT_MODEL.md control: Crisis second pass
     def test_second_pass_parses_only_a_leading_yes(self, classifier):
         """A chatty or empty answer is a no, so a confused model cannot escalate
         anyone by accident."""
@@ -1161,6 +1166,7 @@ class TestWellnessGuide:
             ("I'm available 24/7", "dependency_encouraging"),
         ],
     )
+    # THREAT_MODEL.md control: Mid-stream output voice check
     def test_voice_violations_are_caught(self, guide, text, category):
         assert guide._detect_voice_violation(text) == category
         assert guide._contains_harmful_content(text)
@@ -1279,6 +1285,7 @@ class TestWellnessGuide:
         assert "thoughtful response" in result
 
     @patch("utils.http_client.get_http_client")
+    # THREAT_MODEL.md control: Engine unavailable
     def test_generate_response_handles_api_error(self, mock_get_client, guide):
         import httpx
 
@@ -4002,6 +4009,7 @@ class TestStreaming:
         assert "Hello there." in guide._last_streamed_response
 
     @patch("utils.http_client.get_http_client")
+    # THREAT_MODEL.md control: Engine unavailable
     def test_stream_handles_api_error(self, mock_get_client, guide):
         """API errors should yield a fallback response."""
         import httpx
@@ -4038,6 +4046,7 @@ class TestStreaming:
         assert harmful_token not in full
 
     @patch("utils.http_client.get_http_client")
+    # THREAT_MODEL.md control: Mid-stream output voice check
     def test_stream_buffer_catches_phrase_split_across_chunk_boundary(self, mock_get_client, guide):
         """Harmful phrase split across two buffer flushes must still be caught.
 

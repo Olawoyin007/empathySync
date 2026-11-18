@@ -452,6 +452,7 @@ class TestConnectionHealth:
 class TestErrorHandling:
     """Tests for data recovery and error handling."""
 
+    # THREAT_MODEL.md control: Corrupt storage file
     def test_corrupted_json_recovers(self, tmp_path, mock_loader):
         """Loading corrupted JSON should return defaults, not crash."""
         with (

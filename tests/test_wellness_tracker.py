@@ -563,6 +563,7 @@ class TestLoadData:
         assert data["schema_version"] == 1
         assert data["check_ins"] == []
 
+    # THREAT_MODEL.md control: Corrupt storage file
     def test_load_data_corrupted_json(self, tracker):
         """Lines 406-409: JSONDecodeError backs up and returns defaults."""
         tracker.data_file.write_text("{invalid json!!!")
