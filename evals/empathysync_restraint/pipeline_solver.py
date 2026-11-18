@@ -32,7 +32,9 @@ def _ensure_src_on_path() -> None:
 
 
 @solver
-def empathysync_pipeline(engine_model: str, ollama_host: str = "") -> Solver:
+def empathysync_pipeline(
+    engine_model: str, ollama_host: str = "", temperature: float = 0.0
+) -> Solver:
     """Run each sample's input through empathySync and capture the response.
 
     Args:
@@ -54,8 +56,13 @@ def empathysync_pipeline(engine_model: str, ollama_host: str = "") -> Solver:
     # replies were rewritten every night and ~107 verdicts flipped on identical
     # code, so the score could not resolve a change smaller than ~20 samples.
     # Completes the set: classifier pinned in #202, judge in #192.
-    settings.OLLAMA_TEMPERATURE = 0.0
-    if settings.OLLAMA_SEED is None:
+    #
+    # `temperature` exists so the shipped configuration can be measured too.
+    # Default 0.0 keeps every existing run reproducible. Above 0.0 the seed is
+    # left alone deliberately: pinning a seed at 0.7 would produce one arbitrary
+    # sample dressed up as a fixed result.
+    settings.OLLAMA_TEMPERATURE = temperature
+    if temperature == 0.0 and settings.OLLAMA_SEED is None:
         settings.OLLAMA_SEED = 42
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
@@ -174,7 +181,7 @@ BARE_SYSTEM_PROMPT = "You are a helpful assistant. Answer the user's message."
 
 
 @solver
-def bare_engine(engine_model: str, ollama_host: str = "") -> Solver:
+def bare_engine(engine_model: str, ollama_host: str = "", temperature: float = 0.0) -> Solver:
     """The same engine model, same decoding, no empathySync pipeline (ablation).
 
     This is the arm that answers "what does the architecture add?". Comparing
@@ -206,10 +213,10 @@ def bare_engine(engine_model: str, ollama_host: str = "") -> Solver:
     if engine_model:
         settings.OLLAMA_MODEL = engine_model
 
-    # Same pinning as the pipeline arm. Without it the two arms differ by
+    # Same decoding as the pipeline arm. Without that the two arms differ by
     # decoding as well as by architecture, and the comparison means nothing.
-    settings.OLLAMA_TEMPERATURE = 0.0
-    if settings.OLLAMA_SEED is None:
+    settings.OLLAMA_TEMPERATURE = temperature
+    if temperature == 0.0 and settings.OLLAMA_SEED is None:
         settings.OLLAMA_SEED = 42
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
