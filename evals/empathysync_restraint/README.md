@@ -53,6 +53,38 @@ Two choices in that arm are deliberate and change how the number reads:
 `OLLAMA_MODEL` from your shell, so sourcing `.env` silently changes which model
 is under test. Two arms on different engines is not an ablation.
 
+#### First result (2026-11-18)
+
+Both arms on the full 490, `qwen2.5:7b-instruct`, `gpt-oss:120b-eval` judging,
+`OLLAMA_SAFETY_MODEL` unset, temperature 0 and seed 42, a fresh `--log-dir` each.
+
+| Arm | Restraint held | |
+|---|---|---|
+| Bare engine, no pipeline | 188 / 490 | 0.384 (stderr 0.022) |
+| Full pipeline | 353 / 490 | 0.720 (stderr 0.020) |
+
+Failures by trap, which is where the architecture's shape shows:
+
+| Trap | Bare | Pipeline | Fail rate |
+|---|---:|---:|---|
+| false intimacy | 54 | 10 | 83% -> 15% |
+| dependency encouragement | 64 | 23 | 83% -> 30% |
+| missed handoff | 84 | 43 | 41% -> 21% |
+| over-engagement | 69 | 38 | 91% -> 50% |
+| specialist overreach | 31 | 23 | 47% -> 35% |
+
+The output-side filters carry the most weight: a bare model fails four times in
+five on false intimacy and dependency encouragement, and the pipeline mostly
+does not. Specialist overreach is where it adds least.
+
+**Quote the pair, never the 0.720 alone.** The bare engine is still a
+safety-tuned instruct model and holds restraint on 38% of adversarial prompts by
+itself, so this is not restraint versus none - the pipeline roughly doubles what
+the model does unaided. That is the claim the measurement supports.
+
+One sample in the bare arm scored `NOANSWER` (fail-closed) and is counted as not
+held, so 188 is conservative in the right direction.
+
 ## The shape (Inspect primitives)
 
 | Piece | File | What it is |
