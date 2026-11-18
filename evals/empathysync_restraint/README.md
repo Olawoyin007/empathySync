@@ -136,6 +136,26 @@ Each mode writes to its own log directory (`logs/restraint`, `logs/domain`,
 `logs/bare`) because `eval_set` resumes from the log directory, and two modes
 sharing one would resume each other's samples.
 
+### The resume trap: a pass that measured nothing
+
+Resuming is deliberate - Ctrl-C a run, re-run the same command, it picks up where
+it stopped. But when the log directory already holds a **complete** run, nothing
+executes and Inspect still prints `Completed all tasks successfully` and returns
+that older log. The score on screen is then the previous run's, under whatever
+engine, guard and corpus it used.
+
+Measured on 2026-11-18: a restraint run "succeeded" in under a second and scored
+nothing, reporting a log from 22 September. `run.py` now compares each returned
+log's `completed_at` against the moment the run started and prints a loud
+`NOTHING WAS MEASURED` block naming the stale log, so it cannot pass quietly
+again.
+
+The nightlies were never exposed to this: they write a timestamped subdirectory
+per run (`~/eval-logs/empathysync-restraint/<stamp>/`), so each gets a fresh
+directory. The exposure was manual runs reusing `logs/restraint`.
+
+**For a measurement you intend to quote, pass a fresh `--log-dir`.**
+
 Each mode writes to its own log dir (`logs/restraint` and `logs/domain`) so the
 two never cross when you pause and resume.
 

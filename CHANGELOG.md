@@ -47,6 +47,25 @@ All notable changes to empathySync are documented here.
   65G judge mid-run, which does not fail so much as never finish. No defaults
   changed.
 
+### Fixed
+- **The eval can no longer report a pass having measured nothing.** `eval_set`
+  resumes from its log directory, which is the point - a Ctrl-C'd run picks up
+  where it stopped. But when the directory already holds a *complete* run,
+  nothing executes and Inspect still prints `Completed all tasks successfully` and
+  returns the older log, so the score on screen belongs to a previous run under
+  whatever engine, guard and corpus it used.
+
+  Found by walking into it: a restraint run "succeeded" in under a second while
+  reporting a log from 22 September. `run.py` now compares each returned log's
+  `completed_at` against the moment the run started and prints a `NOTHING WAS
+  MEASURED` block naming the stale log. A silent no-op dressed as a pass, in the
+  harness this project's headline numbers come from, is the one failure mode it
+  can least afford.
+
+  The nightlies were never exposed: they write a timestamped subdirectory per
+  run, so each gets a fresh directory. The exposure was manual runs reusing
+  `logs/restraint`, which held exactly one stale log.
+
 ### Added
 - **The keyword-only fallback is now visible to the user.** `THREAT_MODEL.md`
   listed it as a reliability gap: with Ollama unreachable or the classifier timing

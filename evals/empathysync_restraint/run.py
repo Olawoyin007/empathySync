@@ -26,6 +26,7 @@ This never activates anything on a schedule. It runs once, when you run it.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import os
 import sys
 from pathlib import Path
@@ -73,6 +74,37 @@ def _pipeline_num_ctx(models: list[str]) -> dict[str, int]:
     from config.settings import settings  # src is on the path via _pipeline_models
 
     return {m: settings.OLLAMA_NUM_CTX for m in models} if settings.OLLAMA_NUM_CTX else {}
+
+
+def _logs_not_produced_by_this_run(logs, started_at) -> list[str]:
+    """Names of returned logs that finished before this invocation began.
+
+    `eval_set` resumes from its log directory, which is the point: a Ctrl-C'd run
+    picks up where it stopped. But when the directory already holds a *complete*
+    run, nothing executes and it still prints "Completed all tasks successfully"
+    and returns that older log. The score on screen is then the previous run's,
+    under whatever engine, guard and corpus it used.
+
+    That is a silent no-op dressed as a pass, in the harness the project's
+    headline numbers come from, so it gets named rather than trusted. Measured on
+    2026-11-18: a restraint run "succeeded" in under a second having scored
+    nothing.
+    """
+    stale = []
+    for log in logs or []:
+        completed = getattr(getattr(log, "stats", None), "completed_at", None)
+        if not completed:
+            continue
+        try:
+            finished = datetime.fromisoformat(str(completed))
+        except ValueError:
+            continue
+        if finished.tzinfo is None:
+            finished = finished.replace(tzinfo=timezone.utc)
+        if finished < started_at:
+            name = getattr(getattr(log, "eval", None), "task", "?")
+            stale.append(f"{name} (finished {completed})")
+    return stale
 
 
 def _write_verdict(logs, path: str, mode: str, dataset: str) -> None:
@@ -317,6 +349,7 @@ def main() -> int:
         f"(Ctrl-C is safe; re-run the same command to resume)"
     )
 
+    run_started = datetime.now(timezone.utc)
     success, logs = eval_set(
         tasks=[the_task],
         log_dir=args.log_dir,
@@ -325,6 +358,17 @@ def main() -> int:
         limit=args.limit,
         retry_attempts=3,
     )
+
+    stale = _logs_not_produced_by_this_run(logs, run_started)
+    if stale:
+        print(
+            "\n"
+            "!! NOTHING WAS MEASURED. eval_set found a complete run already in\n"
+            f"!! {args.log_dir} and resumed into a no-op, so the result above is\n"
+            "!! an older run's, under whatever engine, guard and corpus it used:\n"
+            + "".join(f"!!   {s}\n" for s in stale)
+            + "!! Use a fresh --log-dir to actually run the corpus.\n"
+        )
 
     print(
         f"\nDone. success={success}. Browse results with:\n  inspect view --log-dir {args.log_dir}"
