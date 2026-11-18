@@ -3,6 +3,7 @@
 Usage:
     python -m evals.empathysync_restraint.run                 # restraint side (judge)
     python -m evals.empathysync_restraint.run --mode domain   # classifier side (no judge)
+    python -m evals.empathysync_restraint.run --mode bare     # ablation: no pipeline
     python -m evals.empathysync_restraint.run --limit 20
     python -m evals.empathysync_restraint.run --judge qwen2.5:14b-instruct-q4_K_M
     python -m evals.empathysync_restraint.run --no-preflight  # skip the guard
@@ -188,9 +189,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="empathysync-restraint-eval")
     parser.add_argument(
         "--mode",
-        choices=["restraint", "domain"],
+        choices=["restraint", "domain", "bare"],
         default="restraint",
-        help="restraint = judge grades the response; domain = rule-based classifier check (no judge)",
+        help="restraint = judge grades the response; domain = rule-based classifier "
+        "check (no judge); bare = the same engine with no pipeline, graded by the "
+        "same judge, so the difference from restraint mode is what the architecture adds",
     )
     parser.add_argument("--dataset", default=str(STARTER_DATASET))
     parser.add_argument(
@@ -235,9 +238,14 @@ def main() -> int:
     # Each mode is a different task; keep their logs apart so eval_set resume
     # never crosses them. Restraint mode keeps its existing logs/restraint path.
     if args.log_dir is None:
-        args.log_dir = str(
-            DEFAULT_LOG_DIR if args.mode == "restraint" else DEFAULT_LOG_DIR.parent / "domain"
-        )
+        # One directory per mode. Inspect's eval_set resumes from the log dir, so
+        # two modes sharing one would resume each other's samples.
+        by_mode = {
+            "restraint": DEFAULT_LOG_DIR,
+            "domain": DEFAULT_LOG_DIR.parent / "domain",
+            "bare": DEFAULT_LOG_DIR.parent / "bare",
+        }
+        args.log_dir = str(by_mode[args.mode])
 
     if not args.no_preflight:
         # Domain mode never loads the judge, so it does not need judge headroom.
@@ -274,13 +282,26 @@ def main() -> int:
     # Import Inspect lazily so --help and preflight failures stay fast.
     from inspect_ai import eval_set
 
-    from .task import empathysync_domain, empathysync_restraint
+    from .task import empathysync_bare, empathysync_domain, empathysync_restraint
 
     if args.mode == "domain":
         the_task = empathysync_domain(
             dataset_path=args.dataset, engine=args.engine, ollama_host=args.host
         )
         grader = "rule-based (no judge)"
+    elif args.mode == "bare":
+        the_task = empathysync_bare(
+            dataset_path=args.dataset,
+            engine=args.engine,
+            judge=args.judge,
+            ollama_host=args.host,
+        )
+        grader = args.judge
+        print(
+            "bare mode: no empathySync pipeline. Compare against a restraint-mode run\n"
+            "           on the same dataset and judge; the gap is what the\n"
+            "           architecture adds, not what the model does on its own."
+        )
     else:
         the_task = empathysync_restraint(
             dataset_path=args.dataset,
