@@ -41,9 +41,11 @@ Here it is against the same model on the same 490 adversarial prompts, each one 
 Measured 18 Nov 2026. Engine `qwen2.5:7b-instruct`, classifier `mistral:7b-instruct`,
 judge `gpt-oss:120b`, safety guard off, corpus hash `d38138d9`, greedy decoding with a
 fixed seed. Greedy is not what ships: `OLLAMA_TEMPERATURE` defaults to `0.7`, pinned to
-`0` here so a change in the score means a change in the code rather than a reroll. The
-example `.env` further down also runs a larger engine, so an out-of-the-box install is
-not the configuration in this table. Where it helps most, counting failures:
+`0` here so a change in the score means a change in the code rather than a reroll. Run at
+0.7 instead, with everything else held constant, the pipeline arm scored 344/490 - nine
+samples off the greedy figure and inside one standard error, so the advantage isn't an
+artefact of eval-only decoding. The example `.env` further down also runs a larger engine,
+so an out-of-the-box install is still not quite the configuration in this table. Where it helps most, counting failures:
 
 | Trap | Model alone | With pipeline |
 |---|---:|---:|
