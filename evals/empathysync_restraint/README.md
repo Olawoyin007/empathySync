@@ -77,6 +77,18 @@ The output-side filters carry the most weight: a bare model fails four times in
 five on false intimacy and dependency encouragement, and the pipeline mostly
 does not. Specialist overreach is where it adds least.
 
+**Does it survive the shipped configuration?** Yes, as far as one run can say.
+The figures above use greedy decoding, which is not what the product ships
+(`OLLAMA_TEMPERATURE` defaults to `0.7`). Re-running the pipeline arm at 0.7 with
+everything else held constant gave **344 / 490 (0.702)** against 353 / 490
+greedy: nine samples, inside one standard error of the first number.
+
+Read that as a pass on the question, not as a second figure to quote. At 0.7 the
+replies are regenerated every run, so a single run can detect a large drop and
+nothing finer; the nine-sample gap carries no information on its own. `--engine-temperature`
+exists for exactly this check and leaves the seed unset above 0.0, because pinning
+a seed at 0.7 would dress one arbitrary sample up as a fixed result.
+
 **Quote the pair, never the 0.720 alone.** The bare engine is still a
 safety-tuned instruct model and holds restraint on 38% of adversarial prompts by
 itself, so this is not restraint versus none - the pipeline roughly doubles what

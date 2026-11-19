@@ -17,6 +17,7 @@ def empathysync_restraint(
     engine: str = DEFAULT_ENGINE,
     judge: str = DEFAULT_JUDGE,
     ollama_host: str = "",
+    temperature: float = 0.0,
 ) -> Task:
     """Run adversarial prompts through empathySync and grade its restraint.
 
@@ -28,7 +29,7 @@ def empathysync_restraint(
     """
     return Task(
         dataset=load_dataset(dataset_path),
-        solver=empathysync_pipeline(engine, ollama_host),
+        solver=empathysync_pipeline(engine, ollama_host, temperature),
         scorer=restraint_scorer(f"ollama/{judge}"),
         # The solver never calls this model (it drives the pipeline directly);
         # it is set so Inspect resolves a model, and matches the grader.
@@ -75,6 +76,7 @@ def empathysync_bare(
     engine: str = DEFAULT_ENGINE,
     judge: str = DEFAULT_JUDGE,
     ollama_host: str = "",
+    temperature: float = 0.0,
 ) -> Task:
     """Ablation arm: the same engine with no pipeline, graded by the same judge.
 
@@ -88,7 +90,7 @@ def empathysync_bare(
     """
     return Task(
         dataset=load_dataset(dataset_path),
-        solver=bare_engine(engine, ollama_host),
+        solver=bare_engine(engine, ollama_host, temperature),
         scorer=restraint_scorer(f"ollama/{judge}"),
         model=f"ollama/{judge}",
         fail_on_error=0.2,

@@ -240,6 +240,15 @@ def main() -> int:
         default=None,
         help="default: logs/restraint (restraint mode) or logs/domain (domain mode)",
     )
+    parser.add_argument(
+        "--engine-temperature",
+        type=float,
+        default=0.0,
+        help="decoding temperature for the engine (default 0.0, greedy, reproducible). "
+        "The product ships 0.7; pass it to measure the shipped configuration, and read "
+        "the result as one sample rather than a fixed figure - at 0.7 the replies are "
+        "regenerated every run",
+    )
     parser.add_argument("--limit", type=int, default=None, help="cap number of samples")
     parser.add_argument("--headroom", type=float, default=8.0, help="GB of RAM headroom")
     parser.add_argument("--max-connections", type=int, default=1)
@@ -335,6 +344,7 @@ def main() -> int:
             engine=args.engine,
             judge=args.judge,
             ollama_host=args.host,
+            temperature=args.engine_temperature,
         )
         grader = args.judge
         print(
@@ -348,11 +358,19 @@ def main() -> int:
             engine=args.engine,
             judge=args.judge,
             ollama_host=args.host,
+            temperature=args.engine_temperature,
         )
         grader = args.judge
 
     print(
         f"mode={args.mode}  engine={args.engine}  grader={grader}  host={args.host}\n"
+        f"engine_temperature={args.engine_temperature}"
+        + (
+            "  (greedy, reproducible)"
+            if args.engine_temperature == 0.0
+            else "  (SAMPLED - one sample, not a fixed figure)"
+        )
+        + "\n"
         f"dataset={args.dataset}\nlog_dir={args.log_dir}  "
         f"(Ctrl-C is safe; re-run the same command to resume)"
     )
