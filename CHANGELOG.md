@@ -6,6 +6,26 @@ All notable changes to empathySync are documented here.
 
 ### Added
 
+- **The harness can measure the shipped decoding temperature, and the result
+  survives it.** The restraint figures use greedy decoding; the product ships
+  `OLLAMA_TEMPERATURE=0.7`. The solver hardcoded `0.0`, so the configuration users
+  actually run was unmeasurable by construction - a gap an external reviewer
+  spotted from the README alone, without repo access.
+
+  `--engine-temperature` defaults to `0.0`, so every existing run stays
+  reproducible and #211's determinism is untouched. Above zero it deliberately
+  leaves the seed unset and the runner prints `SAMPLED - one sample, not a fixed
+  figure`, because pinning a seed at 0.7 would dress one arbitrary sample up as a
+  fixed result.
+
+  Re-running the pipeline arm at 0.7 with everything else held constant: **344/490
+  (0.702)** against 353/490 greedy. Nine samples, inside one standard error. The
+  architecture's advantage is not an artefact of eval-only decoding. Read it as a
+  pass on that question rather than a second figure to quote: at 0.7 roughly 400 of
+  490 replies get rewritten per run, so the nine-sample gap carries no information
+  by itself.
+
+
 - **The keyword-only fallback is now visible to the user.** `THREAT_MODEL.md`
   listed it as a reliability gap: with Ollama unreachable or the classifier timing
   out, routing falls back to keywords, explicit crisis and harmful wording still
