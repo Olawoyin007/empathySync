@@ -74,6 +74,47 @@ All notable changes to empathySync are documented here.
 
 ### Changed
 
+- **README rewritten around the measurement instead of the history.** It opened
+  as a manifesto and then dropped into forensics: fourteen lines on a U+2019
+  apostrophe bug, dates, "resolved 13 September". That reads like a maintainer
+  defending the work to a sceptic, and it crowded out what a visitor needs in the
+  first thirty seconds. The bug history stays in `docs/crisis-triage-finding.md`,
+  where it already lived.
+
+  `We optimise for exit, not engagement` moves out of a collapsed `<details>`
+  block and becomes a heading with the ablation table under it. The line stops
+  being a slogan the moment there is a number behind it: 188/490 for the bare
+  model against 353/490 for the pipeline, same engine, judge and corpus. The
+  README says to quote the pair and never the 72% alone.
+
+  `What it won't do, and what it still gets wrong` sits near the top rather than
+  in a footnote: not a crisis service, 43% of oblique crisis prompts still
+  missed, no clinician has read the language. Every figure now carries its model
+  and guard state, because a score without those cannot be compared to anything.
+
+  One claim was wrong and is corrected rather than softened. The old text said
+  crisis detection is unaffected by model size, which told anyone shrinking the
+  classifier onto a small GPU that their safety floor was intact. Only the
+  keyword floor is model-independent: on the crisis second-pass question
+  `qwen2.5:3b` reaches 10.3% where `mistral:7b` reaches 52.7%. Also added what
+  the app keeps on disk and what it refuses to keep, collapsed the install paths
+  to Docker plus two `<details>` blocks, and fixed "everyday taks" in the opening
+  paragraph.
+
+  Revised again after two external reviews of the rewrite. Both landed on the
+  same gap independently, and the repo makes it sharper than they could see: not
+  one of the 490 adversarial prompts is a practical task, so a system that got
+  shorter, colder and less useful would score *better* on that corpus. The README
+  now says that outright, and says 72% is evidence the architecture resists a trap
+  it was built for rather than proof the product thesis holds. Both reviewers also
+  caught that the opening read as "nothing sensitive is kept" when names and task
+  patterns are; that line now separates automatic storage from the export you ask
+  for and the data that is retained. The results table names the classifier and
+  the corpus hash beside the engine, says greedy decoding is not what ships, and
+  links the six judge categories, since a published rubric was a fair ask and it
+  already existed.
+
+
 - **The documented domain-eval baseline is 97/122, measured rather than
   inherited** (#239). Six live references still said `96/118`, including
   `ROADMAP.md`'s execution contract, which the roadmap tells you to read before

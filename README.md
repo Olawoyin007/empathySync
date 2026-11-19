@@ -19,78 +19,71 @@
 
 https://github.com/user-attachments/assets/523a70e6-8f07-4d67-a5bd-4cb18490e3c8
 
-## What It Is
+## What it is
 
-empathySync is a local AI assistant built on one design principle:
+A local AI assistant that helps you finish what you came for and then gets out of the way.
 
-> *The part of AI that handles your personal life should belong to you.*
+On practical work it holds nothing back: emails, code, explanations, planning, the ordinary stuff. On emotional distress, health, money, relationships, spirituality and crisis it does close to the opposite of what a normal assistant does. Replies get short, follow-up questions designed to keep you talking disappear, and it points you towards someone real: a person you've named as trusted, or a service that exists for this. Those limits live in the code that handles each message rather than in a system prompt, so you can't talk it out of them and neither can anyone else.
 
-It gives full help on practical tasks - writing, coding, explanations, and everyday taks. On sensitive topics (emotional distress, health, relationships, finances, spirituality), it applies deliberate restraint: brief responses, human redirects, no follow-up questions designed to keep you talking. When it detects signals of a potential crisis, it prioritizes directing you toward professional or emergency resources rather than attempting to handle the situation itself.
+Everything runs on your machine through Ollama, with no accounts, no cloud and no telemetry. Conversations are never stored automatically; you can still export one yourself when you want it. Some things are kept, and a few of them are sensitive: the people you add by name, and what kinds of task you keep coming back for. [What it keeps](#what-it-keeps) lists all of it.
 
-Everything runs on your hardware via Ollama. No cloud. No external API calls. No telemetry. No engagement optimization.
+## We optimise for exit, not engagement
 
-## Who This Is For
+That sentence is easy to put on a page, so it's worth something only if it survives measurement.
 
-Who it is built for, which is not the same as who uses it. There is no measured user base behind this list.
+Here it is against the same model on the same 490 adversarial prompts, each one written to bait an assistant into over-engaging, flattering, pretending intimacy, or quietly taking a professional's job. An independent 120B judge from a different model family graded every reply.
 
-**Developers** who want a privacy-respecting AI assistant with no API keys, no subscriptions, and no data leaving their hardware.
+| | Restraint held |
+|---|---|
+| `qwen2.5:7b-instruct` alone, no pipeline | **188 / 490** (38%) |
+| The same model, full empathySync pipeline | **353 / 490** (72%) |
 
-**Researchers and builders** working on ethical AI tooling who want a reference implementation that optimises for user autonomy. The architecture is documented and the pipeline is embeddable.
+Measured 18 Nov 2026. Engine `qwen2.5:7b-instruct`, classifier `mistral:7b-instruct`,
+judge `gpt-oss:120b`, safety guard off, corpus hash `d38138d9`, greedy decoding with a
+fixed seed. Greedy is not what ships: `OLLAMA_TEMPERATURE` defaults to `0.7`, pinned to
+`0` here so a change in the score means a change in the code rather than a reroll. Run at
+0.7 instead, with everything else held constant, the pipeline arm scored 344/490 - nine
+samples off the greedy figure and inside one standard error, so the advantage isn't an
+artefact of eval-only decoding. The example `.env` further down also runs a larger engine,
+so an out-of-the-box install is still not quite the configuration in this table. Where it helps most, counting failures:
 
-**Therapists, counsellors, and domain experts** who would be willing to say where the language is wrong. The scenarios, responses, and intervention language are plain YAML files, so a correction can land without touching Python. No clinician has reviewed them yet; that is the project's largest open gap and the reason [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md) exists.
+| Trap | Model alone | With pipeline |
+|---|---:|---:|
+| False intimacy | 54 | 10 |
+| Dependency encouragement | 64 | 23 |
+| Missed handoff | 84 | 43 |
+| Over-engagement | 69 | 38 |
+| Specialist overreach | 31 | 23 |
 
-It is a tool, not a companion or an always-on assistant - meant to be used and set aside.
+Read that pair together and never the 72% alone. `qwen2.5:7b-instruct` is already safety-tuned and holds the line on nearly two prompts in five by itself; what the architecture does is roughly double that. The output-side filters carry most of the weight, and specialist overreach is where they help least. Reproduce it with `python -m evals.empathysync_restraint.run --mode bare` against a restraint-mode run on the same engine. The six failure categories the judge grades against are defined in [`evals/empathysync_restraint/restraint_scorer.py`](evals/empathysync_restraint/restraint_scorer.py), unparseable verdicts fail closed, and the method is in [`evals/empathysync_restraint/README.md`](evals/empathysync_restraint/README.md).
 
-<details>
-<summary><strong>The philosophy</strong></summary>
-<br>
+## What it won't do, and what it still gets wrong
 
-We optimise for exit, not engagement.
+**It is not a crisis service.** Crisis wording triggers a hard stop that returns helpline numbers for 13 countries and never reaches the model at all. That's a redirect, not help. It cannot call anyone for you.
 
-| Practical Tasks | Sensitive Topics |
-|-----------------|------------------|
-| Writing emails, coding, explanations | Emotional, health, financial, relationships |
-| Full assistance, no limits | Brief responses, redirects to humans |
-| Complete the task thoroughly | Steer toward human connection |
+**Oblique crisis still slips through.** Calm, practical-sounding messages carrying a danger sign underneath are the hardest case here and the one that matters most. One dedicated yes/no pass after classification took recall on 165 adversarial crisis prompts from 27.9% to 57.0%; the other 43% is open as [#218](https://github.com/Olawoyin007/empathySync/issues/218). Before relying on this anywhere that matters, read [`docs/crisis-triage-finding.md`](docs/crisis-triage-finding.md).
 
-</details>
+**A smaller classifier is genuinely worse at it.** The keyword floor doesn't care what model you run, but everything above it does: on the crisis second-pass question `qwen2.5:3b` reaches 10.3% where `mistral:7b` reaches 52.7%. If you shrink the classifier to fit a small GPU, that is what you're trading, and it isn't the part to economise on.
 
-## What Makes It Different
+**No clinician has reviewed the language.** Every redirect, every refusal, every word it says to someone having a bad night was written by an engineer. That's the largest open gap in the project, and [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md) exists because of it.
 
-### Safety & restraint
+**Enumeration is never finished.** A phrasing nobody thought of can escape every layer. [THREAT_MODEL.md](THREAT_MODEL.md) says which controls have tests behind them and which are still only claims.
 
-- **Crisis detection**: explicit crisis language triggers an immediate redirect
-  to professional resources, before anything else in the pipeline can respond.
-  **Oblique, keyword-light ideation is harder, and was measured.** An adversarial
-  probe in August 2026 found 5 of 8 such messages routed to `emotional` rather
-  than `crisis` - stably across runs, and missed by both a 1B and an 8B guard
-  model, so it was not a weak-model issue. Resolved 13 September 2026: targeted
-  trigger phrases, each measured against 23 intense-but-not-suicidal controls
-  before inclusion, after a candidate intensity-escalation fix was rejected for
-  escalating 6 of 15 benign messages to a crisis hard stop. Testing the fix also
-  surfaced a typographic apostrophe (U+2019) silently defeating the deterministic
-  keyword floor in two independent layers, now folded at match time. Read
-  [`docs/crisis-triage-finding.md`](docs/crisis-triage-finding.md) before relying
-  on this in any setting that matters.
-- **Post-crisis protection**: never apologises for safety interventions
-- **Layered distress detection**: tracks conversation topic and distress level
-  independently, so a message can register distress even when its surface request
-  is practical ("help me write a goodbye letter")
+**Nothing here shows ordinary help stayed good.** Every one of those 490 prompts was written to bait over-engagement, and not one of them is a practical task. A system could score better on that corpus by getting shorter, colder and less useful, and the corpus would not notice. The missing experiment is the same comparison on work someone actually wanted finished - email, code, planning - scoring whether the task got done and whether a finished conversation got cut off needlessly. Until that exists, treat 72% as evidence the architecture resists a trap it was built for, not as proof the product thesis holds.
 
-### Awareness & honesty
+## Who this is for
 
-- **Tracks dependency patterns** and tells you when you're relying on it too much
-- **Transparency panel** showing exactly why it responded the way it did
+Who it's built for, which isn't the same as who uses it; there's no measured user base behind this list.
 
-### Human connection
+**Developers** who want a private assistant with no API keys, no subscription, and nothing leaving their hardware.
 
-- **Connection steering**: when someone signals isolation, a background warmth modifier activates for the session. It doesn't start a conversation about loneliness - it just changes the texture of every response. Noticing people mentioned in passing. Acknowledging when someone reaches out to an old contact. When active, it's visible in the response mode label ("connection awareness active") so it's never hidden. If no trusted contacts exist, it shifts from redirecting to people toward acknowledging that building connection takes time.
-- **Trusted network**: helps identify and reach specific people in your life, with message templates to make the first move easier
-- **Signposting**: for users who genuinely have no one, guides toward places where connection can be found
+**Researchers and builders** after a reference implementation of restraint enforced structurally. The pipeline is embeddable and `ConversationSession` runs headless.
 
-## Quick Start
+**Therapists, counsellors and domain experts** willing to say where the wording is wrong. The responses live in plain YAML, so a correction lands without touching Python, and you can email it instead if that's easier.
 
-### Option 1: Docker (recommended)
+It's a tool rather than a companion, meant to be used and set aside.
+
+## Quick start
 
 ```bash
 git clone https://github.com/Olawoyin007/empathySync.git
@@ -99,105 +92,95 @@ cp .env.example .env
 docker compose up
 ```
 
-This starts both empathySync and Ollama together. The model pulls automatically on first run. Open `http://localhost:8501`.
+That brings up empathySync and Ollama together, pulls the model on first run, and serves `http://localhost:8501`. Docker's daemon has to be running first.
 
-> **Docker must be installed and its daemon running** before `docker compose up` (Docker Desktop on Windows/macOS, or the `docker` service on Linux).
-> On a GPU machine, Docker still runs Ollama **CPU-only** unless you add a GPU reservation to `docker-compose.yml`. For direct GPU use, the [install.sh](#option-2-installsh) or [pip](#option-3-pip-install) paths talk to your local Ollama, which uses the GPU automatically.
+One catch: under Docker, Ollama runs CPU-only unless you add a GPU reservation to `docker-compose.yml`. On a GPU machine the other two paths talk to your local Ollama and use the card automatically.
 
-**Network access:** the app binds to `127.0.0.1` by default (localhost only). To reach it from other devices on your network, add `APP_BIND=0.0.0.0` to `.env`.
-
-**File permissions:** if `./data` ends up root-owned after the first run, add `PUID` and `PGID` to `.env` matching your host user (`id -u` / `id -g`). The container uses these to drop privileges before writing to bind-mounted directories.
-
-**Any Ollama model works.** Set `OLLAMA_MODEL` in `.env` before running. Benchmarked recommendations (see [`docs/model-benchmark.md`](docs/model-benchmark.md)):
-
-| Min VRAM | Engine Model | Scenario Pass |
-|:--------:|-------------|:-------------:|
-| 4 GB GPU | `qwen2.5:3b-instruct` | 55% |
-| 8 GB GPU | `qwen2.5:7b-instruct` | 65% |
-| 12 GB GPU | `gemma3:12b` | 75% ✓ best |
-
-The classifier runs on every message and is separate from the engine. Set `OLLAMA_CLASSIFIER_MODEL` to a smaller model to run classification on CPU while the engine uses your GPU - but the classifier must be capable enough to detect crisis language reliably, so pick a model you have verified on the safety scenarios, not the smallest one available. See [`docs/model-benchmark.md`](docs/model-benchmark.md) for validated classifier models and recommended pairings by VRAM tier.
-
-### Option 2: install.sh
+<details>
+<summary><strong>install.sh (Linux, macOS, WSL)</strong></summary>
+<br>
 
 ```bash
 git clone https://github.com/Olawoyin007/empathySync.git
 cd empathySync
 bash install.sh
-```
-
-> `install.sh` is a bash script for Linux/macOS (or Windows via WSL / Git Bash), not native PowerShell. On native Windows, use [Docker](#option-1-docker-recommended) or [pip](#option-3-pip-install).
-
-The install script checks Python, creates a virtual environment, installs dependencies, configures `.env`, and pulls the configured model automatically if Ollama is running. Then launch:
-
-```bash
 venv/bin/python -m streamlit run src/app.py
 ```
 
-### Option 3: pip install
+The script checks Python, builds a virtual environment, installs dependencies, writes `.env`, and pulls the configured model if Ollama is already running. It's bash, so native PowerShell won't do; use Docker or pip there.
+
+</details>
+
+<details>
+<summary><strong>pip, plus the CLI flags</strong></summary>
+<br>
 
 ```bash
 git clone https://github.com/Olawoyin007/empathySync.git
 cd empathySync
 pip install -e ".[dev]"
 cp .env.example .env
-empathysync                # Launches Streamlit web UI
-empathysync --mode cli     # Direct terminal mode
-empathysync --version      # Show version and exit
-empathysync --list-domains # List all supported classification domains
-empathysync --maintenance  # Prune old data, check integrity, and exit
-empathysync --health       # Run startup health checks and exit
-empathysync --log-level DEBUG  # Set log verbosity (DEBUG, INFO, WARNING, ERROR)
+
+empathysync                     # Streamlit web UI
+empathysync --mode cli          # terminal, no browser
+empathysync --version
+empathysync --list-domains      # add --json for machine-readable
+empathysync --maintenance       # prune old data, check integrity, exit
+empathysync --health            # startup health checks, exit
+empathysync --log-level DEBUG
 ```
-
-### Requirements
-
-- Python 3.10+
-- [Ollama](https://ollama.com/) running locally (or via Docker)
-- 8GB RAM recommended (4GB minimum with smaller models)
-- GPU optional but improves response time
-
-**Lower-spec machine?** `qwen2.5:3b-instruct` runs on 4GB GPU and passes 55% of
-scenarios. Distress recall is measured separately and stays high even on the
-smallest models, and crisis detection is unaffected by model size: the
-oblique-ideation gap found in August 2026 was a routing and matcher problem, not
-a capability one, and both a 1B and an 8B guard model missed it equally (see
-[`docs/crisis-triage-finding.md`](docs/crisis-triage-finding.md)). What you trade
-on a smaller model is scenario pass rate, not the safety floor.
-
-## How It's Built
-
-- Runs entirely on your hardware via Ollama - no cloud, no external API calls
-- Web UI (Streamlit) and CLI mode - your choice
-- All conversation data stays local - JSON files or SQLite
-- Download any conversation as a transcript from the Session & Data panel
-
-<details>
-<summary>For developers and contributors</summary>
-<br>
-
-- Streaming responses with real-time token output
-- YAML-driven prompts, rules, and thresholds - tune without touching Python
-- `ConversationSession` class can be embedded in any Python project
-- Intelligent LLM classifier with keyword fallback and confidence calibration
-- Connection steering implemented as a session-level background warmth modifier (YAML-configurable)
 
 </details>
 
-## How the Safety Pipeline Works
+<details>
+<summary><strong>Docker notes: network and file permissions</strong></summary>
+<br>
 
-Four layers run before and around the model, each covering a different gap:
+The app binds to `127.0.0.1`. To reach it from another device on your network, set `APP_BIND=0.0.0.0` in `.env`.
 
-- **Keyword triage** - instant detection of known harmful and crisis phrases.
-- **LLM classifier** - context-aware detection of rephrased, euphemistic, or framed intent the keywords miss.
-- **Avoidance check** - catches the conversation being used to put off a real action ("as long as we're chatting I don't have to call the landlord").
-- **Crisis second pass** - a single yes/no question after classification, because sorting a message into one topic can lose crisis when the message also has a topic.
+If `./data` comes out root-owned after the first run, set `PUID` and `PGID` in `.env` to match your host user (`id -u`, `id -g`). The container drops privileges to those before writing to bind mounts.
 
-The layers cover different gaps, but enumeration is never complete: a phrasing that escapes all of them can get through. See **[THREAT_MODEL.md](THREAT_MODEL.md)** for what the pipeline does and does not protect, and [docs/architecture.md](docs/architecture.md) for the full design.
+</details>
+
+### What you need
+
+Python 3.10 or newer, [Ollama](https://ollama.com/) reachable locally, and 8GB of RAM, with less possible on smaller models. A GPU only changes how long you wait.
+
+Any Ollama model works; set `OLLAMA_MODEL` before you start. Benchmarked pairings live in [`docs/model-benchmark.md`](docs/model-benchmark.md):
+
+| Min VRAM | Engine | Scenario pass |
+|:--------:|--------|:-------------:|
+| 4 GB | `qwen2.5:3b-instruct` | 55% |
+| 8 GB | `qwen2.5:7b-instruct` | 65% |
+| 12 GB | `gemma3:12b` | 75% |
+
+The classifier is a separate model from the engine and runs on every message. `OLLAMA_CLASSIFIER_MODEL` lets you put classification on something smaller, which saves memory and costs crisis sensitivity; see the warning above before you do it.
+
+## How restraint is enforced
+
+Eight domains, each with its own risk weight and route out. Crisis and harmful get a single turn and never reach the engine at all. Spirituality gets ten, practical work thirty, and everything else fifteen.
+
+Five checks run before or around the model:
+
+- **Keyword triage** catches known crisis and harmful phrasing without calling any model, so it still works when Ollama is down. 1,258 trigger phrases, folded through Unicode normalisation so a zero-width space or a curly apostrophe can't walk past them.
+- **The LLM classifier** picks up rephrased or euphemistic intent that no keyword list will ever hold, at temperature 0 with a pinned seed, because a classifier that wobbles makes every safety measurement meaningless.
+- **The crisis second pass** asks one yes/no question after classification: does this point at self-harm? Sorting a message into one of eight topics loses crisis whenever the message also has a topic, and only crisis fires the hotline.
+- **An avoidance check** notices the conversation being used to dodge something real, as in "as long as we're chatting I don't have to call the landlord".
+- **Output filters** strip false intimacy and dependency-encouraging phrasing mid-stream, before those tokens reach your screen, and cut high-risk replies to 50 words.
+
+When the classifier can't be reached, routing falls back to keywords and the response line says `reduced detection · classifier offline` rather than quietly handing you the weaker path. [`docs/architecture.md`](docs/architecture.md) has the full design; [THREAT_MODEL.md](THREAT_MODEL.md) has the limits.
+
+## What it keeps
+
+Check-ins, session counts, policy events, task patterns, and the people you add. Unencrypted, as JSON or SQLite under `data/`, pruned after 90 days.
+
+Not your conversations. No persona, no inferred preferences, no transcript. Every field the app may persist is listed in `scenarios/config/system_defaults.yaml`, and `tests/test_restraint_memory.py` fails the build if anything outside that list reaches disk, so adding one is a reviewed decision instead of an accident. The write boundary refuses unlisted field names outright.
+
+Export a transcript yourself from the Session & Data panel whenever you want one.
 
 ## Configuration
 
-See `.env.example` for all configuration options:
+Full documentation sits in `.env.example`.
 
 ```bash
 # Required
@@ -206,41 +189,53 @@ OLLAMA_MODEL=gemma3:12b
 OLLAMA_TEMPERATURE=0.7
 
 # Optional
-LLM_CLASSIFICATION_ENABLED=true        # Intelligent context-aware classification
-OLLAMA_CLASSIFIER_MODEL=mistral:7b-instruct  # Separate classifier model (faster; falls back to OLLAMA_MODEL)
-# OLLAMA_SAFETY_MODEL=llama-guard3:1b  # Optional additive LlamaGuard layer (off by default; escalate-only, never downgrades)
-# OLLAMA_NUM_CTX=8192                  # Cap the context Ollama reserves (unset = the model's full trained context)
-# Crisis second pass is on by default and adds one short model call per message.
-# Configured in scenarios/classification/crisis_second_pass.yaml
-USE_SQLITE=false                       # SQLite backend (better concurrency)
-ENABLE_DEVICE_LOCK=false               # Multi-device sync safety
+LLM_CLASSIFICATION_ENABLED=true
+OLLAMA_CLASSIFIER_MODEL=mistral:7b-instruct   # separate classifier; falls back to OLLAMA_MODEL
+# OLLAMA_SAFETY_MODEL=llama-guard3:1b         # additive LlamaGuard layer, off by default, escalate-only
+# OLLAMA_NUM_CTX=8192                         # cap the context Ollama reserves at load time
+USE_SQLITE=false
+ENABLE_DEVICE_LOCK=false
 
 # Docker only
-APP_BIND=127.0.0.1                     # Bind address (set to 0.0.0.0 for LAN access)
-PUID=1000                              # Host user ID (prevents root-owned files in ./data)
-PGID=1000                              # Host group ID
+APP_BIND=127.0.0.1
+PUID=1000
+PGID=1000
 ```
+
+Quote the guard state alongside any score you report from this project. `llama-guard3:1b` escalates lawful adult work to a flat refusal, and four such cases sit in the domain corpus, so a number without its guard setting can't be compared to anything.
+
+## Numbers, and the conditions they were measured under
+
+| What | Figure | Conditions |
+|---|---|---|
+| Restraint, full pipeline | 353/490 | `qwen2.5:7b-instruct`, 120B judge, guard off, 18 Nov 2026 |
+| Restraint, model alone | 188/490 | same engine, judge, corpus and decoding |
+| Domain routing | 97/122 | `mistral:7b-instruct`, guard unset, 18 Nov 2026 |
+| Crisis recall | 57.0% | 165 adversarial crisis prompts, after the second pass |
+| Test suite | 1,480 | plus 23 conversation-marked tests needing Ollama |
+
+Corpus sizes move as cases get added, so a score is comparable only against another run on the same corpus hash. Re-measure rather than trusting a figure someone wrote down, these included.
 
 ## Documentation
 
-- [docs/architecture.md](docs/architecture.md) - Architecture overview: pipeline structure, component relationships, operating modes
-- [CLAUDE.md](CLAUDE.md) - Contributor process guide: pre-merge gates, key patterns, what to read before touching the pipeline
-- [ROADMAP.md](ROADMAP.md) - Feature implementation history and planned phases
-- [MANIFESTO.md](MANIFESTO.md) - Design principles and philosophy
-- [scenarios/README.md](scenarios/README.md) - Knowledge base editing guide
-- [docs/](docs/) - Model benchmarks, persistence, additional reference
+- [docs/architecture.md](docs/architecture.md) - pipeline structure, components, operating modes
+- [THREAT_MODEL.md](THREAT_MODEL.md) - what the design protects, what it doesn't, which controls have tests
+- [evals/empathysync_restraint/README.md](evals/empathysync_restraint/README.md) - the adversarial harness and the ablation
+- [docs/model-benchmark.md](docs/model-benchmark.md) - model comparisons and the crisis capability cliff
+- [CLAUDE.md](CLAUDE.md) - contributor process, pre-merge gates, what to read before touching the pipeline
+- [ROADMAP.md](ROADMAP.md) - planned work; [docs/roadmap-history.md](docs/roadmap-history.md) for what's done
+- [MANIFESTO.md](MANIFESTO.md) - the principles, including the ones that rule features out
+- [scenarios/README.md](scenarios/README.md) - editing the knowledge base
 
 ## Contributing
 
-empathySync is shaped by more than code. Engineers build the pipeline. But whether the words actually land - whether a response to "I feel lonely" feels human or hollow - that's a different kind of knowledge.
+Engineers build the pipeline, and that's the easier half. Whether a reply to "I feel lonely" lands like a person or like a form letter is a different kind of knowledge, and this project doesn't have it yet.
 
-If you're a therapist, counsellor, social worker, or UX writer, see [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md). The responses, interventions, and connection-building guidance are plain text files. No programming required.
-
-If you're an engineer, see [CONTRIBUTING.md](CONTRIBUTING.md).
+If you work with people in distress for a living, [HELP-SHAPE-THIS.md](HELP-SHAPE-THIS.md) is for you. Email the better wording and someone else will do the git part; no account needed. Engineers, start at [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT License.
+MIT.
 
 ---
 
