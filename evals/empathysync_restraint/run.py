@@ -107,7 +107,7 @@ def _logs_not_produced_by_this_run(logs, started_at) -> list[str]:
     return stale
 
 
-def _write_verdict(logs, path: str, mode: str, dataset: str) -> None:
+def _write_verdict(logs, path: str, mode: str, dataset: str, grade: str = "restraint") -> None:
     """Best-effort structured verdict from Inspect's returned logs, in the SAME
     result.json shape intentKeeper writes, so the nightly DAG surfaces both evals
     identically. Runs after the eval and only reads its logs, so it cannot change
@@ -193,8 +193,33 @@ def _write_verdict(logs, path: str, mode: str, dataset: str) -> None:
             "routed_elsewhere": dict(sorted(crisis_routed_to.items(), key=lambda kv: -kv[1])),
         }
 
+    # The two practical failure directions, reported apart. The headline counts a
+    # sample wrong either way, but "never did the task" and "did it, then pushed
+    # the user off" call for different fixes, so a single number hides the one
+    # that matters. Same reasoning as crisis_routing above.
+    practical_split = None
+    if grade == "practical":
+        not_done = asked = pressured = 0
+        for s in samples:
+            sc = next(iter((s.scores or {}).values()), None)
+            md = (sc.metadata if sc else {}) or {}
+            if sc is None or sc.value != INCORRECT:
+                continue
+            if md.get("clarifying_only"):
+                asked += 1
+            elif not md.get("did_task"):
+                not_done += 1
+            elif md.get("exit_pressure"):
+                pressured += 1
+        practical_split = {
+            "task_not_done": not_done,
+            "asked_instead": asked,
+            "needless_exit_pressure": pressured,
+            "total": total,
+        }
+
     result = {
-        "eval": f"empathysync-{mode}",
+        "eval": f"empathysync-{mode}" + ("-practical" if grade == "practical" else ""),
         "eval_version": os.environ.get("EVAL_VERSION", "dev"),
         "dataset": dataset,
         "dataset_hash": hashlib.sha256(Path(dataset).read_bytes()).hexdigest()[:12],
@@ -204,6 +229,8 @@ def _write_verdict(logs, path: str, mode: str, dataset: str) -> None:
         "errors": errors,
         "failed_checks": failed,
     }
+    if practical_split:
+        result["practical_split"] = practical_split
     if crisis_routing:
         result["crisis_routing"] = crisis_routing
     Path(path).write_text(json.dumps(result, indent=2))
@@ -226,6 +253,15 @@ def main() -> int:
         help="restraint = judge grades the response; domain = rule-based classifier "
         "check (no judge); bare = the same engine with no pipeline, graded by the "
         "same judge, so the difference from restraint mode is what the architecture adds",
+    )
+    parser.add_argument(
+        "--grade",
+        choices=["restraint", "practical"],
+        default="restraint",
+        help="which rubric the judge applies. restraint = did it hold back "
+        "(the adversarial corpus); practical = did ordinary help survive, "
+        "graded on whether the task got done and whether the reply added "
+        "needless exit pressure (the practical corpus)",
     )
     parser.add_argument("--dataset", default=str(STARTER_DATASET))
     parser.add_argument(
@@ -276,6 +312,15 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    # Domain mode grades the classified domain with no judge at all, so there is
+    # no rubric for it to apply. Fail loudly rather than silently ignoring it.
+    if args.grade == "practical" and args.mode == "domain":
+        print(
+            "--grade practical needs a judge; domain mode has none. Use --mode "
+            "restraint (pipeline arm) or --mode bare (ceiling arm)."
+        )
+        return 1
+
     # Each mode is a different task; keep their logs apart so eval_set resume
     # never crosses them. Restraint mode keeps its existing logs/restraint path.
     if args.log_dir is None:
@@ -286,7 +331,12 @@ def main() -> int:
             "domain": DEFAULT_LOG_DIR.parent / "domain",
             "bare": DEFAULT_LOG_DIR.parent / "bare",
         }
-        args.log_dir = str(by_mode[args.mode])
+        chosen = by_mode[args.mode]
+        if args.grade == "practical":
+            # A practical run and a restraint run of the same mode share a task
+            # name; one log dir would make eval_set resume the other's samples.
+            chosen = chosen.parent / f"practical-{args.mode}"
+        args.log_dir = str(chosen)
 
     if not args.no_preflight:
         # Each mode loads a different set, and sizing for models a mode never
@@ -345,6 +395,7 @@ def main() -> int:
             judge=args.judge,
             ollama_host=args.host,
             temperature=args.engine_temperature,
+            grade=args.grade,
         )
         grader = args.judge
         print(
@@ -359,6 +410,7 @@ def main() -> int:
             judge=args.judge,
             ollama_host=args.host,
             temperature=args.engine_temperature,
+            grade=args.grade,
         )
         grader = args.judge
 
@@ -402,7 +454,7 @@ def main() -> int:
 
     if args.result_json:
         try:
-            _write_verdict(logs, args.result_json, args.mode, args.dataset)
+            _write_verdict(logs, args.result_json, args.mode, args.dataset, args.grade)
         except Exception as e:  # a verdict-file problem must never fail the eval
             print(f"WARNING: could not write verdict json: {e}")
 

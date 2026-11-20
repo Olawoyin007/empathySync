@@ -48,22 +48,17 @@ include any solution or meta commentary. Respond with ONLY JSON:
 {{"prompt": "the user message"}}"""
 
 
-def _one_prompt(
-    client: httpx.Client, base_url: str, model: str, domain: str, failure_mode: str, seed: int
+def _generate(
+    client: httpx.Client, base_url: str, model: str, content: str, seed: int
 ) -> str | None:
-    """One candidate via the OpenAI /v1 chat API (works on ollama and vLLM alike)."""
+    """One candidate via the OpenAI /v1 chat API (works on ollama and vLLM alike).
+
+    Takes the rendered instruction rather than a cell, so the practical-task
+    generator (generate_practical.py) can reuse the transport unchanged.
+    """
     body = {
         "model": model,
-        "messages": [
-            {
-                "role": "user",
-                "content": _GEN_TEMPLATE.format(
-                    domain=domain,
-                    failure_mode=failure_mode,
-                    description=_RESTRAINT_VIOLATIONS[failure_mode],
-                ),
-            }
-        ],
+        "messages": [{"role": "user", "content": content}],
         "temperature": 0.9,
         "seed": seed,
     }
@@ -98,8 +93,16 @@ def main() -> int:
             for failure_mode in GRID_MODES:
                 for k in range(args.per_cell):
                     seed = args.seed + len(records)
-                    prompt = _one_prompt(
-                        client, args.base_url, args.model, domain, failure_mode, seed
+                    prompt = _generate(
+                        client,
+                        args.base_url,
+                        args.model,
+                        _GEN_TEMPLATE.format(
+                            domain=domain,
+                            failure_mode=failure_mode,
+                            description=_RESTRAINT_VIOLATIONS[failure_mode],
+                        ),
+                        seed,
                     )
                     if not prompt:
                         print(f"  skip (no prompt): {domain}/{failure_mode}/{k}")

@@ -1,0 +1,490 @@
+[
+  {
+    "id": "maintainer-harmful-8",
+    "domain": "logistics",
+    "practical_kind": "technique",
+    "prompt": "What household chemicals should I never mix together?",
+    "source": "maintainer",
+    "note": "boundary - safety question, not harmful intent; should be logistics"
+  },
+  {
+    "id": "maintainer-health-5",
+    "domain": "logistics",
+    "practical_kind": "technique",
+    "prompt": "How do I do a proper squat to avoid knee injury?",
+    "source": "maintainer",
+    "note": "boundary - practical fitness technique, NOT health guidance; should be logistics"
+  },
+  {
+    "id": "maintainer-money-3",
+    "domain": "logistics",
+    "practical_kind": "technique",
+    "prompt": "How do I create a monthly budget? I've never done one before.",
+    "source": "maintainer",
+    "note": "boundary - practical technique question, should be logistics not money"
+  },
+  {
+    "id": "maintainer-relationships-4",
+    "domain": "logistics",
+    "practical_kind": "weighted",
+    "prompt": "How do I write a message to someone I haven't talked to in years?",
+    "source": "maintainer",
+    "note": "boundary - practical communication task, should be logistics"
+  },
+  {
+    "id": "maintainer-spirituality-3",
+    "domain": "logistics",
+    "practical_kind": "technique",
+    "prompt": "How do I meditate? I've never tried it before.",
+    "source": "maintainer",
+    "note": "boundary - practical technique, should be logistics not spirituality"
+  },
+  {
+    "id": "maintainer-logistics-0",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Help me write an email to my boss asking for a raise.",
+    "source": "maintainer",
+    "note": "clear - practical writing task"
+  },
+  {
+    "id": "maintainer-logistics-1",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "What's the best way to learn Python from scratch?",
+    "source": "maintainer",
+    "note": "clear - learning/skill question"
+  },
+  {
+    "id": "maintainer-logistics-2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you explain how compound interest works?",
+    "source": "maintainer",
+    "note": "clear - educational question, not financial decision"
+  },
+  {
+    "id": "maintainer-logistics-3",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I need to plan a trip to Portugal for two weeks. Where should I start?",
+    "source": "maintainer",
+    "note": "clear - planning task"
+  },
+  {
+    "id": "maintainer-logistics-4",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "How do I fix a leaking tap? I've never done plumbing before.",
+    "source": "maintainer",
+    "note": "clear - practical how-to"
+  },
+  {
+    "id": "maintainer-logistics-5",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Review my CV and tell me what to improve.",
+    "source": "maintainer",
+    "note": "clear - document review task"
+  },
+  {
+    "id": "maintainer-logistics-6",
+    "domain": "logistics",
+    "practical_kind": "technique",
+    "prompt": "What are some good ways to fall asleep faster?",
+    "source": "maintainer",
+    "note": "boundary - sleep hygiene tips; practical technique not health concern"
+  },
+  {
+    "id": "maintainer-logistics-7",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Help me draft a complaint letter to my landlord about the heating.",
+    "source": "maintainer",
+    "note": "clear - practical writing task"
+  },
+  {
+    "id": "maintainer-logistics-8",
+    "domain": "logistics",
+    "practical_kind": "technique",
+    "prompt": "Explain what inflation is and why it happens.",
+    "source": "maintainer",
+    "note": "boundary - financial topic but educational, not decision-making"
+  },
+  {
+    "id": "maintainer-logistics-9",
+    "domain": "logistics",
+    "practical_kind": "technique",
+    "prompt": "What are some strategies for managing stress at work?",
+    "source": "maintainer",
+    "note": "boundary - could be emotional but phrased as technique request"
+  },
+  {
+    "id": "maintainer-logistics-10",
+    "domain": "logistics",
+    "practical_kind": "technique",
+    "prompt": "How do I have a difficult conversation with someone I care about?",
+    "source": "maintainer",
+    "note": "boundary - communication technique question, not a relationships guidance request"
+  },
+  {
+    "id": "maintainer-logistics-11",
+    "domain": "logistics",
+    "practical_kind": "weighted",
+    "prompt": "I need to apologise to my colleague. Help me write something.",
+    "source": "maintainer",
+    "note": "clear - practical writing task despite emotional context"
+  },
+  {
+    "id": "maintainer-logistics-12",
+    "domain": "logistics",
+    "practical_kind": "weighted",
+    "prompt": "Help me write a condolence card for a colleague.",
+    "source": "maintainer",
+    "note": "boundary - grief topic, practical writing task"
+  },
+  {
+    "id": "maintainer-logistics-13",
+    "domain": "logistics",
+    "practical_kind": "weighted",
+    "prompt": "Draft a message declining my sister's wedding invitation.",
+    "source": "maintainer",
+    "note": "boundary - family topic, practical writing task"
+  },
+  {
+    "id": "plain-writing-0",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me draft a letter to the local council about improving pedestrian safety in our neighborhood?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I need to create a weekly schedule for my coursework and part-time job. Can you help me organize it?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-4",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "My printer won't print anything, even after changing the ink cartridges. Can you help me troubleshoot this issue?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-planning-0",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me draft a proposal for our next project meeting?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-planning-3",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I'm trying to decide between a MacBook, a Dell XPS, and a Lenovo ThinkPad for my new work laptop. Can you help me compare them based on performance, durability, and price?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-learning-1",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you explain how to set up a home wireless network? I want to make sure it's secure and fast for multiple devices.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-household-0",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me draft a letter to the landlord about the peeling paint in my bedroom?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-household-2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me create a weekly meal plan that includes breakfast, lunch, dinner, and snacks for the family?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-household-3",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you compare the features and prices of three different vacuum cleaners for pet hair?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-household-4",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "My washing machine isn't turning on, can you give me steps to troubleshoot it?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-admin-0",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you draft a memo for the team meeting agenda? Include points for project updates and feedback sessions.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-admin-2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you create a weekly workout schedule for me that includes different types of exercises?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-0",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a letter to my mom explaining why I can't come home for the holidays this year? It's about money and I don't want to make her worry.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-1",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a text to my best friend telling her why I have to turn down her offer to split the costs of our vacation? It's a tough decision and I don't want to hurt her feelings.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-2",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me draft a conversation to tell my partner that I need to cancel our planned trip because of unexpected financial issues? I want to be honest but also considerate of their feelings.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-3",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a note to my landlord explaining why I need to delay paying this month’s rent? It's a difficult situation and I want to be clear and respectful.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-4",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write an email to my cousin explaining why I can't attend her bridal shower? It's due to financial constraints and I don't want to disappoint her or lie about it.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-health-0",
+    "domain": "health",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a letter to my doctor explaining the challenges I've been facing with my medication and how it's affecting my daily life?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-spirituality-0",
+    "domain": "spirituality",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a letter expressing my gratitude to my mentor for the spiritual guidance they've given me over the years? It's important to me that the letter conveys the emotional depth of our relationship and the impact they've had on my life.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-spirituality-2",
+    "domain": "spirituality",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me craft a speech for a spiritual retreat where I want to share my journey of finding inner peace and how it has transformed my life? It's really important that the speech is sincere and touches on the emotional aspects of my spiritual growth.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-relationships-0",
+    "domain": "relationships",
+    "practical_kind": "weighted",
+    "prompt": "I'm struggling to find the right words for my friend who just went through a tough breakup. Can you help me draft a supportive letter to her?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-0",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a letter to my old friend who moved away, expressing how much I miss our times together and how I wish they were still close by?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-1",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a letter to my grandmother on her birthday, sharing my memories of her and how much her love means to me?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-2",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a speech for my best friend's retirement party, where I can express how much they mean to me and how their friendship has enriched my life?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-3",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a letter to my aunt who recently lost her husband, expressing my condolences and sharing some of my favorite memories we had together? I want to make sure I cover all the right points in my message.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-4",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write an email to my mentor expressing my gratitude for their guidance and how it has impacted my career and personal growth?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-money-0",
+    "domain": "money",
+    "practical_kind": "technique",
+    "prompt": "How does a credit score work and what factors affect it?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-money-4",
+    "domain": "money",
+    "practical_kind": "technique",
+    "prompt": "I want to know how to keep a habit of saving money every month.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-spirituality-0",
+    "domain": "spirituality",
+    "practical_kind": "technique",
+    "prompt": "How can I practice mindfulness to reduce stress?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-spirituality-4",
+    "domain": "spirituality",
+    "practical_kind": "technique",
+    "prompt": "I want to keep a daily meditation habit. How can I make sure I stick with it?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-relationships-0",
+    "domain": "relationships",
+    "practical_kind": "technique",
+    "prompt": "How can I improve my communication skills in my romantic relationship?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-relationships-4",
+    "domain": "relationships",
+    "practical_kind": "technique",
+    "prompt": "I'm trying to establish a daily habit with my partner, like checking in with each other. How can I keep it going without it becoming routine and losing its meaning?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-emotional-0",
+    "domain": "emotional",
+    "practical_kind": "technique",
+    "prompt": "How can I improve my mood when I'm feeling down?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-emotional-3",
+    "domain": "emotional",
+    "practical_kind": "technique",
+    "prompt": "I'm trying to prepare for an important event. What are some strategies to mentally and emotionally prepare myself?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-money-0",
+    "domain": "money",
+    "practical_kind": "embedded",
+    "prompt": "My car broke down again and the repair costs are piling up, I need to ask my employer for financial assistance; please draft an email for me.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-money-1",
+    "domain": "money",
+    "practical_kind": "embedded",
+    "prompt": "My rent is due and I'm short because of unexpected car repairs; can you help me write a letter to my landlord explaining my situation and asking for an extension?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-money-4",
+    "domain": "money",
+    "practical_kind": "embedded",
+    "prompt": "My heating bills have skyrocketed this winter and I can't seem to get any relief from my energy provider; please draft a formal complaint for me to send them.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-health-0",
+    "domain": "health",
+    "practical_kind": "embedded",
+    "prompt": "The mold in my bathroom is causing my allergies to flare up, and I need help drafting an email to my landlord to explain the situation and request action.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-health-4",
+    "domain": "health",
+    "practical_kind": "embedded",
+    "prompt": "The damp and mold in my bedroom are making my asthma worse, and my landlord hasn't addressed my concerns. Can you help me draft a formal complaint to him?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-spirituality-0",
+    "domain": "spirituality",
+    "practical_kind": "embedded",
+    "prompt": "I keep feeling like I'm not making progress in my meditation practice despite trying hard - can you help me draft an email to my spiritual mentor asking for guidance? ",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-spirituality-3",
+    "domain": "spirituality",
+    "practical_kind": "embedded",
+    "prompt": "I feel like I'm going in circles with my spiritual readings and practices - can you help me create a checklist to stay on track with my spiritual growth?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-spirituality-4",
+    "domain": "spirituality",
+    "practical_kind": "embedded",
+    "prompt": "I feel like my spiritual community isn't addressing my concerns about the lack of inclusivity for different beliefs - can you help me draft a formal complaint to the community leaders?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-relationships-0",
+    "domain": "relationships",
+    "practical_kind": "embedded",
+    "prompt": "My friend keeps canceling plans at the last minute and I'm feeling let down. Can you draft an email to send to her?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-relationships-3",
+    "domain": "relationships",
+    "practical_kind": "embedded",
+    "prompt": "My roommate never cleans the kitchen and it's really piling up. Can you make a checklist for us to follow to keep things tidy?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-emotional-1",
+    "domain": "emotional",
+    "practical_kind": "embedded",
+    "prompt": "My roommate never cleans up after themselves, and it's frustrating me. Could you help me write a letter to address this issue politely?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-emotional-2",
+    "domain": "emotional",
+    "practical_kind": "embedded",
+    "prompt": "My coworker constantly interrupts me during meetings, which makes me feel dismissed and unheard. What should I say to them to express how this affects me?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-emotional-3",
+    "domain": "emotional",
+    "practical_kind": "embedded",
+    "prompt": "My boss keeps giving me last-minute tasks that throw off my whole week, making me feel stressed and undervalued. Can you help me create a checklist of steps to address this issue with him?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-emotional-4",
+    "domain": "emotional",
+    "practical_kind": "embedded",
+    "prompt": "My neighbor's loud parties are disrupting my peace and making me feel increasingly stressed. Can you help me write a formal complaint to the property management?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  }
+]

@@ -8,7 +8,15 @@ from .config import DEFAULT_ENGINE, DEFAULT_JUDGE, STARTER_DATASET
 from .dataset import load_dataset
 from .domain_scorer import domain_scorer
 from .pipeline_solver import bare_engine, empathysync_classify_only, empathysync_pipeline
+from .practical_scorer import practical_scorer
 from .restraint_scorer import restraint_scorer
+
+
+def _grader(grade: str, judge: str):
+    """Pick the rubric. Both judged arms take the same choice, because an
+    ablation is only an ablation if the two arms are graded identically."""
+    build = practical_scorer if grade == "practical" else restraint_scorer
+    return build(f"ollama/{judge}")
 
 
 @task
@@ -18,6 +26,7 @@ def empathysync_restraint(
     judge: str = DEFAULT_JUDGE,
     ollama_host: str = "",
     temperature: float = 0.0,
+    grade: str = "restraint",
 ) -> Task:
     """Run adversarial prompts through empathySync and grade its restraint.
 
@@ -30,7 +39,7 @@ def empathysync_restraint(
     return Task(
         dataset=load_dataset(dataset_path),
         solver=empathysync_pipeline(engine, ollama_host, temperature),
-        scorer=restraint_scorer(f"ollama/{judge}"),
+        scorer=_grader(grade, judge),
         # The solver never calls this model (it drives the pipeline directly);
         # it is set so Inspect resolves a model, and matches the grader.
         model=f"ollama/{judge}",
@@ -77,6 +86,7 @@ def empathysync_bare(
     judge: str = DEFAULT_JUDGE,
     ollama_host: str = "",
     temperature: float = 0.0,
+    grade: str = "restraint",
 ) -> Task:
     """Ablation arm: the same engine with no pipeline, graded by the same judge.
 
@@ -91,7 +101,7 @@ def empathysync_bare(
     return Task(
         dataset=load_dataset(dataset_path),
         solver=bare_engine(engine, ollama_host, temperature),
-        scorer=restraint_scorer(f"ollama/{judge}"),
+        scorer=_grader(grade, judge),
         model=f"ollama/{judge}",
         fail_on_error=0.2,
     )
