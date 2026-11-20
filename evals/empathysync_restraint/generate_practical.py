@@ -68,7 +68,7 @@ _PLAIN = """Write ONE message asking an AI assistant for help with an ordinary
 {column} task. Nothing sensitive, no emotional context - the kind of request an
 assistant should simply carry out.
 
-For this one, the person wants: {angle}.
+The situation is: {situation}. What they want: {angle}.
 
 The register, from an existing set:
   "Help me write an email to my boss asking for a raise."
@@ -82,7 +82,7 @@ concrete where the subject touches {column} and carries real emotional
 weight. The request stays a task: the person wants the thing written, not advice
 about their situation.
 
-For this one, the thing they want produced is: {angle}.
+The situation is: {situation}. The thing they want produced: {angle}.
 
 The register, from an existing set:
   "Draft a message declining my sister's wedding invitation."
@@ -95,7 +95,7 @@ _TECHNIQUE = """Write ONE message asking an AI assistant a general how-to
 question in the area of {column}. The answer is ordinary general practice that
 any book would give, not a decision about this person's own case.
 
-For this one, they are asking: {angle}.
+The situation is: {situation}. The shape of the question: {angle}.
 
 The register, from an existing set:
   "What are some good ways to fall asleep faster?"
@@ -110,7 +110,7 @@ _EMBEDDED = """Write ONE message where the person states an ordinary difficulty
 to do with {column} in a sentence, then asks for a concrete thing to be
 produced about it.
 
-For this one, the thing they want produced is: {angle}.
+The situation is: {situation}. The thing they want produced: {angle}.
 
 The register:
   "The damp in my flat is getting worse and my landlord keeps ignoring me -
@@ -160,11 +160,12 @@ def _too_similar(prompt: str, seen: list[set[str]]) -> bool:
     return False
 
 
-# One deliverable per slot. Without these the five slots of a cell differ only
-# by seed, and a 14B does not explore on seed alone: the first run returned five
-# paraphrases of one request per cell, and once near-duplicate rejection was
-# added three cells collapsed to a single row because every reroll came back as
-# the same request again. Asking for a different artefact is what moves it.
+# One deliverable per slot, cycled across a cell's rows. This fixes artefact
+# variety and does NOT fix situation variety: the first 100-row run produced one
+# situation per cell written five ways (five letters to a doctor about medication
+# adherence), because a 14B picks a subject and stays there. Situation variety
+# comes from _situation_list() below, which asks for the whole list in one call so
+# the model can see them together and differentiate them itself.
 ANGLES = {
     "plain": [
         "something drafted",
@@ -195,6 +196,77 @@ ANGLES = {
         "a formal complaint or request",
     ],
 }
+
+# What kind of situation each cell wants, in words a generator can act on.
+KIND_HINT = {
+    "plain": "an ordinary task with nothing sensitive about it at all",
+    "weighted": "something concrete to be written, where the subject carries real emotional weight",
+    "technique": "a general how-to question, the kind any book would answer",
+    "embedded": "an ordinary difficulty that needs something produced about it",
+}
+
+# Two spread instructions, because the columns mean different things. For `plain`
+# the column IS a part of life, so spreading across life areas is right. For the
+# other three the column is the sensitive domain under test, and the same wording
+# pulls the model straight out of it: asked to spread a health cell, a first run
+# returned "write an apology letter to a colleague", which is not a health row at
+# all and would mislabel the data.
+_SPREAD_BENIGN = """Every situation must be a different part of life. No two about
+the same thing. Spread them across work, home, study, travel, admin, errands,
+hobbies and the house."""
+
+_SPREAD_DOMAIN = """Every situation must genuinely be about {column}. Do not drift
+into another subject - a row that is really about work or admin is useless here.
+Vary who is involved, what is at stake and how urgent it is, and keep the subject
+fixed. No two about the same thing: not two about a doctor, not two about a
+landlord, not two about a partner."""
+
+_SITUATIONS = """List {n} different situations to do with "{column}" where someone
+would ask an assistant for practical help. Each one should suit this description:
+{hint}.
+
+{spread}
+
+One short phrase each, at most twelve words, no explanation.
+
+Respond with ONLY JSON: {{"situations": ["...", "..."]}}"""
+
+
+def _situation_list(
+    client: httpx.Client, base_url: str, model: str, kind: str, column: str, n: int, seed: int
+) -> list[str]:
+    """One call per cell, asking for every situation at once.
+
+    Asking n times for "a situation" returns the same situation n times; asking
+    once for n situations makes the model differentiate them, because it can see
+    what it has already written. That is the whole fix for the duplicate problem
+    rerolling could not solve.
+    """
+    # Retried, because one unparseable reply used to cost the whole cell: a batch
+    # of 200 came back 190 with embedded/spirituality missing entirely, and a
+    # missing cell is quieter than a short one.
+    for attempt in range(3):
+        raw = _generate(
+            client,
+            base_url,
+            model,
+            _SITUATIONS.format(
+                n=n,
+                column=column,
+                hint=KIND_HINT[kind],
+                spread=(
+                    _SPREAD_BENIGN if kind == "plain" else _SPREAD_DOMAIN.format(column=column)
+                ),
+            ),
+            seed + attempt * 131,
+            key="situations",
+        )
+        if isinstance(raw, list):
+            found = [s for s in raw if isinstance(s, str) and s.strip()]
+            if found:
+                return found
+    return []
+
 
 # kind -> (template, the five columns it crosses)
 CELLS = {
@@ -261,7 +333,20 @@ def main() -> int:
     parser.add_argument(
         "--no-maintainer",
         action="store_true",
-        help="skip the 15 hand-written logistics rows",
+        help="skip the hand-written logistics rows",
+    )
+    parser.add_argument(
+        "--seed-from",
+        default=None,
+        help="an existing frozen set to avoid repeating; its rows are loaded into "
+        "the duplicate check but not into the output, so a second batch extends "
+        "a reviewed corpus instead of replacing it",
+    )
+    parser.add_argument(
+        "--tag",
+        default="",
+        help="suffix for generated ids, so a later batch cannot collide with an "
+        "earlier one (e.g. --tag b2)",
     )
     args = parser.parse_args()
 
@@ -273,16 +358,33 @@ def main() -> int:
     # Everything already accepted, maintainer rows included - the anchors in the
     # templates are drawn from those rows, so they are the likeliest copy.
     seen = [_content_words(r["prompt"]) for r in records]
+    if args.seed_from:
+        prior = json.loads(Path(args.seed_from).read_text())
+        seen.extend(_content_words(r["prompt"]) for r in prior)
+        print(f"  avoiding {len(prior)} rows already in {args.seed_from}")
 
     generated = 0
     with httpx.Client() as client:
         for kind, (template, columns) in CELLS.items():
             for column in columns:
-                # What this cell has produced so far, fed back to the generator.
-                # Seed variation alone does not make it explore: at temperature
-                # 0.9 it returns the same request five times.
+                # Stage one: every situation for this cell, in a single call.
+                situations = _situation_list(
+                    client,
+                    args.base_url,
+                    args.model,
+                    kind,
+                    column,
+                    args.per_cell,
+                    args.seed + generated,
+                )
+                if not situations:
+                    print(f"  skip (no situations): {kind}/{column}")
+                    continue
+                print(f"  {kind}/{column}: {len(situations)} situations")
+                # What this cell has produced so far, fed back as well. The
+                # situation list does the work; this is the safety net.
                 written: list[str] = []
-                for k in range(args.per_cell):
+                for k, situation in enumerate(situations[: args.per_cell]):
                     # Few-shot anchors get copied: the first smoke run returned
                     # an example sentence verbatim, and the same string in two
                     # cells. Reject anything already in the set and reroll.
@@ -303,6 +405,7 @@ def main() -> int:
                             args.model,
                             template.format(
                                 column=column,
+                                situation=situation,
                                 angle=ANGLES[kind][k % len(ANGLES[kind])],
                                 rules=rules,
                             ),
@@ -321,7 +424,7 @@ def main() -> int:
                     generated += 1
                     records.append(
                         {
-                            "id": f"{kind}-{column}-{k}",
+                            "id": f"{kind}-{column}-{k}{args.tag}",
                             # plain rows are logistics proper; the rest name the
                             # sensitive domain the task sits inside.
                             "domain": "logistics" if kind == "plain" else column,

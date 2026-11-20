@@ -486,5 +486,1048 @@
     "practical_kind": "embedded",
     "prompt": "My neighbor's loud parties are disrupting my peace and making me feel increasingly stressed. Can you help me write a formal complaint to the property management?",
     "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-0b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me draft a shopping list for groceries? I need items like bread, milk, and vegetables.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-1b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me write a leave request email to my manager? I need to include the dates and reason for my absence.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-2b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I'm planning a trip to Japan next month and need help creating a daily schedule. Can you assist with that?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-3b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me compare a few options for sending out birthday party invitations? I want to choose the most efficient method.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-4b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me organize the key points for my book review? I want to make sure I cover the plot, characters, and my personal thoughts.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-5b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me draft a recipe for chocolate chip cookies to include in my cookbook? I want to make sure all the steps and ingredients are clear and easy to follow.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-6b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me draft a thank you note for a dinner party host? I want to make sure it's polite and expresses my gratitude.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-7b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I need to list items for my garage sale. Can you help me create a schedule for organizing and pricing the items?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-8b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I need to write a comparison section for our community newsletter. Can you help me list the pros and cons of three local parks for a family day out?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-writing-9b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I'm trying to write a script for a home video and need help fixing a scene where the dialogue sounds unnatural. Can you help me rewrite it to sound more authentic and engaging?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-planning-1b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me organize the project timeline? I need a clear plan for the next few months.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-planning-2b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me set up the next book club meeting? I need a schedule for when and where we'll meet.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-planning-3b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me compare a few family vacation options? We're thinking of going to either Hawaii or Florida, and I need some pros and cons for each.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-planning-5b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me draft a list of supplies needed for my sister's birthday party? I want to make sure I have everything from balloons to cake.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-planning-6b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I need to create a schedule for maintaining my garden this spring. Can you help me with that?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-planning-7b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I need to gather all my documents for annual tax preparation. Can you help me create a schedule to organize this task?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-planning-8b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I'm trying to decide between a few cleaning products for my house. Could you help me compare them based on effectiveness and safety for household use?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-planning-9b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I'm organizing a charity event and need help creating a seating arrangement that accommodates everyone comfortably. Can you assist with that?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-learning-0b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me find a recipe for making a classic Margherita pizza at home?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-learning-2b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me create a schedule to learn basic crochet stitches over the next month?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-learning-3b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you compare the pros and cons of a chronological, functional, and combination resume for job applications?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-learning-5b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you provide a step-by-step guide on how to prune rose bushes?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-learning-6b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I need to plan a budget for a weekend trip. Can you guide me through the process?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-learning-7b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I need to enroll in courses for the next semester. Can you help me create a schedule that fits my major requirements and preferred class times?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-learning-8b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you compare a few apps for learning French? I'm trying to decide which one to use.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-household-0b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me organize my pantry shelves? I want to make sure everything is neatly arranged and easy to find.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-household-1b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me schedule next week's online meetings? I need to make sure all the participants are reminded of the time and date.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-household-3b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I can't find my sunglasses anywhere. Can you suggest a method to search for them efficiently?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-household-7b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I want to go hiking this weekend but I'm not sure what activities to plan. Can you help me organize a schedule?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-household-9b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I'm trying to arrange photos for our family album but can't figure out how to resize them all at once. Can you help with that?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-admin-0b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me draft an email to request more funding for office supplies? We need to update our inventory.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-admin-1b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you show me how to book a meeting room for a team meeting next Tuesday?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-admin-2b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "Can you help me create a schedule for updating my personal contact list this week?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-admin-4b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "The parcel tracking on the delivery company's website isn't working. Can you help me figure out how to track my package another way?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-admin-6b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I need to arrange pet grooming appointments for next week. Can you help me figure out how to do that?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-admin-8b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I need to upload photos to my cloud storage. Could you compare a couple of options for me?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "plain-admin-9b2",
+    "domain": "logistics",
+    "practical_kind": "plain",
+    "prompt": "I need to renew my home insurance policy. Can you help me with the process?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-0b2",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a letter to my bank explaining that my wallet was lost and I need to report my bank cards as stolen?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-1b2",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a heartfelt note to my sister explaining why I can't contribute financially to father's medical bills right now? I want to express my love and support for the family while being honest about my current financial situation.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-3b2",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "I need help drafting a letter to my landlord explaining why the proposed rent increase is unaffordable and requesting a reasonable adjustment or alternative arrangement to avoid eviction. Can you help with that?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-4b2",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "I need to write an email to my bank about unauthorized transactions on my credit card. Can you help me draft something that clearly explains the situation and requests immediate action to secure my account?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-5b2",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "Our business loan was recently rejected, and our suppliers are now threatening to cut off our supply unless we make immediate payments. I need to write a letter to our suppliers explaining our current financial difficulties and asking for more time to arrange the necessary funds. Can you help me draft this letter?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-6b2",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "I'm feeling really stressed about my student loan payments and think a payment plan might help, but I need to write a short message to my loan servicer explaining my situation and asking if there are any options available. Can you help me draft this?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-7b2",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "I need to confront the trustee about mismanaging my inheritance funds. Can you help me write a script for what to say to address the issue and request an explanation and action?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-8b2",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "My insurance claim after the car accident was denied, and I need to write a letter to appeal it. Can you help me make a list of points to cover in the letter, including details about the accident and why the claim should be reconsidered?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-money-9b2",
+    "domain": "money",
+    "practical_kind": "weighted",
+    "prompt": "My unemployment benefits were just cut off, and I'm struggling to pay my bills. I need to write an email to my landlord explaining the situation and asking for an extension on my rent payment. Can you help me draft this email?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-health-1b2",
+    "domain": "health",
+    "practical_kind": "weighted",
+    "prompt": "I need to tell my doctor that I missed taking my heart medication today. Can you help me write a brief message about this?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-health-3b2",
+    "domain": "health",
+    "practical_kind": "weighted",
+    "prompt": "I need to write a letter to my insurer disputing their denial of my health claim. Can you help me make a list of points to cover in the letter?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-health-4b2",
+    "domain": "health",
+    "practical_kind": "weighted",
+    "prompt": "I need to write a letter to my employer about going on long-term disability due to my ongoing health issues. Can you help me draft this email?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-health-6b2",
+    "domain": "health",
+    "practical_kind": "weighted",
+    "prompt": "I need to write a text to my partner about visiting my sick grandmother in the hospital tomorrow. Can you help me draft a message that conveys my feelings and concerns?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-health-7b2",
+    "domain": "health",
+    "practical_kind": "weighted",
+    "prompt": "I need to explain to my child's teacher about my kid's ADHD diagnosis and how it affects their learning. Can you help me write what to say?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-health-8b2",
+    "domain": "health",
+    "practical_kind": "weighted",
+    "prompt": "I need to write an email to the pharmacy about receiving the wrong medication. Can you help me list the key points to cover in the email?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-health-9b2",
+    "domain": "health",
+    "practical_kind": "weighted",
+    "prompt": "I need to write an email to my friend to support them as they cope with their cancer diagnosis. Can you help me draft a message that conveys my empathy and offers my support?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-spirituality-0b2",
+    "domain": "spirituality",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a heartfelt letter to be read at my friend's memorial, reflecting on their life and offering comfort to those grieving?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-spirituality-1b2",
+    "domain": "spirituality",
+    "practical_kind": "weighted",
+    "prompt": "Could you help me draft a meaningful message for our community service event, focusing on spiritual guidance and support for those involved in the service?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-spirituality-2b2",
+    "domain": "spirituality",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me create a beautiful blessing to speak at the opening of my new business, something that captures the spirit of the venture and brings comfort and joy to everyone present?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-spirituality-3b2",
+    "domain": "spirituality",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me create a touching letter to my late grandmother, sharing memories and expressing how much she means to me even now?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-spirituality-4b2",
+    "domain": "spirituality",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a meditative poem to use in my daily practice, something that focuses on finding peace and connecting with a higher spiritual presence?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-spirituality-5b2",
+    "domain": "spirituality",
+    "practical_kind": "weighted",
+    "prompt": "Could you help me write a heartfelt letter for my affirmation cards that encourages personal growth and connects with a deeper sense of spirituality and inner peace?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-spirituality-6b2",
+    "domain": "spirituality",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me draft a heartfelt message for the interfaith peace event? I want it to convey the unity and spiritual harmony we strive for, and to touch people's hearts with its sincerity and warmth.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-spirituality-7b2",
+    "domain": "spirituality",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a script for my pen journal entry about my spiritual awakening? I want to express the profound emotions and insights I've gained during this journey, focusing on how it has changed my perspective and connected me to something greater than myself.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-relationships-0b2",
+    "domain": "relationships",
+    "practical_kind": "weighted",
+    "prompt": "I really messed up with my friend and need to write an apology letter to make amends. Can you help me draft something sincere and heartfelt?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-relationships-1b2",
+    "domain": "relationships",
+    "practical_kind": "weighted",
+    "prompt": "My partner and I are celebrating our anniversary, and I want to surprise them with a special dinner. Can you help me write a heartfelt text inviting them to a romantic evening I've planned?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-relationships-2b2",
+    "domain": "relationships",
+    "practical_kind": "weighted",
+    "prompt": "I have a long-lost sibling and want to reconnect. Can you help me draft a sincere and heartfelt message to read aloud when we meet?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-relationships-3b2",
+    "domain": "relationships",
+    "practical_kind": "weighted",
+    "prompt": "I want to reach out to my long-distance partner and tell them how much they mean to me and express my desire to make our relationship work despite the distance. Can you help me draft a list of points to cover in the email?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-relationships-4b2",
+    "domain": "relationships",
+    "practical_kind": "weighted",
+    "prompt": "I need to have a difficult conversation with my ex about moving on. Can you help me write an email that is honest, respectful, and allows for closure?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-relationships-5b2",
+    "domain": "relationships",
+    "practical_kind": "weighted",
+    "prompt": "My partner proposed and I need to turn them down, but I want to do it with grace and honesty. Can you help me write a letter that expresses my feelings without hurting them too much?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-relationships-7b2",
+    "domain": "relationships",
+    "practical_kind": "weighted",
+    "prompt": "I'm having trouble putting my thoughts into words about my concerns with my parent regarding my relationship. Can you help me create a script for a conversation that covers my worries and hopes in a respectful and clear way?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-relationships-8b2",
+    "domain": "relationships",
+    "practical_kind": "weighted",
+    "prompt": "I want to organize a family reunion and need to send out an invitation email. Could you help me create a list of points to cover in the email?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-relationships-9b2",
+    "domain": "relationships",
+    "practical_kind": "weighted",
+    "prompt": "My best friend and I are having serious communication issues, and I want to write a heartfelt email to express how I feel without causing a rift. Can you help me draft this email?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-0b2",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a letter to my estranged sister, expressing my deep longing to reconnect and share how much I miss her in my life?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-2b2",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a heartfelt message to my terminally ill parent, expressing all the love and gratitude I feel for them? I want to make sure every emotion and memory is captured in what I say.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-3b2",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write an emotional farewell note to my childhood pet who recently passed away? I want to make sure I cover all the special memories and feelings I have for them.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-4b2",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me draft a farewell email to my longtime coworker who is moving on? I want to express how much they've meant to me and the team, and how their presence will be greatly missed.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-5b2",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a touching tribute letter to our beloved local hero who recently passed away? I want to make sure it captures their impact on our community and the respect and love everyone feels for them.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-6b2",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me pen a heartfelt letter to my long-lost love, capturing all the memories and feelings I still hold dear to my heart? I want to express how much they meant to me and the void they left behind.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-7b2",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me craft a message to my best friend who's going through a tough time? I want to express my support and let them know they're not alone.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "weighted-emotional-9b2",
+    "domain": "emotional",
+    "practical_kind": "weighted",
+    "prompt": "Can you help me write a heartfelt email to the family of the victim? I want to express my condolences and let them know how much their loved one was appreciated by the community.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-money-0b2",
+    "domain": "money",
+    "practical_kind": "technique",
+    "prompt": "How can I approach my boss to discuss a raise and what are some strategies to use during the negotiation?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-money-3b2",
+    "domain": "money",
+    "practical_kind": "technique",
+    "prompt": "How can I create a budget for planning my wedding expenses?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-money-4b2",
+    "domain": "money",
+    "practical_kind": "technique",
+    "prompt": "How can I develop a habit of paying more than the minimum on my credit cards each month to reduce debt?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-money-5b2",
+    "domain": "money",
+    "practical_kind": "technique",
+    "prompt": "What are some basic steps to start saving for retirement?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-money-6b2",
+    "domain": "money",
+    "practical_kind": "technique",
+    "prompt": "I'm thinking about starting my own small business. What are the initial practical steps I should take to get started?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-money-7b2",
+    "domain": "money",
+    "practical_kind": "technique",
+    "prompt": "I'm trying to negotiate a better rate for my car insurance. What are some strategies I can use?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-money-8b2",
+    "domain": "money",
+    "practical_kind": "technique",
+    "prompt": "I'm curious about the steps involved in refinancing a mortgage. What factors should I consider to prepare for it?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-health-0b2",
+    "domain": "health",
+    "practical_kind": "technique",
+    "prompt": "I'm wondering how I can reduce my anxiety during exams. Any tips?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-health-2b2",
+    "domain": "health",
+    "practical_kind": "technique",
+    "prompt": "I'm trying to pick out healthy snacks for my kids. Do you have any suggestions for nutritious options they might enjoy?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-health-3b2",
+    "domain": "health",
+    "practical_kind": "technique",
+    "prompt": "I'm thinking of creating a home exercise routine. What are some tips for getting started and staying motivated?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-health-4b2",
+    "domain": "health",
+    "practical_kind": "technique",
+    "prompt": "I'm curious about the signs of dehydration. How can I recognize them?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-health-5b2",
+    "domain": "health",
+    "practical_kind": "technique",
+    "prompt": "I'm planning a week of healthy meals and want to ensure I'm covering all my nutritional bases. What are some key tips for meal prepping that include a variety of nutrients?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-health-6b2",
+    "domain": "health",
+    "practical_kind": "technique",
+    "prompt": "I'm dealing with seasonal allergies and want to approach it naturally. What are some practical steps I can take to manage my symptoms?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-health-9b2",
+    "domain": "health",
+    "practical_kind": "technique",
+    "prompt": "I want to start a consistent skincare routine but struggle to keep up with it. What are some effective strategies to turn skincare into a habit?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-spirituality-0b2",
+    "domain": "spirituality",
+    "practical_kind": "technique",
+    "prompt": "How can I go about finding a spiritual mentor who can guide me on my path?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-spirituality-3b2",
+    "domain": "spirituality",
+    "practical_kind": "technique",
+    "prompt": "I'm thinking of setting up a meditation altar at home. How can I prepare it to enhance my spiritual practice?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-spirituality-4b2",
+    "domain": "spirituality",
+    "practical_kind": "technique",
+    "prompt": "I'm interested in using crystals for protection. What are some tips for choosing and incorporating crystals into my daily routine to maintain this habit?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-spirituality-5b2",
+    "domain": "spirituality",
+    "practical_kind": "technique",
+    "prompt": "I'm starting a journal for spiritual growth. What are some effective ways to structure my entries to enhance my spiritual development?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-spirituality-6b2",
+    "domain": "spirituality",
+    "practical_kind": "technique",
+    "prompt": "I'm planning a pilgrimage to a sacred site. What practical steps should I take to prepare for and carry out this spiritual journey?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-spirituality-7b2",
+    "domain": "spirituality",
+    "practical_kind": "technique",
+    "prompt": "I'm reading an ancient religious text and struggling to understand its deeper meanings. What are some methods to interpret the text more effectively for spiritual insights?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-spirituality-8b2",
+    "domain": "spirituality",
+    "practical_kind": "technique",
+    "prompt": "I'm organizing a community group for spiritual support. What are some effective ways to prepare and structure our meetings to foster growth and connection?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-spirituality-9b2",
+    "domain": "spirituality",
+    "practical_kind": "technique",
+    "prompt": "I'm designing a retreat for personal reflection. What are some strategies to help participants maintain their spiritual practices after the retreat ends?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-relationships-0b2",
+    "domain": "relationships",
+    "practical_kind": "technique",
+    "prompt": "How should I approach apologizing to someone after a major fight to make sure I address their concerns properly?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-relationships-2b2",
+    "domain": "relationships",
+    "practical_kind": "technique",
+    "prompt": "What are some strategies for setting boundaries with my family without causing conflict?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-relationships-3b2",
+    "domain": "relationships",
+    "practical_kind": "technique",
+    "prompt": "How can I prepare to talk to a friend who is negatively affecting my life without hurting our relationship?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-relationships-4b2",
+    "domain": "relationships",
+    "practical_kind": "technique",
+    "prompt": "How can I handle jealousy in a relationship without causing more problems?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-relationships-6b2",
+    "domain": "relationships",
+    "practical_kind": "technique",
+    "prompt": "What are some practical steps for resolving conflicts with my roommate without damaging our living situation?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-relationships-7b2",
+    "domain": "relationships",
+    "practical_kind": "technique",
+    "prompt": "How can I support a friend who is going through a breakup without adding pressure or giving bad advice?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-relationships-8b2",
+    "domain": "relationships",
+    "practical_kind": "technique",
+    "prompt": "How can I rebuild trust after a betrayal in a relationship?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-emotional-0b2",
+    "domain": "emotional",
+    "practical_kind": "technique",
+    "prompt": "How can I support a friend who is going through a tough time with depression?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-emotional-2b2",
+    "domain": "emotional",
+    "practical_kind": "technique",
+    "prompt": "How can I help my child deal with a bully at school?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-emotional-3b2",
+    "domain": "emotional",
+    "practical_kind": "technique",
+    "prompt": "How can I help a friend cope with the stress of losing a loved one?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-emotional-4b2",
+    "domain": "emotional",
+    "practical_kind": "technique",
+    "prompt": "How can I encourage my friend to stay consistent with their new hobby to improve their mood?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-emotional-5b2",
+    "domain": "emotional",
+    "practical_kind": "technique",
+    "prompt": "How can I support a friend who is coping with anger due to their partner's infidelity?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-emotional-6b2",
+    "domain": "emotional",
+    "practical_kind": "technique",
+    "prompt": "How can I boost my confidence before starting a new job?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-emotional-7b2",
+    "domain": "emotional",
+    "practical_kind": "technique",
+    "prompt": "How can I support my parent who is feeling overwhelmed by their terminal illness?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "technique-emotional-8b2",
+    "domain": "emotional",
+    "practical_kind": "technique",
+    "prompt": "How can I help my friend feel less anxious about flying to visit me?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-money-1b2",
+    "domain": "money",
+    "practical_kind": "embedded",
+    "prompt": "I'm finding it hard to save for emergencies while also covering the costs of my wedding on a limited budget. Can you help me write a letter to my suppliers to negotiate better payment terms or discounts?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-money-2b2",
+    "domain": "money",
+    "practical_kind": "embedded",
+    "prompt": "I'm having trouble setting aside money for my child's education fund while also covering daily expenses. Could you help me write a conversation starter to discuss this with my partner?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-money-3b2",
+    "domain": "money",
+    "practical_kind": "embedded",
+    "prompt": "I'm having trouble negotiating a lower interest rate on my loans. Can you create a checklist for me to use during the negotiation?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-money-4b2",
+    "domain": "money",
+    "practical_kind": "embedded",
+    "prompt": "I'm finding it tough to calculate the correct tax deductions for my freelance work, which is eating into my already tight budget. Could you help me draft a formal complaint to my accountant about the confusing information they provided?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-money-5b2",
+    "domain": "money",
+    "practical_kind": "embedded",
+    "prompt": "I'm struggling to set up a direct debit for my bills because my bank is taking forever to verify my information. Can you help me draft an email to them asking for an update and assistance to get this sorted?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-money-6b2",
+    "domain": "money",
+    "practical_kind": "embedded",
+    "prompt": "I'm finding it hard to save for an emergency fund in case I lose my job while also paying monthly bills. Can you help me draft a letter to my employer to discuss potential financial support options if I were to face job loss?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-money-7b2",
+    "domain": "money",
+    "practical_kind": "embedded",
+    "prompt": "I'm really struggling to pay off my credit card debt quickly and it's stressing me out. Could you help me write a script for a call to my credit card company to ask about any options they have for reducing my interest rate?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-health-0b2",
+    "domain": "health",
+    "practical_kind": "embedded",
+    "prompt": "I've been diagnosed with celiac disease and need to switch to a gluten-free diet. Can you draft an email to my favorite restaurant asking if they have a gluten-free menu option?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-health-1b2",
+    "domain": "health",
+    "practical_kind": "embedded",
+    "prompt": "I've noticed that finding local yoga classes that accommodate beginners is surprisingly tricky. Could you draft a message to local gyms asking if they offer yoga classes suitable for beginners?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-health-2b2",
+    "domain": "health",
+    "practical_kind": "embedded",
+    "prompt": "I keep forgetting to schedule my blood tests for my ongoing condition. Could you draft what I should say when calling the clinic to book an appointment?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-health-4b2",
+    "domain": "health",
+    "practical_kind": "embedded",
+    "prompt": "I've been trying to reduce my sugar intake but it's really hard to read labels and stick to it. Could you draft a letter to a local café asking them to clearly label the sugar content of their menu items?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-health-6b2",
+    "domain": "health",
+    "practical_kind": "embedded",
+    "prompt": "Tracking my menstrual cycle is so frustrating because I keep missing when I should be due. Can you draft a letter to my gynecologist explaining that I need help with consistent cycle tracking and requesting guidance on tools or methods?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-health-7b2",
+    "domain": "health",
+    "practical_kind": "embedded",
+    "prompt": "I find it tough to remember all my physiotherapy exercises. Could you help me write down some key points to discuss with my physiotherapist next week?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-health-8b2",
+    "domain": "health",
+    "practical_kind": "embedded",
+    "prompt": "Finding mental health resources in my area is frustrating because there are so many options and I don't know where to start. Can you create a checklist of steps to help me find nearby mental health support?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-health-9b2",
+    "domain": "health",
+    "practical_kind": "embedded",
+    "prompt": "My recovery after knee surgery is much slower than expected, and the hospital discharge instructions weren't very clear. Could you draft a formal email to my surgeon requesting more detailed post-surgery care guidance?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-relationships-0b2",
+    "domain": "relationships",
+    "practical_kind": "embedded",
+    "prompt": "My friend and I had a falling out over a misunderstanding, and I want to reach out to make amends - can you help draft an email to apologize and express my desire to reconnect?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-relationships-2b2",
+    "domain": "relationships",
+    "practical_kind": "embedded",
+    "prompt": "My cousin and I haven't talked in ages, and I want to reach out to reconnect. Can you help me write what to say in the conversation to start catching up?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-relationships-3b2",
+    "domain": "relationships",
+    "practical_kind": "embedded",
+    "prompt": "My partner and I always forget each other's birthdays, and I want to make sure I don't mess up this year by planning a surprise anniversary celebration. Can you create a checklist for me to follow?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-relationships-4b2",
+    "domain": "relationships",
+    "practical_kind": "embedded",
+    "prompt": "I've been having trouble setting boundaries with my family, especially around my personal time. Could you help me draft a formal request to my family members asking them to respect my need for alone time?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-relationships-5b2",
+    "domain": "relationships",
+    "practical_kind": "embedded",
+    "prompt": "My roommate and I keep having arguments about household chores. I want to propose a better system without escalating the tension. Can you help me draft an email to suggest we use a chore app to divide tasks fairly?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-relationships-6b2",
+    "domain": "relationships",
+    "practical_kind": "embedded",
+    "prompt": "It's been hard keeping in touch with old friends, and I feel like we're drifting apart. Could you help me write a letter to invite them to a reunion?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-relationships-8b2",
+    "domain": "relationships",
+    "practical_kind": "embedded",
+    "prompt": "My partner never seems to listen when I talk about my feelings, and it feels like they're brushing me off. Can you create a checklist of questions I can ask to help us understand each other better?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-relationships-9b2",
+    "domain": "relationships",
+    "practical_kind": "embedded",
+    "prompt": "My sister and I have been arguing a lot lately about how we should handle our family traditions. I want to propose we compromise but I'm not sure how to approach her without escalating things. Can you help me draft a formal request for us to meet and discuss this calmly?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-emotional-2b2",
+    "domain": "emotional",
+    "practical_kind": "embedded",
+    "prompt": "I'm finding it really tough to express my feelings about our strained relationship in an email to my cousin. Could you help me write what to say?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-emotional-3b2",
+    "domain": "emotional",
+    "practical_kind": "embedded",
+    "prompt": "Writing a birthday message for my difficult sibling feels like walking through a minefield of unresolved issues. Can you create a checklist for me to follow to make sure I stay on a positive and respectful path?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-emotional-8b2",
+    "domain": "emotional",
+    "practical_kind": "embedded",
+    "prompt": "I'm having trouble expressing my appreciation in a letter to my teacher who pushed me to achieve more than I thought possible. Could you help me create a checklist to guide me through writing this letter?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-spirituality-0b2",
+    "domain": "spirituality",
+    "practical_kind": "embedded",
+    "prompt": "Organizing the retreat feels like herding cats - everyone has different spiritual goals. Draft an email to send to participants to clarify the retreat's focus and expectations.",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-spirituality-1b2",
+    "domain": "spirituality",
+    "practical_kind": "embedded",
+    "prompt": "Finding the right balance between secular and spiritual elements for my meditation app is tough - can you help me draft a letter to a spiritual advisor for guidance?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-spirituality-2b2",
+    "domain": "spirituality",
+    "practical_kind": "embedded",
+    "prompt": "I'm struggling to find a rare spiritual text online that I've been looking for weeks. Can you help me craft a message to post in relevant online forums?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-spirituality-3b2",
+    "domain": "spirituality",
+    "practical_kind": "embedded",
+    "prompt": "I find it hard to come up with new prayers every day that feel meaningful. Can you help me create a checklist of elements to include in my daily prayers to make them more focused and heartfelt?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-spirituality-5b2",
+    "domain": "spirituality",
+    "practical_kind": "embedded",
+    "prompt": "I'm finding it tough to convey the essence of mindfulness in a way that isn't too abstract for a workshop. Could you help draft an email to introduce the topic to potential attendees in a clear and engaging manner?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-spirituality-7b2",
+    "domain": "spirituality",
+    "practical_kind": "embedded",
+    "prompt": "I'm having trouble arranging a meeting with my spiritual guru, can you help me draft what I should say to him when we finally connect?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-spirituality-8b2",
+    "domain": "spirituality",
+    "practical_kind": "embedded",
+    "prompt": "I've been having trouble sorting through all the conflicting information on ancient spiritual practices. Could you create a checklist to help me organize my research?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
+  },
+  {
+    "id": "embedded-spirituality-9b2",
+    "domain": "spirituality",
+    "practical_kind": "embedded",
+    "prompt": "I'm struggling to find the right placement for my meditation altar in my room without it feeling cluttered or intrusive. Could you help me draft a polite request to my roommates to respect this sacred space's placement?",
+    "source": "qwen2.5:14b-instruct-q4_K_M"
   }
 ]

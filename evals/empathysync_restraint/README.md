@@ -115,11 +115,12 @@ the two arms that already exist, over a corpus of practical tasks instead:
     python -m evals.empathysync_restraint.run --mode bare --grade practical \
         --dataset evals/empathysync_restraint/data/practical.json
 
-`data/practical.json` is the frozen set: **67 rows**, reviewed 20 Nov 2026 from
-116 candidates. `PRACTICAL_REVIEW.md` records every cut and why. Read its
-*What the cut costs* section before quoting anything from this arm: n=67 gives a
-standard error near 0.06, so it detects a large drop in usefulness and nothing
-finer, and the per-kind counts (14 to 19) indicate rather than measure.
+`data/practical.json` is the frozen set: **216 rows**, reviewed 20 Nov 2026 from
+316 candidates across two batches. `PRACTICAL_REVIEW.md` records every cut and
+why, including the three kinds of row that have to be cut for the arm to mean
+anything - rows where restraint is correct, rows the assistant cannot do without
+external calls, and incoherent ones. Standard error is about 0.034, and the
+per-kind groups run 48 to 59.
 
 **The direction of a good result is the opposite one.** A plain model just does
 the task, so the bare arm is the *ceiling* here, not a baseline to beat. The

@@ -49,12 +49,14 @@ include any solution or meta commentary. Respond with ONLY JSON:
 
 
 def _generate(
-    client: httpx.Client, base_url: str, model: str, content: str, seed: int
-) -> str | None:
-    """One candidate via the OpenAI /v1 chat API (works on ollama and vLLM alike).
+    client: httpx.Client, base_url: str, model: str, content: str, seed: int, key: str = "prompt"
+):
+    """One generator call via the OpenAI /v1 chat API (ollama and vLLM alike).
 
     Takes the rendered instruction rather than a cell, so the practical-task
-    generator (generate_practical.py) can reuse the transport unchanged.
+    generator (generate_practical.py) can reuse the transport unchanged, and
+    `key` names the field to pull out - a prompt string here, a list of
+    situations there.
     """
     body = {
         "model": model,
@@ -69,7 +71,7 @@ def _generate(
     if not match:
         return None
     try:
-        return json.loads(match.group(0)).get("prompt")
+        return json.loads(match.group(0)).get(key)
     except (json.JSONDecodeError, ValueError):
         return None
 
