@@ -125,7 +125,7 @@ tests/
 ├── test_threat_model_controls.py   # The five controls nothing used to check
 ├── test_classifier_degraded.py     # Keyword fallback is visible, and only when real
 └── classification/
-    ├── domain_corpus.yaml          # 122 labeled examples for accuracy eval
+    ├── domain_corpus.yaml          # 121 labeled examples for accuracy eval
     ├── crisis_triage_corpus.yaml   # Oblique ideation vs intense-benign
     ├── test_crisis_triage.py       # Crisis hard-stop routing (keyword floor)
     └── run_domain_eval.py          # Per-domain accuracy report

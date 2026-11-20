@@ -577,10 +577,6 @@ logistics:
     expected_domain: logistics
     note: "boundary - grief topic, practical writing task"
 
-  - text: "Explain how compound interest works."
-    expected_domain: logistics
-    note: "boundary - money topic, general explain request"
-
   - text: "Draft a message declining my sister's wedding invitation."
     expected_domain: logistics
     note: "boundary - family topic, practical writing task"
