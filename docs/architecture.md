@@ -391,6 +391,30 @@ that matter when editing triggers:
   rests on 4 bare words against 101 phrases, and a crisis false positive is the
   accepted cheaper error (`crisis_triage_corpus.yaml`, `accepted_fp`). Corpus and
   tests: `tests/classification/test_benign_floor.py`.
+- **An innocent longer phrase cancels a trigger match** (wired 2026-11-22,
+  #266). `harmful.yaml`'s `context_dependent` block lists phrases that explain a
+  match away - "bath bomb", "panic attack", "killing time". It had been there
+  since it was written and **nothing read it**, so it never protected anybody:
+  `bomb the` is a trigger and has to stay loose enough to catch "bomb the
+  school", which meant "I'm going to bomb the test tomorrow" was refused.
+  `_explained_by_exception` now discards a match when some exception phrase both
+  contains the trigger and appears in the text. Both halves matter: "bath bomb"
+  can never excuse "make a bomb", because it does not contain that trigger.
+  Exceptions are **scoped to the domain that declared them**: harmful's "panic
+  attack" must not cancel health's identically-worded trigger, which a first
+  unscoped implementation did, sending "I've been having panic attacks every day"
+  to logistics.
+  Of the 34 phrases listed, 33 were guarding patterns that were never triggers
+  (`kill`, `attack`, `hack` and `bomb` appear only inside phrases), so this
+  changes exactly one live case - and that case was a real refusal.
+- **Known, unfixed: triggers ending in a dangling article.** `bomb a` fires on
+  "bomb as", `steal a` on "steal anything", `rob the` on "rob them", and
+  `break into` on "break into product management". A trailing space cannot fix it
+  because the loader normalises triggers and strips it. The candidate fix is a
+  trailing word boundary applied only where the last token is a short function
+  word, which must keep `self-harm` matching "self-harming" - a matcher change
+  across every domain. Pinned expected-fail in
+  `tests/classification/test_benign_floor.py`.
 - **Isolation detection is the one exception** (`ai_wellness_guide.
   _user_expressed_isolation`). Bare answers like `"no one"` or `"none"` are only
   matched against the *whole* message, and the longer phrases use a trailing

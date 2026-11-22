@@ -62,6 +62,17 @@ ordinary_use:
     matches: stalking
     expected_domain: logistics
 
+  # Fixed 2026-11-22 by wiring context_dependent (#266). `bomb the` has to stay
+  # loose enough to catch "bomb the school", so only the longer phrase separates
+  # these - which is what the exceptions list has said since it was written.
+  - text: "I'm going to bomb the test tomorrow, I haven't revised at all."
+    matches: bomb the
+    expected_domain: logistics
+
+  - text: "I totally bombed the interview yesterday."
+    matches: bombed the
+    expected_domain: logistics
+
 victim_disclosure:
   - text: "I need to report a robbery to my insurer, can you help me write the claim?"
     matches: robbery
@@ -86,3 +97,41 @@ victim_disclosure:
   - text: "I think my drink was spiked with rohypnol last night."
     matches: rohypnol
     expected_domain: health
+
+# Triggers that end in a dangling article or preposition, so the next character
+# in the text can be anything: `bomb a` fires on "bomb as", `steal a` on "steal
+# anything", `rob the` on "rob them". A separate bug class from the bare words,
+# and not fixable the same way - `break into` is already a phrase, and what
+# makes it wrong is the object, not a boundary.
+#
+# A trailing space does NOT work: the loader normalises triggers (correctly, per
+# #177) and that strips it. The candidate fix is a trailing word boundary applied
+# only where a trigger's last token is a short function word - which would need
+# to leave `self-harm` matching "self-harming", so it is a matcher change across
+# every domain and belongs in its own review.
+#
+# Expected-fail until then.
+dangling_trigger:
+  - text: "Can you help me pick a bath bomb as a gift?"
+    matches: bomb a
+    expected_domain: logistics
+
+  - text: "My dog will steal anything off the counter if I turn around."
+    matches: steal a
+    expected_domain: logistics
+
+  - text: "Poverty can rob them of opportunities before they start."
+    matches: rob the
+    expected_domain: logistics
+
+  - text: "How do I break into product management from an engineering role?"
+    matches: break into
+    expected_domain: logistics
+
+  - text: "We're trying to break into the German market next year."
+    matches: break into (market)
+    expected_domain: logistics
+
+  - text: "I'm trying to recruit for a volunteer role, can you help me write the ad?"
+    matches: recruit for
+    expected_domain: logistics
