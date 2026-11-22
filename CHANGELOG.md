@@ -44,20 +44,44 @@ All notable changes to empathySync are documented here.
   a request for a diagnosis on whether the task got done would punish the pipeline
   for behaving.
 
-  **No result yet.** 116 candidates exist (97 from `qwen2.5:14b-instruct-q4_K_M`,
-  plus the 19 rows `domain_corpus.yaml` labels `logistics`, flagged
-  `source: maintainer`), and they are candidates: unreviewed, unmerged and
-  unmeasured. Those 19 are selected on `expected_domain` rather than on the YAML
-  key, which recovers five rows filed under other domains - the practical
-  questions wearing a sensitive subject, and the best rows in the set for this
-  arm. Two generation findings are worth keeping. Few-shot anchors in a
-  prompt get copied verbatim unless forbidden and then checked - the first run
-  returned an example sentence as a row, and the same string in two cells. And
-  seed variation does not make a 14B explore: five slots of one cell came back as
-  five paraphrases of one request, and once near-duplicate rejection was added,
-  three cells collapsed to a single row. Giving each slot its own deliverable
-  fixed it, from 47 rerolls and three collapsed cells to 7 rerolls and three cells
-  one row short.
+  **The corpus is 216 rows**, reviewed from 316 candidates over two batches, with
+  every cut and its reason in `PRACTICAL_REVIEW.md`. Three generator lessons are
+  recorded there because each cost a run: few-shot anchors get copied verbatim
+  unless forbidden and checked; seed variation does not make a 14B explore, so a
+  cell's slots must ask for all their situations in **one** call; and the spread
+  instruction that produces that variety pulls a sensitive cell off-domain unless
+  it is told to hold the subject fixed. Three categories of row must be cut or the
+  arm measures nothing - rows where restraint is correct, rows needing external
+  calls the app does not make, and incoherent ones.
+
+  **The result, measured 2026-11-20.** Both arms on 216 practical prompts, same
+  engine, judge, rubric and decoding as the ablation, guard unset, zero judge
+  errors:
+
+      bare engine, no pipeline   205/216   0.949 (stderr 0.015)
+      full pipeline              185/216   0.856 (stderr 0.024)
+
+  **The architecture costs about 9 points of ordinary usefulness.** Read it beside
+  the restraint pair and never alone: the same architecture takes restraint under
+  adversarial pressure from 0.384 to 0.720. Those two figures are the trade.
+
+  The bare engine never refuses. Across 216 ordinary tasks its only failure is
+  asking a clarifying question before attempting, 11 times, so it is a true
+  ceiling rather than a baseline and the gap is attributable to the pipeline.
+  Scoring those questions as passes instead gives 216/216 against 187/216, a gap
+  of 13 points rather than 9 - say which reading a quoted figure uses.
+
+  **The cost is targeted.** Twenty-four of the twenty-nine losses are `weighted`
+  and `embedded`: a concrete task sitting inside an emotionally weighted
+  situation, which routes to a sensitive domain, fires restraint, and gets advice
+  instead of the email that was asked for. `technique` lost 2 of 53, which is
+  direct evidence that `is_practical_technique` does its job. By this project's
+  own stated design - full help for practical tasks - the 24 are over-restraint
+  rather than correct behaviour.
+
+  By failure type: 27 `task_not_done`, 2 `needless_exit_pressure`, 2
+  `asked_instead`. The pipeline almost never completes a task and then pushes the
+  person away. It just does not complete the task.
 
 - **The harness can measure the shipped decoding temperature, and the result
   survives it.** The restraint figures use greedy decoding; the product ships
