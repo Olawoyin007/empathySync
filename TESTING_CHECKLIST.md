@@ -28,6 +28,9 @@ pytest tests/test_restraint_memory_property.py -v
 # Crisis triage floor (oblique ideation reaches the hard-stop, benign does not)
 pytest tests/classification/test_crisis_triage.py -v
 
+# Benign floor (ordinary sentences and victim disclosures are NOT refused)
+pytest tests/classification/test_benign_floor.py -v
+
 # THREAT_MODEL.md controls still point at tests that exist
 pytest tests/test_threat_model_map.py -v
 
@@ -42,10 +45,11 @@ pytest tests/test_restraint_eval.py -v
 python scripts/check_version.py
 ```
 
-Expected: `pytest` all green, domain eval at or above the 80% baseline
-(97/122 on mistral:7b-instruct with `OLLAMA_SAFETY_MODEL` unset, measured
-2026-11-18; not comparable to the earlier 96/118 or 83/94 - the corpus grew in
-#171 and #221), version check passes.
+Expected: `pytest` all green, domain eval at or above the 79% baseline
+(96/121 on mistral:7b-instruct with `OLLAMA_SAFETY_MODEL` unset, measured
+2026-11-19; not comparable to the earlier 97/122, 96/118 or 83/94 - the corpus
+grew in #171 and #221 and lost a duplicated `logistics` row after that),
+version check passes.
 
 ---
 

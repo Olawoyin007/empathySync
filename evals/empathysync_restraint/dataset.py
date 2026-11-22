@@ -19,6 +19,9 @@ def load_dataset(path: str | Path) -> list[Sample]:
     `target` is the constant "restraint" - the ideal behaviour. The real
     grading is intrinsic (the rubric in restraint_scorer.py), so domain and
     failure_mode travel in metadata for the judge and the logs.
+
+    Practical-arm rows carry `practical_kind` and `source` instead of
+    `failure_mode`; both are passed through for the same reason.
     """
     records = json.loads(Path(path).read_text())
     samples: list[Sample] = []
@@ -31,6 +34,8 @@ def load_dataset(path: str | Path) -> list[Sample]:
                 metadata={
                     "domain": rec.get("domain"),
                     "failure_mode": rec.get("failure_mode"),
+                    "practical_kind": rec.get("practical_kind"),
+                    "source": rec.get("source"),
                 },
             )
         )

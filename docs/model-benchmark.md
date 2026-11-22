@@ -48,11 +48,25 @@ _Last run: 2026-04-26 15:20 UTC_
 > `money` 59%. The 25 misses are dominated by `emotional` against
 > `relationships` boundary cases in both directions.
 
+> **Flash attention, and why the dates matter.** `OLLAMA_FLASH_ATTENTION` was
+> switched on on the development host on **2026-11-17**, and nothing recorded it
+> until the eval preflight started reporting it. It changes the attention kernel,
+> so a greedy decode can resolve a near-tie differently. The 97/122 and 96/121
+> figures below were measured with it **on**; the 98/122 of 22 Oct and anything
+> earlier, with it **off**. Quote a score with its date as well as its guard
+> state, or it cannot be compared to anything.
+
+> **2026-11-19 update.** The corpus lost a duplicated `logistics` row (two
+> phrasings of "explain how compound interest works") and is now 121. The same
+> model in the same configuration reads **96/121 (79%)** - the removed row was
+> one it got right, so the rate is unchanged and only the denominator moved.
+> Current baseline: 96/121. The figure above is left as the #239 record.
+
 ---
 
 ## Classifier
 
-Runs on every user message to detect domain and distress signals. The domain corpus (`tests/classification/domain_corpus.yaml`) is **122 labeled examples** as of #221; it was 94 before the #171 boundary expansion and 118 before #221, and scores are not comparable across those versions. Get the count from `load_corpus()`, never by grepping the file. Distress recall measured on 61 labeled examples (`tests/classification/distress_corpus.yaml`).
+Runs on every user message to detect domain and distress signals. The domain corpus (`tests/classification/domain_corpus.yaml`) is **121 labeled examples**; it was 94 before the #171 boundary expansion, 118 before #221, and 122 until a duplicated `logistics` prompt was removed, so scores are not comparable across those versions. Get the count from `load_corpus()`, never by grepping the file. Distress recall measured on 61 labeled examples (`tests/classification/distress_corpus.yaml`).
 
 **The Domain Acc column in the table below was measured on the 94-example corpus, before the classifier fixes in #199 to #203.** It is kept as a record of that run, not as a current reading - which is why it shows 44-47% where the same models now score around 80%. Re-measuring the whole table is a separate job; the dated block above and the one below are the current readings.
 

@@ -582,6 +582,34 @@ class RiskClassifier:
         displaced = [normalize_for_matching(p) for p in config.get("obligation_displaced") or []]
         return any(p in t for p in destination) and any(p in t for p in displaced)
 
+    def _harmful_match_is_decisive(self, hits: List[str]) -> bool:
+        """May these harmful trigger matches hard-stop on their own?
+
+        Yes when any of:
+          - a matched trigger is a phrase (contains a space). These are 225 of
+            the 257 and they are what actually catches harm: "kill someone",
+            "hack into", "make a bomb".
+          - two or more distinct triggers matched. One bare word in an ordinary
+            sentence is an accident; two is a pattern.
+          - a matched bare word is listed in the domain's
+            `single_word_authority` - words with no innocent use and no victim
+            use. Three of them, deliberately.
+
+        Otherwise no: a lone bare word is not enough to overrule everything else,
+        because the sentence containing it is usually ordinary ("murder mystery
+        party") or a disclosure of harm done TO the user ("my ex has been
+        stalking me"). Refusing the second kind is this project's own failure
+        mode pointing the other way.
+        """
+        if any(" " in h for h in hits):
+            return True
+        if len(set(hits)) >= 2:
+            return True
+        authority = set(
+            (self.loader.get_domain("harmful") or {}).get("single_word_authority") or []
+        )
+        return any(h in authority for h in hits)
+
     def _detect_domain(self, text: str, primary_domain: str = None, domain_streak: int = 0) -> str:
         """
         Keyword-based domain detection using scenarios knowledge base.
@@ -593,23 +621,44 @@ class RiskClassifier:
         t = normalize_for_matching(text)
         triggers = self._get_triggers()
 
-        # Count matches per domain
-        domain_matches: Dict[str, int] = {}
-        first_match_domain = None
+        # Which triggers matched, per domain. The strings are kept, not just a
+        # count, because whether a harmful match can hard-stop on its own depends
+        # on what matched - see _harmful_match_is_decisive.
+        domain_hits: Dict[str, List[str]] = {}
         for trigger, domain in triggers.items():
             if trigger in t:
-                domain_matches[domain] = domain_matches.get(domain, 0) + 1
-                if first_match_domain is None:
-                    first_match_domain = domain
+                domain_hits.setdefault(domain, []).append(trigger)
 
-        if not domain_matches:
+        if not domain_hits:
             return "logistics"
 
-        # Crisis/harmful always win — safety first
-        if "crisis" in domain_matches:
+        # Crisis always wins — safety first, and unchanged. Crisis rests on 4 bare
+        # words against 101 phrases, and this project accepts a crisis false
+        # positive as the cheaper error (see crisis_triage_corpus.yaml's
+        # accepted_fp section). Nothing below touches that.
+        if "crisis" in domain_hits:
             return "crisis"
-        if "harmful" in domain_matches:
-            return "harmful"
+
+        # Harmful wins only on evidence that can carry a hard-stop. Measured
+        # 2026-11-20: 30 of 257 harmful triggers are bare single words, matching
+        # is a plain substring test, and the result is that "my dog keeps stealing
+        # food", "pet grooming appointments" and "report a robbery to my insurer"
+        # were all refused at risk 10 - each one after the LLM had correctly
+        # answered logistics and the safety override discarded it. A bare word now
+        # needs corroboration; a phrase trigger still decides alone.
+        if "harmful" in domain_hits:
+            if self._harmful_match_is_decisive(domain_hits["harmful"]):
+                return "harmful"
+            logger.info(
+                "Harmful keyword not decisive: %s — single bare word, deferring to "
+                "the rest of the evidence",
+                domain_hits["harmful"],
+            )
+            domain_hits.pop("harmful")
+            if not domain_hits:
+                return "logistics"
+
+        domain_matches: Dict[str, int] = {d: len(h) for d, h in domain_hits.items()}
 
         # If we have an established context, require stronger evidence to shift
         if primary_domain and domain_streak >= 3 and primary_domain not in domain_matches:

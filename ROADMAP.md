@@ -125,7 +125,7 @@ difference is whether a door is opened on the way out.
 crisis path output is byte-identical; a test fails if a sensitive reply refuses
 without a route.
 **Verify**: restraint eval against the 46.9% baseline (2026.09-r2);
-`run_domain_eval.py` still 97/122; the 490 domain run still 96.3%.
+`run_domain_eval.py` still 96/121; the 490 domain run still 96.3%.
 **Pitfalls**: referrals belong in YAML, not Python - this is exactly the
 language Phase 24 lets a clinician shape. Do not touch the crisis path: it
 already passes, and it is the pattern being copied.
