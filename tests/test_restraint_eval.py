@@ -874,3 +874,56 @@ spirituality:
         kinds = {r["prompt"][:12]: r["practical_kind"] for r in self._rows(tmp_path)}
         assert kinds["Help me writ"] == "plain"
         assert kinds["How do I do "] == "weighted"
+
+
+class TestFlashAttentionProvenance:
+    """`resolve_flash_attention` records a setting the eval cannot see directly.
+
+    It matters because it selects a different attention kernel, so a greedy
+    decode can resolve a near-tie differently - which makes it part of the run
+    configuration, like temperature and seed. It was switched on on the
+    development host on 2026-11-17 with nothing recording it, silently splitting
+    every figure in the project into a before and an after.
+    """
+
+    def test_shell_value_wins_and_is_parsed(self, monkeypatch):
+        monkeypatch.setenv("OLLAMA_FLASH_ATTENTION", "1")
+        assert pf.resolve_flash_attention() == (True, "OLLAMA_FLASH_ATTENTION in this shell")
+        monkeypatch.setenv("OLLAMA_FLASH_ATTENTION", "0")
+        value, source = pf.resolve_flash_attention()
+        assert value is False and "this shell" in source
+
+    def test_unknown_is_reported_not_guessed(self, monkeypatch):
+        """An unknown value must not read as 'off'.
+
+        Reporting a server-side unknown as False would put a wrong figure in
+        result.json, which is worse than admitting the gap.
+        """
+        monkeypatch.delenv("OLLAMA_FLASH_ATTENTION", raising=False)
+        monkeypatch.setattr(pf.shutil, "which", lambda _: None)
+        value, source = pf.resolve_flash_attention()
+        assert value is None
+        assert "not visible" in source
+
+    def test_systemd_unit_is_read_when_the_shell_is_silent(self, monkeypatch):
+        monkeypatch.delenv("OLLAMA_FLASH_ATTENTION", raising=False)
+        monkeypatch.setattr(pf.shutil, "which", lambda _: "/usr/bin/systemctl")
+        monkeypatch.setattr(
+            pf.subprocess,
+            "run",
+            lambda *a, **k: SimpleNamespace(
+                stdout="Environment=PATH=/usr/bin OLLAMA_FLASH_ATTENTION=1 OLLAMA_HOST=0.0.0.0"
+            ),
+        )
+        assert pf.resolve_flash_attention() == (True, "the ollama systemd unit")
+
+    def test_a_broken_host_does_not_break_the_eval(self, monkeypatch):
+        monkeypatch.delenv("OLLAMA_FLASH_ATTENTION", raising=False)
+        monkeypatch.setattr(pf.shutil, "which", lambda _: "/usr/bin/systemctl")
+
+        def _boom(*a, **k):
+            raise OSError("no init system here")
+
+        monkeypatch.setattr(pf.subprocess, "run", _boom)
+        value, source = pf.resolve_flash_attention()
+        assert value is None and "not visible" in source

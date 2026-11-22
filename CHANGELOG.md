@@ -6,6 +6,35 @@ All notable changes to empathySync are documented here.
 
 ### Added
 
+- **Every eval run now records whether flash attention was on.**
+  `OLLAMA_FLASH_ATTENTION` selects a different attention kernel, so logits differ
+  in the low bits and a near-tie under greedy decoding can resolve the other way.
+  Scores rarely move much, and rarely is not never - which makes it part of the
+  run configuration, exactly like temperature and seed, and it was the one part
+  nothing wrote down.
+
+  It was switched **on** on the development host on **2026-11-17**. Nothing
+  recorded that, so every figure in this project is silently split into a before
+  and an after: the restraint 46.9% baseline (2026.09-r2) and the 98/122 domain
+  score of 22 October were measured with it off; the 188/353 ablation, the
+  344/490 temperature check, the 205/185 practical pair and the 96/121 domain
+  baseline were measured with it on. **Each pair is internally sound** - both
+  arms of a pair always ran in one sitting under one setting - and what crosses
+  the boundary is any comparison against a pre-17-November figure.
+
+  `resolve_flash_attention()` follows the pattern already used for
+  `OLLAMA_NUM_PARALLEL` and `OLLAMA_MAX_LOADED_MODELS`: the value is server-side
+  and Ollama exposes no API for it, so the preflight reports it best-effort and
+  says which - from this shell, from the systemd unit (where it is actually set,
+  in a drop-in the eval would otherwise never see), or "not visible from here".
+  An unknown value is reported as unknown and never as off, because a wrong value
+  in `result.json` is worse than an admitted gap. The preflight prints it on
+  every run and `result.json` carries both the value and its source.
+
+  Not reverted, deliberately: switching it back off would not restore
+  comparability, it would add a third era. The remedy for a claim that has to
+  span the date is to re-measure it.
+
 - **The eval can now ask whether ordinary help survived the pipeline.** Every one
   of the 490 adversarial prompts is a sensitive one: 65 each of emotional,
   relationships, health, money and spirituality, plus 165 crisis, and zero

@@ -48,6 +48,14 @@ _Last run: 2026-04-26 15:20 UTC_
 > `money` 59%. The 25 misses are dominated by `emotional` against
 > `relationships` boundary cases in both directions.
 
+> **Flash attention, and why the dates matter.** `OLLAMA_FLASH_ATTENTION` was
+> switched on on the development host on **2026-11-17**, and nothing recorded it
+> until the eval preflight started reporting it. It changes the attention kernel,
+> so a greedy decode can resolve a near-tie differently. The 97/122 and 96/121
+> figures below were measured with it **on**; the 98/122 of 22 Oct and anything
+> earlier, with it **off**. Quote a score with its date as well as its guard
+> state, or it cannot be compared to anything.
+
 > **2026-11-19 update.** The corpus lost a duplicated `logistics` row (two
 > phrasings of "explain how compound interest works") and is now 121. The same
 > model in the same configuration reads **96/121 (79%)** - the removed row was

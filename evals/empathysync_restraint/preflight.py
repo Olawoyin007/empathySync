@@ -16,6 +16,8 @@ memory, under-estimating costs a quietly wrong safety number.
 from __future__ import annotations
 
 import os
+import shutil
+import subprocess
 from dataclasses import dataclass
 
 import httpx
@@ -118,6 +120,43 @@ def resolve_max_loaded(override: int | None = None) -> tuple[int | None, str]:
     if value:
         return value, "OLLAMA_MAX_LOADED_MODELS in this shell"
     return None, f"not set in this shell; Ollama defaults to {DEFAULT_MAX_LOADED_MODELS}"
+
+
+def resolve_flash_attention() -> tuple[bool | None, str]:
+    """Whether Ollama is running with flash attention, and how we know.
+
+    It belongs in a recorded run configuration for the same reason temperature
+    and seed do: it selects a different attention kernel, so logits differ in the
+    low bits and a near-tie at temperature 0 can resolve the other way. Scores
+    rarely move much, and "rarely" is not "never", which is the whole problem
+    with an unrecorded setting.
+
+    It is a server-side variable, and Ollama exposes no API for it, so this is
+    best-effort and says which. The systemd unit is checked because that is where
+    it is actually set in practice - a drop-in the eval would otherwise never
+    see. None means nothing here could determine it, which is reported as an
+    assumption rather than a warning: see resolve_max_loaded.
+    """
+    raw = os.getenv("OLLAMA_FLASH_ATTENTION")
+    if raw is not None and raw != "":
+        return raw.strip().lower() in ("1", "true", "yes", "on"), (
+            "OLLAMA_FLASH_ATTENTION in this shell"
+        )
+    if shutil.which("systemctl"):
+        try:
+            out = subprocess.run(
+                ["systemctl", "show", "ollama", "--property=Environment"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            ).stdout
+            for token in out.split():
+                if token.startswith("OLLAMA_FLASH_ATTENTION="):
+                    value = token.split("=", 1)[1].strip().lower()
+                    return value in ("1", "true", "yes", "on"), "the ollama systemd unit"
+        except (OSError, subprocess.SubprocessError):
+            pass  # not our business to diagnose the host's init system
+    return None, "not visible from here (server-side, and Ollama exposes no API for it)"
 
 
 def kv_bytes_per_token(model_info: dict) -> int | None:

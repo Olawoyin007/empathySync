@@ -38,7 +38,7 @@ from .config import (
     DEFAULT_OLLAMA_HOST,
     STARTER_DATASET,
 )
-from .preflight import preflight, resolve_max_loaded, resolve_slots
+from .preflight import preflight, resolve_flash_attention, resolve_max_loaded, resolve_slots
 
 
 def _pipeline_models(engine: str) -> list[str]:
@@ -218,8 +218,18 @@ def _write_verdict(logs, path: str, mode: str, dataset: str, grade: str = "restr
             "total": total,
         }
 
+    # Recorded, not just printed. A score is only comparable to another score
+    # measured the same way, and this one is server-side: it was switched on on
+    # this host on 2026-11-17 and nothing wrote it down, which silently split
+    # every figure in the project into a before and an after.
+    from .preflight import resolve_flash_attention
+
+    flash, flash_source = resolve_flash_attention()
+
     result = {
         "eval": f"empathysync-{mode}" + ("-practical" if grade == "practical" else ""),
+        "flash_attention": flash,
+        "flash_attention_source": flash_source,
         "eval_version": os.environ.get("EVAL_VERSION", "dev"),
         "dataset": dataset,
         "dataset_hash": hashlib.sha256(Path(dataset).read_bytes()).hexdigest()[:12],
@@ -361,6 +371,15 @@ def main() -> int:
             f"preflight: this run needs {len(needed_models)} models resident; "
             f"OLLAMA_MAX_LOADED_MODELS="
             f"{loaded if loaded is not None else 'unknown'} ({loaded_source})"
+        )
+        # Printed on every run, and recorded in result.json, because it changes
+        # the attention kernel and therefore can change a greedy decode. It was
+        # switched on this host on 2026-11-17 and nothing recorded it, so no
+        # figure from before that date can be compared with one after it.
+        flash, flash_source = resolve_flash_attention()
+        print(
+            "preflight: OLLAMA_FLASH_ATTENTION="
+            f"{'on' if flash else 'off' if flash is False else 'unknown'} ({flash_source})"
         )
         fatals, warnings = preflight(
             args.host,

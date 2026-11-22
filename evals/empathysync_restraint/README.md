@@ -283,6 +283,29 @@ domain-stability damping that sit between `classify()` and `risk_assessment` are
 no-ops (verified 25/25 against the corpus). **If samples ever become multi-turn,
 domain mode has to go back to the full pipeline solver.**
 
+**Flash attention is part of the configuration, and there is an era boundary.**
+`OLLAMA_FLASH_ATTENTION` selects a different attention kernel, so logits differ
+in the low bits and a near-tie under greedy decoding can resolve the other way.
+Scores rarely move much, and rarely is not never. It is server-side and Ollama
+exposes no API for it, so the preflight reports it best-effort - from this shell,
+or from the systemd unit, or as "not visible from here" - and `result.json`
+records both the value and where it came from.
+
+It was switched **on** on the development host on **2026-11-17**, and nothing
+recorded it at the time. So:
+
+- Figures measured **before 17 Nov 2026** (the restraint 46.9% baseline from
+  2026.09-r2, the 98/122 domain score of 22 Oct) were measured with it off.
+- Everything from 18 Nov onward - the 188/353 ablation, the 344/490 temperature
+  check, the 205/185 practical pair, the 96/121 domain baseline - was measured
+  with it on.
+- **Each pair is internally sound**, because both arms of a pair always ran in
+  one sitting under one setting. What crosses the boundary is any comparison
+  against a pre-17-Nov figure.
+
+Reverting it would not restore comparability, only add a third era. Record,
+quote the pair, and re-measure anything that has to span the date.
+
 **The engine is pinned for eval runs** (#211): `temperature 0` and `seed 42`,
 set by the solver. The product ships `OLLAMA_TEMPERATURE=0.7` because that is
 what a real conversation should sound like; an eval needs the opposite. Unpinned,
