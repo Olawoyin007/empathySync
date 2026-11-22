@@ -63,6 +63,7 @@ class RiskClassifier:
         """
         self.loader = scenario_loader or get_scenario_loader()
         self._trigger_cache: Optional[Dict[str, str]] = None
+        self._exception_cache: Optional[Dict[str, List[str]]] = None
         self.emotional = EmotionalWeightAssessor(self.loader)
 
         # Phase 21.2: additive LlamaGuard safety layer. Off unless
@@ -582,6 +583,48 @@ class RiskClassifier:
         displaced = [normalize_for_matching(p) for p in config.get("obligation_displaced") or []]
         return any(p in t for p in destination) and any(p in t for p in displaced)
 
+    def _get_trigger_exceptions(self) -> Dict[str, List[str]]:
+        """Phrases that explain away a trigger match, per domain.
+
+        Keyed by the domain whose file declared them, and that scoping is not
+        cosmetic. `harmful.yaml` lists "panic attack" so that `attack` is not
+        read as an assault - but "panic attack" is also a legitimate **health**
+        trigger. Flattening the lists across domains cancelled it, and "I've
+        been having panic attacks every day" routed to logistics. An exception
+        may only ever cancel a match in its own domain.
+        """
+        if self._exception_cache is None:
+            by_domain: Dict[str, List[str]] = {}
+            for name, domain in (self.loader.get_all_domains() or {}).items():
+                phrases: List[str] = []
+                for item in domain.get("context_dependent") or []:
+                    phrases.extend(
+                        normalize_for_matching(e) for e in (item.get("exceptions") or [])
+                    )
+                if phrases:
+                    by_domain[domain.get("domain") or name] = phrases
+            self._exception_cache = by_domain
+        return self._exception_cache
+
+    def _explained_by_exception(self, text: str, trigger: str, domain: str) -> bool:
+        """Did this trigger only match because it sits inside an innocent phrase?
+
+        `bomb the` is a trigger, and it has to stay loose enough to catch "bomb
+        the school". It also matches "I'm going to bomb the test tomorrow". The
+        only thing separating them is the longer phrase, which is what
+        `context_dependent` has listed since it was written - and what nothing
+        read until 2026-11-22, so it never protected anybody (#266).
+
+        Three conditions, all required: the exception belongs to the matched
+        trigger's own domain, it contains the trigger, and it appears in the
+        text. The second is why "bath bomb" can never excuse "make a bomb". The
+        first is why harmful's "panic attack" cannot cancel health's.
+        """
+        for phrase in self._get_trigger_exceptions().get(domain, ()):
+            if trigger in phrase and phrase in text:
+                return True
+        return False
+
     def _harmful_match_is_decisive(self, hits: List[str]) -> bool:
         """May these harmful trigger matches hard-stop on their own?
 
@@ -626,7 +669,7 @@ class RiskClassifier:
         # on what matched - see _harmful_match_is_decisive.
         domain_hits: Dict[str, List[str]] = {}
         for trigger, domain in triggers.items():
-            if trigger in t:
+            if trigger in t and not self._explained_by_exception(t, trigger, domain):
                 domain_hits.setdefault(domain, []).append(trigger)
 
         if not domain_hits:

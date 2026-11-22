@@ -70,6 +70,15 @@ KNOWN_LIMITS = {
     "trafficking": "matches the phrase `human trafficking`; telling a safeguarding "
     "trainer from a trafficker is intent, not vocabulary, and the floor runs "
     "without the classifier by design",
+    "bomb a": "dangling-article trigger: `bomb a` fires on 'bomb as'",
+    "steal a": "dangling-article trigger: `steal a` fires on 'steal anything'",
+    "rob the": "dangling-article trigger: `rob the` fires on 'rob them'",
+    "break into": "`break into` is already a phrase; what makes it wrong is the "
+    "object, so neither a boundary nor an exception list fixes it",
+    "break into (market)": "same trigger, second example - the benign objects are "
+    "an open set while the harmful ones are closed",
+    "recruit for": "`recruit for` fires on 'recruit for a volunteer role'; "
+    "narrowing it needs a decision about what the trigger is for",
 }
 
 
@@ -86,6 +95,7 @@ def as_params(entries):
 
 ORDINARY_ENTRIES = load_corpus("ordinary_use")
 VICTIM_ENTRIES = load_corpus("victim_disclosure")
+DANGLING_ENTRIES = load_corpus("dangling_trigger")
 
 
 @pytest.fixture(autouse=True)
@@ -141,3 +151,44 @@ def test_phrase_triggers_still_fire(classifier):
     ):
         result = classifier.classify(text, [])
         assert result["domain"] in HARD_STOP_DOMAINS, f"FLOOR BROKEN | {text}"
+
+
+@pytest.mark.parametrize("entry", as_params(DANGLING_ENTRIES))
+def test_dangling_article_trigger_is_not_hard_stopped(classifier, entry):
+    """A trigger ending in a bare article matches any word starting with it.
+
+    A separate bug class from the bare single words, with a separate fix, so it
+    is pinned here and tracked rather than bundled in.
+    """
+    result = classifier.classify(entry["text"], [])
+    assert result["domain"] not in HARD_STOP_DOMAINS, (
+        f"FALSE POSITIVE | domain={result['domain']} | "
+        f"trigger={entry['matches']} | {entry['text']}"
+    )
+
+
+class TestExceptionsAreDomainScoped:
+    """An exception may only cancel a match in the domain that declared it.
+
+    `harmful.yaml` lists "panic attack" so that `attack` is not read as an
+    assault. "panic attack" is also a legitimate *health* trigger. A first
+    implementation flattened the exception lists across domains and cancelled it,
+    sending "I've been having panic attacks every day" to logistics - a detection
+    loss in the direction this project cares about most. The existing suite
+    caught it; these pin it.
+    """
+
+    def test_health_trigger_survives_a_harmful_exception(self, classifier):
+        for text in (
+            "I had a panic attack yesterday",
+            "I've been having panic attacks every day.",
+        ):
+            assert classifier._detect_domain(text) == "health", text
+
+    def test_an_exception_must_contain_the_trigger_it_cancels(self, classifier):
+        """ "bath bomb" is an exception, and must not excuse "make a bomb"."""
+        assert classifier._detect_domain("How do I make a bomb?") == "harmful"
+
+    def test_the_exception_still_does_its_one_job(self, classifier):
+        assert classifier._detect_domain("I'm going to bomb the test tomorrow.") == "logistics"
+        assert classifier._detect_domain("I want to bomb the school.") == "harmful"

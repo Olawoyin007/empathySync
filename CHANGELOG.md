@@ -469,6 +469,51 @@ All notable changes to empathySync are documented here.
 
 ### Fixed
 
+- **The trigger exceptions nobody was reading now work** (#266).
+  `scenarios/domains/harmful.yaml` has carried a `context_dependent` block since
+  it was written - phrases that explain a trigger match away, like "bath bomb",
+  "panic attack" and "killing time". `grep` found no code reading it anywhere in
+  the repo. It was a safety control that looked real and did nothing, the same
+  shape as the voice guard that sat inert until #177.
+
+  It cost one live refusal. `bomb the` is a trigger and has to stay loose enough
+  to catch "bomb the school", so the only thing separating that from **"I'm going
+  to bomb the test tomorrow"** is the longer phrase - which the exceptions list
+  had named all along. `_explained_by_exception` now discards a match when an
+  exception phrase both contains the trigger and appears in the text. Both
+  conditions are required, so "bath bomb" can never excuse "make a bomb".
+
+  33 of the 34 listed phrases turned out to be guarding patterns that were never
+  triggers (`kill`, `attack`, `hack` and `bomb` appear only inside phrases like
+  "kill someone"), which is why wiring this changes exactly one case rather than
+  thirty-four. Deleting the block was the other option and would have thrown that
+  one away.
+
+  **Exceptions are scoped to the domain that declared them**, and that is the
+  part that makes wiring this safe rather than dangerous. A first implementation
+  flattened the lists across domains, so harmful's "panic attack" cancelled
+  health's identically-worded trigger and "I've been having panic attacks every
+  day" routed to logistics. The existing suite caught it. Three conditions are
+  now all required: same domain, the exception contains the trigger, and the
+  exception appears in the text.
+
+  Found while closing #266, which proposed deleting it.
+
+- **A second false-positive class is now pinned, unfixed.** Triggers that end in
+  a dangling article match any word starting with that letter: `bomb a` fires on
+  "bomb **as** a gift", `steal a` on "steal **anything**", `rob the` on "rob
+  **them** of opportunities", and `break into` on "break into product
+  management" and "break into the German market". Six examples are in
+  `tests/classification/test_benign_floor.py` as expected-fail, each with its own
+  reason.
+
+  A trailing space does not work: the loader normalises triggers, correctly, and
+  that strips it. The candidate fix is a trailing word boundary applied only
+  where a trigger's last token is a short function word - which has to keep
+  `self-harm` matching "self-harming", so it is a matcher change across every
+  domain and gets its own review rather than riding along here.
+
+
 - **The eval preflight no longer warns about a resident-model limit it cannot
   see** (#248). The eviction check read `OLLAMA_MAX_LOADED_MODELS` from the
   eval's own shell and assumed Ollama's default of 3 when unset. The limit is
