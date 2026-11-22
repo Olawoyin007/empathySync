@@ -26,11 +26,18 @@ project's own failure mode, pointing the other way.
 Keyword-only by design, like the crisis floor: these must hold with the LLM
 disabled, because the floor is what runs when Ollama is down.
 
-**These tests are expected to fail until the floor is fixed** - `xfail(strict)`,
-so the suite stays green now and tells you to delete the marker the moment the
-fix lands. `scenarios/domains/harmful.yaml` already carries a `context_dependent`
-block built for exactly this problem, with exceptions like "panic attack" and
-"bath bomb". Nothing in the codebase reads it.
+**Fixed 2026-11-22.** A harmful keyword now needs evidence that can carry a
+hard-stop: a phrase trigger, or two distinct triggers, or membership of
+`harmful.yaml`'s `single_word_authority` (three words with no innocent use and no
+victim use). Crisis is untouched - it rests on 4 bare words against 101 phrases
+and this project accepts a crisis false positive as the cheaper error.
+
+One row stays expected-fail, and it marks a real ceiling rather than an oversight:
+"human trafficking awareness training" matches the *phrase* `human trafficking`,
+and phrases are exactly what the floor should trust. Separating a safeguarding
+trainer from a trafficker is a question of intent, not vocabulary - the same wall
+the crisis-triage work hit. It needs the classifier, which is the thing the floor
+exists to work without.
 """
 
 import sys
@@ -57,6 +64,26 @@ def load_corpus(key):
     return raw.get(key, [])
 
 
+# Rows that remain expected-fail, with the reason. Keyed on the trigger that
+# fires, so a corpus edit cannot silently detach a marker from its row.
+KNOWN_LIMITS = {
+    "trafficking": "matches the phrase `human trafficking`; telling a safeguarding "
+    "trainer from a trafficker is intent, not vocabulary, and the floor runs "
+    "without the classifier by design",
+}
+
+
+def as_params(entries):
+    """Parametrise, marking the known limits xfail(strict) one row at a time."""
+    out = []
+    for e in entries:
+        marks = []
+        if e["matches"] in KNOWN_LIMITS:
+            marks.append(pytest.mark.xfail(strict=True, reason=KNOWN_LIMITS[e["matches"]]))
+        out.append(pytest.param(e, marks=marks, id=e["matches"]))
+    return out
+
+
 ORDINARY_ENTRIES = load_corpus("ordinary_use")
 VICTIM_ENTRIES = load_corpus("victim_disclosure")
 
@@ -77,12 +104,7 @@ def classifier():
     return RiskClassifier(loader, use_llm=False)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="bare single-word harmful triggers match ordinary sentences; "
-    "context_dependent exceptions exist in YAML but nothing reads them",
-)
-@pytest.mark.parametrize("entry", ORDINARY_ENTRIES, ids=[e["matches"] for e in ORDINARY_ENTRIES])
+@pytest.mark.parametrize("entry", as_params(ORDINARY_ENTRIES))
 def test_ordinary_sentence_is_not_hard_stopped(classifier, entry):
     """An everyday use of a trigger word must not reach harmful or crisis."""
     result = classifier.classify(entry["text"], [])
@@ -92,12 +114,7 @@ def test_ordinary_sentence_is_not_hard_stopped(classifier, entry):
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="a person reporting harm done TO them matches the same bare triggers "
-    "as a person asking to do it, and harmful wins at risk_weight 10",
-)
-@pytest.mark.parametrize("entry", VICTIM_ENTRIES, ids=[e["matches"] for e in VICTIM_ENTRIES])
+@pytest.mark.parametrize("entry", as_params(VICTIM_ENTRIES))
 def test_victim_disclosure_is_not_refused(classifier, entry):
     """Someone reporting harm done to them must get help, not a refusal.
 

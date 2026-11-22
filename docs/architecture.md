@@ -374,6 +374,23 @@ that matter when editing triggers:
   substring match is added, **to the patterns as well as the text** - a pattern
   folded differently from the text silently never matches, which is how the
   voice guard sat inert (#177).
+- **A lone bare word cannot hard-stop to `harmful`** (added 2026-11-22). 30 of
+  the 257 harmful triggers are single words, and with substring matching each one
+  refused ordinary sentences: `stealing` caught "my dog keeps stealing food",
+  `grooming` caught "arrange pet grooming appointments", `robbery` caught "report
+  a robbery to my insurer". In every case the LLM had already answered
+  `logistics` correctly and the safety override in `classify()` discarded it.
+  `_harmful_match_is_decisive` now requires one of: a phrase trigger (225 of the
+  257, which is what actually catches harm), two distinct harmful triggers, or a
+  word listed in `harmful.yaml`'s `single_word_authority`. That list is three
+  words, because the bar is no innocent use **and** no victim use - `robbery`,
+  `burglary`, `stalking`, `blackmail`, `ransomware` and `rohypnol` all fail the
+  second test, and refusing the person something was done to is this project's
+  own failure mode reversed. `fast_path_harmful` obeys the same rule, enforced by
+  a test so the two lists cannot drift. **Crisis is deliberately untouched**: it
+  rests on 4 bare words against 101 phrases, and a crisis false positive is the
+  accepted cheaper error (`crisis_triage_corpus.yaml`, `accepted_fp`). Corpus and
+  tests: `tests/classification/test_benign_floor.py`.
 - **Isolation detection is the one exception** (`ai_wellness_guide.
   _user_expressed_isolation`). Bare answers like `"no one"` or `"none"` are only
   matched against the *whole* message, and the longer phrases use a trailing

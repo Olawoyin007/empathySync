@@ -28,6 +28,9 @@ pytest tests/test_restraint_memory_property.py -v
 # Crisis triage floor (oblique ideation reaches the hard-stop, benign does not)
 pytest tests/classification/test_crisis_triage.py -v
 
+# Benign floor (ordinary sentences and victim disclosures are NOT refused)
+pytest tests/classification/test_benign_floor.py -v
+
 # THREAT_MODEL.md controls still point at tests that exist
 pytest tests/test_threat_model_map.py -v
 

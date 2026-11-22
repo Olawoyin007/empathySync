@@ -128,10 +128,12 @@ tests/
     ├── domain_corpus.yaml          # 121 labeled examples for accuracy eval
     ├── crisis_triage_corpus.yaml   # Oblique ideation vs intense-benign
     ├── test_crisis_triage.py       # Crisis hard-stop routing (keyword floor)
+    ├── benign_floor_corpus.yaml    # Ordinary uses + victim disclosures of trigger words
+    ├── test_benign_floor.py        # The floor's false positives (mirror of crisis triage)
     └── run_domain_eval.py          # Per-domain accuracy report
 ```
 
-Current counts: ~1480 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
+Current counts: ~1516 unit tests, 23 conversation-marked tests (20 quality scenarios + 3 safety-guard integration).
 
 Pre-existing known failure: `stress_test_001` conversation tier is
 non-deterministic (LLM output varies); the structural tier always passes.

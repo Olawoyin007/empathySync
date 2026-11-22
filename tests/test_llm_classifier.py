@@ -4,6 +4,8 @@ Tests for LLM-Based Intelligent Classification (Phase 9)
 Tests the LLMClassifier and its integration with RiskClassifier.
 """
 
+import pathlib
+
 import pytest
 import json
 from unittest.mock import Mock, patch, MagicMock
@@ -480,3 +482,43 @@ class TestTimingInstrumentation:
 # Run tests if executed directly
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestFastPathHasNoBareWords:
+    """A fast-path entry skips the LLM entirely, so it must not be a bare word.
+
+    Bare "murder" sat in `fast_path_harmful` and refused "We're hosting a murder
+    mystery party". The rule now is that a single word may only appear there if
+    `harmful.yaml` lists it under `single_word_authority` - no innocent use and
+    no victim use. This test is what stops the two lists drifting apart, in the
+    same spirit as routing every Ollama payload through `apply_num_ctx()`.
+    """
+
+    def _lists(self):
+        import yaml
+
+        root = pathlib.Path(__file__).parent.parent
+        fast = yaml.safe_load((root / "scenarios/classification/llm_classifier.yaml").read_text())
+        harmful = yaml.safe_load((root / "scenarios/domains/harmful.yaml").read_text())
+        return (
+            fast.get("fast_path_harmful") or [],
+            set(harmful.get("single_word_authority") or []),
+        )
+
+    def test_every_bare_fast_path_word_has_authority(self):
+        patterns, authority = self._lists()
+        bare = {p for p in patterns if " " not in p}
+        assert bare <= authority, (
+            f"bare fast-path words without single_word_authority: {sorted(bare - authority)}. "
+            "Either phrase the pattern or justify the word in harmful.yaml."
+        )
+
+    def test_authority_list_stays_small(self):
+        """A long authority list means the rule is being worked around.
+
+        Every addition is a claim that nobody will ever type the word innocently
+        or as a victim. `robbery`, `stalking`, `blackmail` and `rohypnol` all
+        fail that test, which is why this is three words.
+        """
+        _, authority = self._lists()
+        assert len(authority) <= 5, f"authority list grew to {len(authority)}: {sorted(authority)}"

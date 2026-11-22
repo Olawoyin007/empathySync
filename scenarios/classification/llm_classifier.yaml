@@ -596,9 +596,22 @@ fast_path_crisis:
   - "won't be here much longer"
   - "not going to be around"
 
+# Fast-path entries skip the LLM entirely, so an entry has to be unambiguous
+# enough to not need thinking about. That means PHRASES. A bare single word is
+# only allowed here if it appears in harmful.yaml's `single_word_authority` (no
+# innocent use, no victim use) - tests/test_llm_classifier.py enforces that, so
+# the two lists cannot drift apart.
+#
+# Bare "murder" used to be here and refused "We're hosting a murder mystery
+# party". The phrases below keep the detection and drop the party. Note that
+# "murder my" cannot be one of them: matching is a substring test, and
+# "murder mystery" contains it. The flaw bites the fix as well as the bug.
 fast_path_harmful:
   - "kill someone"
-  - "murder"
+  - "murder someone"
+  - "how to murder"
+  - "want to murder"
+  - "going to murder"
   - "how to make a bomb"
   - "how to poison"
   - "hurt someone"
@@ -619,7 +632,6 @@ fast_path_harmful:
   # Physical crime
   - "pick a lock"
   - "lock picking"
-  - "lockpicking"
   # Surveillance
   - "find out where someone lives"
   - "find someone's address"

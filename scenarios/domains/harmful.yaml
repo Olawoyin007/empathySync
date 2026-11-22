@@ -331,6 +331,33 @@ referrals:
   line: "If anyone is at risk right now, emergency services are the right call. Either way, this is worth telling someone you trust."
 
 # Patterns that require additional context before classifying as harmful
+# Bare single words that may hard-stop on their own evidence alone.
+#
+# Measured 2026-11-20: 30 of the triggers above are bare single words, and
+# trigger matching is a plain substring test, so each of them refuses ordinary
+# sentences. "How do I stop my dog stealing food off the counter" matched
+# `stealing`; "arrange pet grooming appointments" matched `grooming`; "report a
+# robbery to my insurer" matched `robbery`. In every case the LLM classifier had
+# already answered `logistics` correctly and the safety override threw that away.
+#
+# So a bare word no longer carries a hard-stop by itself. It needs a second
+# harmful trigger, or a phrase trigger, or membership of this list. Phrase
+# triggers ("kill someone", "hack into", "make a bomb") are unaffected: they are
+# 225 of the 257 and they are what actually catches harm.
+#
+# The bar for this list: a word with no innocent use AND no victim use. That is
+# why it is three words and not thirty. `robbery`, `burglary`, `stalking`,
+# `blackmail`, `ransomware` and `rohypnol` are all excluded on the victim test -
+# the person typing them is usually the one it happened to, and refusing them at
+# the moment they ask for help is the failure this project exists to prevent.
+#
+# tests/classification/test_benign_floor.py holds the corpus. Adding a word here
+# means claiming nobody will ever type it innocently or as a victim.
+single_word_authority:
+  - csam
+  - bioweapon
+  - bestiality
+
 context_dependent:
   - pattern: "kill"
     exceptions:
